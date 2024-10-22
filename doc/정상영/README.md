@@ -42,3 +42,16 @@
 
 - https://krdict.korean.go.kr/openApi/openApiInfo
 - https://stdict.korean.go.kr/openapi/openApiInfo.do
+
+<hr />
+<hr />
+<hr />
+
+
+## 10월 22일
+### 3차 기획 회의
+
+- 근거를 기반으로 소통하자.
+- 문해력 사회 문제에 대한 공감은 ok
+- 서비스의 사용성이나 볼륨이 프로젝트와 역량에 비해 부족하다.
+
