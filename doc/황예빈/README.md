@@ -43,3 +43,7 @@
 
 - https://krdict.korean.go.kr/openApi/openApiInfo
 - https://stdict.korean.go.kr/openapi/openApiInfo.do
+
+# 아이디어 디벨롭
+- https://research.google.com/semantris/?m=a&lt=10exN4FCV62NC5I
+- 위 링크처럼 계속해서 유사한 명사를 찾을 수 있도록 하는 게임 등 아이디어를 찾아봄.
