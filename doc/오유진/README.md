@@ -40,3 +40,8 @@
 
 - https://krdict.korean.go.kr/openApi/openApiInfo
 - https://stdict.korean.go.kr/openapi/openApiInfo.do
+
+
+# GIT 컨벤션 논의
+- baseresponse 설정
+
