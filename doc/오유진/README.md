@@ -47,7 +47,6 @@
 - base response 설정
 
 
-
-# GIT 컨벤션 논의
-- baseresponse 설정
+# 기술 결정
+- pdf.js 한국어 BERT 언어모델(https://aiopen.etri.re.kr/bertModel)
 
