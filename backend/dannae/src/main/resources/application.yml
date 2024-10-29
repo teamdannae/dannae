@@ -1,0 +1,4 @@
+spring:
+  application:
+    name: dannae
+  port: 8080
