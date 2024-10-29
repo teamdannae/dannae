@@ -61,3 +61,4 @@
 - https://stdict.korean.go.kr/openapi/openApiInfo.do
 - https://aiopen.etri.re.kr/bertModel
 
+# api 명세서 작성완료 
