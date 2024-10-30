@@ -1,5 +1,7 @@
 package com.ssafy.dannae.domain.room.entity;
 
+import com.ssafy.dannae.domain.room.exception.TitleNumberOverflowException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -47,11 +49,18 @@ public class Room {
 	}
 
 	public Room(String title, String mode, String release, String code, RoomStatus status) {
+		checkRoomTitle(title);
 		this.title = title;
 		this.mode = mode;
 		this.release = release;
 		this.code = code;
 		this.status = status;
+	}
+
+	private void checkRoomTitle(String title) {
+		if (title.length() > 20) {
+			throw new TitleNumberOverflowException("Invalid Title value");
+		}
 	}
 
 	public void updateStatus() {
