@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.room.entity.Room;
+import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.repository.RoomRepository;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.domain.room.service.dto.RoomDto;
@@ -32,5 +33,12 @@ class RoomQueryServiceImpl implements RoomQueryService {
 		return RoomDto.builder()
 			.roomId(room.getId())
 			.build();
+	}
+
+	@Override
+	public void updateRoom(Long roomId, RoomDto dto) {
+		Room room = roomRepository.findById(roomId)
+			.orElseThrow(() -> new 	NoRoomException("Room not found"));
+		room.update(dto.title(), dto.mode(), dto.release());
 	}
 }

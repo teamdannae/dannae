@@ -26,7 +26,6 @@ public class Room {
 	@Column(name = "room_id")
 	private Long id;
 
-
 	@Column(name = "title", nullable = false)
 	private String title;
 
@@ -76,6 +75,7 @@ public class Room {
 	}
 
 	public void update(String title, String mode, String release){
+		checkRoomTitle(title);
 		this.title = title;
 		this.mode = mode;
 		this.release = release;
