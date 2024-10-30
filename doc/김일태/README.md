@@ -21,3 +21,11 @@
 
 ![게임 대기 화면](./img/waitingOne.png)
 ![게임 대기 화면](./img/waitingTwo.png)
+
+# '단어의 방' 게임 화면 설계
+
+!['단어의 방' 플레이 화면](./img/wordRoomOne.png)
+!['단어의 방' 플레이 화면](./img/wordRoomTwo.png)
+!['단어의 방' 플레이 화면](./img/wordRoomThree.png)
+!['단어의 방' 플레이 화면](./img/wordRoomFour.png)
+!['단어의 방' 플레이 화면](./img/wordRoomFive.png)
