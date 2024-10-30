@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Service
 class RoomQueryServiceImpl implements RoomQueryService {
+
 	private final RoomRepository roomRepository;
 
 	@Override
@@ -41,4 +42,5 @@ class RoomQueryServiceImpl implements RoomQueryService {
 			.orElseThrow(() -> new 	NoRoomException("Room not found"));
 		room.update(dto.title(), dto.mode(), dto.release());
 	}
+
 }
