@@ -7,4 +7,5 @@ public interface RoomQueryService {
 	RoomDto createRoom(RoomDto roomDto);
 
 	void updateRoom(Long roomId, RoomDto roomDto);
+
 }
