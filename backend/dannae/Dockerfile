@@ -1,6 +1,9 @@
 FROM openjdk:17-jdk AS builder
 WORKDIR /app
 
+# RUN apt-get update && apt-get install -y findutils
+RUN microdnf install findutils
+
 # Gradle 파일들만 먼저 복사
 COPY gradlew .
 COPY gradle gradle
@@ -8,7 +11,8 @@ COPY build.gradle .
 COPY settings.gradle .
 
 # Gradle 실행 권한 부여
-RUN chmod +x ./gradlew
+RUN sed -i 's/\r$//' gradlew && \
+    chmod +x ./gradlew
 
 # 소스 복사
 COPY src src
