@@ -4,3 +4,8 @@ spring:
   port: 8080
 jwt:
   secret-key: ${JWT_SECRET_KEY:defaultSecretKey}
+
+openai:
+  api:
+    key: '${OPENAI_API_KEY}'
+  model: '${OPENAI_API_MODEL}'
