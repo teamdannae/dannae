@@ -1,0 +1,27 @@
+@use "../../styles/variables.scss" as vars;
+
+.progressContainer {
+  width: 100%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  transition: width 0.1s linear;
+  border-radius: 10px 0 0 10px;
+
+  &.low {
+    background-color: vars.$primary-color;
+  }
+
+  &.medium {
+    background-color: vars.$word-unique-color;
+  }
+
+  &.high {
+    background-color: vars.$red-color;
+  }
+}
