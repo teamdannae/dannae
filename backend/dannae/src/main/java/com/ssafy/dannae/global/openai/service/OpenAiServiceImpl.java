@@ -34,10 +34,10 @@ class OpenAiServiceImpl implements OpenAIService {
 	private final ObjectMapper objectMapper;
 	private final RestClient restClient;
 
-	@Value("${openai.model}")
+	@Value("${OPENAI_API_MODEL}")
 	private String model;
 
-	@Value("${openai.api.key}")
+	@Value("${OPENAI_API_KEY}")
 	private String apiKey;
 
 	@Override
