@@ -1,15 +1,12 @@
 package com.ssafy.dannae.domain.room.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.ssafy.dannae.global.util.JwtTokenProvider;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ssafy.dannae.domain.room.controller.request.RoomReq;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
@@ -20,23 +17,32 @@ import com.ssafy.dannae.global.template.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/room")
 @RestController
 public class RoomController {
 
+	private final JwtTokenProvider jwtTokenProvider;
 	private final RoomCommandService roomCommandService;
 	private final RoomQueryService roomQueryService;
 
 	@PostMapping("")
-	public ResponseEntity<BaseResponse<RoomDto>> createRoom(@RequestBody RoomReq req){
+	public ResponseEntity<BaseResponse<Map<String, Object>>> createRoom(@RequestBody RoomReq req, @RequestParam String playerId){
 		RoomDto res = roomQueryService.createRoom(RoomDto.builder()
-			.title(req.title())
-			.mode(req.mode())
-			.release(req.release())
-			.build());
-		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+				.title(req.title())
+				.mode(req.mode())
+				.release(req.release())
+				.build());
+
+		String token = jwtTokenProvider.createToken(res.roomId().toString(), playerId);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("room", res);
+		response.put("token", token);
+
+		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
 
 	@PatchMapping("/{room-id}")
