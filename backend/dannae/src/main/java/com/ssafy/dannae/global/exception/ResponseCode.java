@@ -12,7 +12,7 @@ public enum ResponseCode {
 
 	// 3000 - 게임 방
 	TITLE_NUMBER_OVERFLOW_EXCEPTION("3000", "제목이 허용된 길이를 초과하였습니다"),
-	ROOM_NOT_AVAILABLE_EXCEPTION("3001", "방이 없습니다.");
+	ROOM_NOT_AVAILABLE_EXCEPTION("3001", "방이 없습니다."),
 
 	// 4000 - OpenAI 관련 에러
 	OPENAI_REQUEST_PROCESSING_ERROR("4000", "OpenAI 요청 처리 중 오류가 발생했습니다"),
