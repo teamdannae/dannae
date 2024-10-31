@@ -34,10 +34,10 @@ class OpenAiServiceImpl implements OpenAIService {
 	private final ObjectMapper objectMapper;
 	private final RestClient restClient;
 
-	@Value("${OPENAI_API_MODEL}")
+	@Value("${openai.model}")
 	private String model;
 
-	@Value("${OPENAI_API_KEY}")
+	@Value("${openai.api.key}")
 	private String apiKey;
 
 	@Override
@@ -55,8 +55,7 @@ class OpenAiServiceImpl implements OpenAIService {
 				.build();
 
 			String requestBody = objectMapper.writeValueAsString(requestDto);
-
-			return executeWithRetry(() -> sendRequest(requestBody));
+			return executeWithRetry(requestBody);
 		} catch (JsonProcessingException e) {
 			throw new OpenAIRequestProcessingException("Failed to process request body", e);
 		}
@@ -94,14 +93,14 @@ class OpenAiServiceImpl implements OpenAIService {
 		}
 	}
 
-	private String executeWithRetry(RetryableOperation operation) {
+	private String executeWithRetry(String requestBody) {
 		int attempts = 0;
 		int maxAttempts = 5;
 		long backoffTime = 1000;
 
 		while (attempts < maxAttempts) {
 			try {
-				return operation.execute();
+				return sendRequest(requestBody);
 			} catch (OpenAITooManyRequestsException e) {
 				attempts++;
 				if (attempts >= maxAttempts) {
@@ -122,10 +121,5 @@ class OpenAiServiceImpl implements OpenAIService {
 			}
 		}
 		throw new OpenAIServiceException("Failed to process request after maximum retry attempts");
-	}
-
-	@FunctionalInterface
-	private interface RetryableOperation {
-		String execute() throws Exception;
 	}
 }
