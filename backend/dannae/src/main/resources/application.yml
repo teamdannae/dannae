@@ -2,3 +2,7 @@ spring:
   application:
     name: dannae
   port: 8080
+openai:
+  api:
+    key: '${OPENAI_API_KEY}'
+  model: '${OPENAI_API_MODEL}'
