@@ -79,31 +79,30 @@
   border-radius: 15px;
   height: 68px;
   padding: 18px 30px;
+
+  &::placeholder {
+    color: vars.$disabled-color;
+    font-family: var(--font-main);
+  }
+  
+  &:focus {
+    outline: none;
+  }
+  
+  &[type="text"][disabled] {
+    background-color: vars.$disabled-color;
+    cursor: not-allowed;
+  }
 }
 
 .invalidInputValue {
   border: 2px solid vars.$red-color;
 }
 
-.inputValue::placeholder {
-  color: vars.$disabled-color;
-  font-family: var(--font-main);
-}
-
-.inputValue:focus {
-  outline: none;
-}
-
-.inputValue[type="text"][disabled] {
-  background-color: vars.$disabled-color;
-  cursor: not-allowed;
-}
-
 .warningIcon {
   position: absolute;
   right: 30px;
 }
-
 
 // 프로그레스 바 스타일
 .progressContainer {
