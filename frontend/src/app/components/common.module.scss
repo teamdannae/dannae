@@ -8,7 +8,6 @@
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
-  // backdrop-filter: blur(1px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,6 +47,63 @@
     background-image: url("/icons/cross-blockB.svg");
   }
 }
+
+// Input
+.inputFormContainer {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.inputLabel {
+  color: vars.$dark-color;
+  font-size: vars.$font-size-p2;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.inputValue {
+  width: 100%;
+  background-color: vars.$white-color;
+  color: vars.$dark-color;
+  font-size: vars.$font-size-p1;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  height: 68px;
+  padding: 18px 30px;
+}
+
+.invalidInputValue {
+  border: 2px solid vars.$red-color;
+}
+
+.inputValue::placeholder {
+  color: vars.$disabled-color;
+  font-family: var(--font-main);
+}
+
+.inputValue:focus {
+  outline: none;
+}
+
+.inputValue[type="text"][disabled] {
+  background-color: vars.$disabled-color;
+  cursor: not-allowed;
+}
+
+.warningIcon {
+  position: absolute;
+  right: 30px;
+}
+
 
 // 프로그레스 바 스타일
 .progressContainer {
