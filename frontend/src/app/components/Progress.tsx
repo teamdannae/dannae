@@ -5,17 +5,12 @@ import styles from "./common.module.scss";
 
 interface ProgressBarProps {
   duration: number;
-  reset?: boolean;
 }
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
+const ProgressBar: React.FC<ProgressBarProps> = ({ duration }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    setProgress(0);
-
-    if (reset) return;
-
     const interval = 100;
     const increment = 100 / ((duration * 1000) / interval);
 
@@ -31,10 +26,10 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
     }, interval);
 
     return () => clearInterval(timer);
-  }, [duration, reset]);
+  }, [duration]);
 
   const progressClass =
-    progress < 70 ? styles.low : progress < 90 ? styles.medium : styles.high;
+    progress < 50 ? styles.low : progress < 80 ? styles.medium : styles.high;
 
   return (
     <div className={styles.progressContainer}>
