@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "/src/styles/globals.scss";
+import { ModalProvider } from "./components/ModalContext";
 
 const headFont = localFont({
   src: "./fonts/Gumi Romance.ttf",
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${headFont.className} ${mainFont.className}`}>
-        {children}
+        <ModalProvider>{children}</ModalProvider>
       </body>
     </html>
   );
