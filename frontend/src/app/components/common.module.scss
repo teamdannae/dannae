@@ -135,7 +135,7 @@
 .radioContainer {
   border: none;
   display: flex;
-  gap:35px;
+  gap: 35px;
 }
 
 .radio {
@@ -147,7 +147,7 @@
 .radioButton[type="radio"] {
   -webkit-appearance: none;
   -moz-appearance: none;
-  appearance: none; 
+  appearance: none;
 
   width: 28px;
   height: 28px;
@@ -157,21 +157,23 @@
   background-color: vars.$white-color;
   position: relative;
 
-    &:checked::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 14px;
-      height: 14px;
-      background-color: vars.$primary-color;
-      border-radius: 50%;
-    }
+  &:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: vars.$primary-color;
+    border-radius: 50%;
+  }
 }
 
 .radioText {
   font-size: vars.$font-size-p1;
+}
+
 // Word
 .wordCard {
   position: relative;
