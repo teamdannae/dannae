@@ -1,3 +1,5 @@
+@use "./variables.scss" as vars;
+
 :root {
   --background: #ffffff;
   --foreground: #191a23;
@@ -19,8 +21,8 @@ body {
 }
 
 body {
-  color: $dark-color;
-  background: $white-color;
+  color: vars.$dark-color;
+  background: vars.$white-color;
   font-family: var(--font-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
