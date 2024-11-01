@@ -53,8 +53,8 @@ public class RoomController {
 		String token = jwtTokenProvider.createToken( roomId.toString(),playerDto.playerId().toString());
 
 		Map<String, Object> response = new HashMap<>();
-		response.put("room", roomDto);
-		response.put("player", playerDto);
+		response.put("roomId", roomDto.roomId());
+		response.put("playerId", playerDto.playerId());
 		response.put("token", token);
 
 		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
