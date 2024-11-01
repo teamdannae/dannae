@@ -24,6 +24,7 @@ body {
   color: vars.$dark-color;
   background: vars.$white-color;
   font-family: var(--font-main);
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
