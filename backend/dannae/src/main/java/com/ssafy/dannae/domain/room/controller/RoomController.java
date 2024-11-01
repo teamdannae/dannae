@@ -21,9 +21,6 @@ import com.ssafy.dannae.global.template.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.ssafy.dannae.domain.player.entity.PlayerStatus.nonready;
-
-
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/room")
