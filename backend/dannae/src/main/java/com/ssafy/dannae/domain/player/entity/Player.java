@@ -35,7 +35,7 @@ public class Player {
     private PlayerStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "authorization", nullable = false)
+    @Column(name = "player_authorization", nullable = false)
     private PlayerAuthorization authorization;
 
     @Column(name = "nickname", length = 24, nullable = false)
