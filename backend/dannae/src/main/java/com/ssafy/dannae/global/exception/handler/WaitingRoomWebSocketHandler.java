@@ -55,7 +55,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     }
 
     public boolean isPlayerInWaitingRoom(Long roomId, String playerToken) {
-        return waitingRoomSessions.containsKey(roomId); // roomId 기준으로만 대기실에 있는지 확인
+        return waitingRoomSessions.containsKey(roomId);
     }
 
     private void broadcastToRoom(Long roomId, String message) throws IOException {
@@ -71,4 +71,9 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         String query = session.getUri().getQuery();
         return query != null && query.contains("roomId=") ? Long.valueOf(query.split("roomId=")[1].split("&")[0]) : null;
     }
+
+    public List<WebSocketSession> getRoomSessions(Long roomId) {
+        return waitingRoomSessions.getOrDefault(roomId, new CopyOnWriteArrayList<>());
+    }
+
 }

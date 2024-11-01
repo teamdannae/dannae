@@ -60,6 +60,22 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    private void handleGameExit(Long roomId) throws IOException {
+        broadcastToRoom(roomId, "게임이 종료되었습니다. 대기실로 돌아갑니다.");
+        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+
+        if (sessions != null) {
+            for (WebSocketSession session : sessions) {
+                session.close(CloseStatus.NORMAL);
+            }
+            gameRoomSessions.remove(roomId);
+        }
+
+        for (WebSocketSession session : waitingRoomHandler.getRoomSessions(roomId)) {
+            session.sendMessage(new TextMessage("대기실로 돌아왔습니다. 새로운 게임을 기다려 주세요."));
+        }
+    }
+
     private void broadcastToRoom(Long roomId, String message) throws IOException {
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
         if (sessions != null) {

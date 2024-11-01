@@ -3,7 +3,7 @@ spring:
     name: dannae
   port: 8080
 jwt:
-  secret-key: ${JWT_SECRET_KEY:defaultSecretKey}
+  secret-key: '${JWT_SECRET_KEY}'
 
 openai:
   api:
