@@ -41,12 +41,16 @@ public class Player {
     @Column(name = "nickname", length = 24, nullable = false)
     private String nickname;
 
+    @Column(name = "image")
+    private Integer image;
+
     @Builder
-    public Player(Long roomId, Long score, PlayerStatus status, PlayerAuthorization authorization, String nickname) {
+    public Player(Long roomId, Long score, PlayerStatus status, PlayerAuthorization authorization, String nickname, int image) {
         this.roomId = roomId;
         this.score = score;
         this.status = status;
         this.authorization = authorization;
         this.nickname = nickname;
+        this.image = image;
     }
 }

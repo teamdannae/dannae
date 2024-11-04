@@ -9,6 +9,7 @@ public record PlayerDto(
         Long score,
         String status,
         String authorization,
-        String nickname
+        String nickname,
+        int image
 ) {
 }

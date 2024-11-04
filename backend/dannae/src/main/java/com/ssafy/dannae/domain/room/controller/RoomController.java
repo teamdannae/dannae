@@ -8,6 +8,7 @@ import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.room.controller.request.RoomCreaterReq;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +34,7 @@ public class RoomController {
 	private final PlayerQueryService playerQueryService;
 
 	@PostMapping("")
-	public ResponseEntity<BaseResponse<Map<String, Object>>> createRoom(@RequestBody RoomReq req, @RequestParam String nickname){
+	public ResponseEntity<BaseResponse<Map<String, Object>>> createRoom(@RequestBody RoomCreaterReq req){
 		RoomDto roomDto= roomQueryService.createRoom(RoomDto.builder()
 				.title(req.title())
 				.mode(req.mode())
@@ -42,12 +43,13 @@ public class RoomController {
 
 		Long roomId = roomDto.roomId();
 
-		PlayerDto playerDto =  playerQueryService.createPlayer(PlayerDto.builder()
+		PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
 				.roomId(roomId)
 				.score(0L)
 				.status(String.valueOf(PlayerStatus.nonready))
 				.authorization(String.valueOf(PlayerAuthorization.creator))
-				.nickname(nickname)
+				.nickname(req.nickname())
+				.image(req.image())
 				.build());
 
 		String token = jwtTokenProvider.createToken( roomId.toString(),playerDto.playerId().toString());
