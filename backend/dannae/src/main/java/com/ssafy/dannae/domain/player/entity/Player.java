@@ -53,4 +53,8 @@ public class Player {
         this.nickname = nickname;
         this.image = image;
     }
+
+    public void updateAuthorization(){
+        this.authorization=PlayerAuthorization.creator;
+    }
 }

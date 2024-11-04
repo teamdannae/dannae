@@ -35,4 +35,7 @@ class RoomQueryServiceImpl implements RoomQueryService {
 			.collect(Collectors.toList());
 	}
 
+	public boolean existsById(Long roomId) {
+		return roomRepository.existsById(roomId);
+	}
 }

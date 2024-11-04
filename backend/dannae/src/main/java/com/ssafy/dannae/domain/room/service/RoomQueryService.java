@@ -8,4 +8,5 @@ public interface RoomQueryService {
 
 	List<RoomDto> readReleasedRooms();
 
+	boolean existsById(Long roomId);
 }
