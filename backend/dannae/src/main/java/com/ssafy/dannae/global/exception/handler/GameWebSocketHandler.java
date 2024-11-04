@@ -30,6 +30,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String token = getTokenFromSession(session);
         String nickname = getNicknameFromSession(session);
+        Integer image = getImageFromSession(session);
 
         if (!jwtTokenProvider.validateToken(token) || !waitingRoomHandler.isPlayerInWaitingRoom(roomId, jwtTokenProvider.getPlayerIdFromToken(token))) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이거나 대기실에 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
@@ -39,7 +40,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\"}"));
+        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"image\": " + image + "}"));
     }
 
     @Override
@@ -47,9 +48,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
         String nickname = getNicknameFromSession(session);
+        Integer image = getImageFromSession(session);
         String payload = message.getPayload();
 
-        String chatMessage = String.format("{\"type\": \"chat\", \"event\": \"message\", \"nickname\": \"%s\", \"playerId\": \"%s\", \"message\": \"%s\"}", nickname, playerId, payload);
+        String chatMessage = String.format("{\"type\": \"chat\", \"event\": \"message\", \"nickname\": \"%s\", \"playerId\": \"%s\", \"message\": \"%s\", \"image\": %d}", nickname, playerId, payload, image);
         broadcastToRoom(roomId, chatMessage);
     }
 
@@ -57,6 +59,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
         Long roomId = getRoomIdFromSession(session);
         String nickname = getNicknameFromSession(session);
+        Integer image = getImageFromSession(session);
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
 
         if (sessions != null) {
@@ -64,7 +67,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             if (sessions.isEmpty()) {
                 gameRoomSessions.remove(roomId);
             } else {
-                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\"}", nickname));
+                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"image\": %d}", nickname, image));
             }
         }
     }
@@ -94,5 +97,17 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private String getNicknameFromSession(WebSocketSession session) {
         String query = session.getUri().getQuery();
         return query != null && query.contains("nickname=") ? query.split("nickname=")[1].split("&")[0] : null;
+    }
+
+    private Integer getImageFromSession(WebSocketSession session) {
+        String query = session.getUri().getQuery();
+        if (query != null && query.contains("image=")) {
+            try {
+                return Integer.parseInt(query.split("image=")[1].split("&")[0]);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
     }
 }
