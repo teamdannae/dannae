@@ -1,0 +1,22 @@
+.nicknameContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 40px;
+}
+
+.headerText {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+
+    p {
+        text-wrap: pretty;
+    }
+}
+
+.illustration {
+    position: absolute;
+    right: -20%;
+}
