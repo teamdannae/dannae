@@ -24,7 +24,7 @@ class RoomCommandServiceImpl implements RoomCommandService {
 
 	@Override
 	public List<RoomDto> getReleasedRooms() {
-		List<Room> roomList = roomRepository.findByRelease("true"); // release가 "true"인 방만 조회
+		List<Room> roomList = roomRepository.findByRelease("true");
 		return roomList.stream()
 			.map(room -> RoomDto.builder()
 				.roomId(room.getId())

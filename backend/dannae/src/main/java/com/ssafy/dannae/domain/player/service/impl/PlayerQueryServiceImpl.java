@@ -25,6 +25,7 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                 .status(PlayerStatus.valueOf(dto.status()))
                 .authorization(PlayerAuthorization.valueOf(dto.authorization()))
                 .nickname(dto.nickname())
+                .image(dto.image())
                 .build());
 
         return PlayerDto.builder()
