@@ -46,8 +46,8 @@ public class RoomController {
 		PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
 				.roomId(roomId)
 				.score(0L)
-				.status(String.valueOf(PlayerStatus.nonready))
-				.authorization(String.valueOf(PlayerAuthorization.creator))
+				.status(PlayerStatus.nonready)
+				.authorization(PlayerAuthorization.creator)
 				.nickname(req.nickname())
 				.image(req.image())
 				.build());

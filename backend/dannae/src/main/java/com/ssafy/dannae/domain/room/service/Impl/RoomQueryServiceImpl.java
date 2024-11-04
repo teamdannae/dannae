@@ -43,4 +43,7 @@ class RoomQueryServiceImpl implements RoomQueryService {
 		room.update(dto.title(), dto.mode(), dto.release());
 	}
 
+	public boolean existsById(Long roomId) {
+		return roomRepository.existsById(roomId);
+	}
 }

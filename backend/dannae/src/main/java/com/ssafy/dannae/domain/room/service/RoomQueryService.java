@@ -8,4 +8,5 @@ public interface RoomQueryService {
 
 	void updateRoom(Long roomId, RoomDto roomDto);
 
+	boolean existsById(Long roomId);
 }
