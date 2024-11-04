@@ -84,11 +84,11 @@
     color: vars.$disabled-color;
     font-family: var(--font-main);
   }
-  
+
   &:focus {
     outline: none;
   }
-  
+
   &[type="text"][disabled] {
     background-color: vars.$disabled-color;
     cursor: not-allowed;
@@ -266,7 +266,6 @@
     color: vars.$dark-color;
     font-family: var(--font-head);
     border: none;
-
   }
 
   &:disabled {
@@ -319,5 +318,25 @@
 
   &.fail {
     background-color: vars.$red-color;
+  }
+}
+
+// Toast
+.toast {
+  position: fixed;
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  color: vars.$black-color;
+  border: vars.$border;
+  padding: 24px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+
+  &.visible {
+    opacity: 1;
   }
 }
