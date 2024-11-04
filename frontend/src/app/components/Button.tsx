@@ -14,7 +14,7 @@ const Button: React.FC<ButtonProps> = ({ buttonText, onClickEvent, buttonColor, 
       onClick={onClickEvent}
       disabled={disabled}
     >
-      {buttonText}
+      <p>{buttonText}</p>
     </button>
   );
 };
