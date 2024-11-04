@@ -53,4 +53,12 @@ public class Player {
         this.nickname = nickname;
         this.image = image;
     }
+
+    public void updateScore(Integer score) {
+        this.score+=score;
+    }
+
+    public void resetScore(){
+        this.score = 0L;
+    }
 }
