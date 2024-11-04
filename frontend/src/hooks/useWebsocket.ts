@@ -1,8 +1,9 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 
 interface MessageData {
-  playerId: string;
+  playerId?: string;
   message: string;
 }
 
