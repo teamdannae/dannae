@@ -84,9 +84,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private String getTokenFromSession(WebSocketSession session) {
-        List<String> tokenHeaders = session.getHandshakeHeaders().get("Authorization");
-        if (tokenHeaders != null && !tokenHeaders.isEmpty()) {
-            return tokenHeaders.get(0).replace("Bearer ", ""); // "Bearer "를 제거하고 토큰만 추출
+        String query = session.getUri().getQuery();
+        if (query != null && query.contains("token=")) {
+            return query.split("token=")[1].split("&")[0];
         }
         return null;
     }
