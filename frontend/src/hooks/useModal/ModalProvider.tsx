@@ -1,14 +1,17 @@
+// ModalProvider.tsx
 "use client";
 
-import { createContext, ReactNode, useContext, useState } from "react";
-import styles from "./common.module.scss";
+import { createContext, ReactNode, useState } from "react";
+import styles from "../../app/components/common.module.scss";
 
 type ModalContextType = {
   openModal: (content: ReactNode) => void;
   closeModal: () => void;
 };
 
-const ModalContext = createContext<ModalContextType | undefined>(undefined);
+export const ModalContext = createContext<ModalContextType | undefined>(
+  undefined
+);
 
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [modalContent, setModalContent] = useState<ReactNode | null>(null);
@@ -32,10 +35,4 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       )}
     </ModalContext.Provider>
   );
-}
-
-export function useModal() {
-  const context = useContext(ModalContext);
-  if (!context) throw new Error("useModal must be used within a ModalProvider");
-  return context;
 }
