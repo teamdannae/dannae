@@ -274,3 +274,50 @@
     cursor: not-allowed;
   }
 }
+
+// Card
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+
+  width: 300px;
+  height: 180px;
+  z-index: 100;
+  padding: 24px 30px;
+  border: 1px solid vars.$dark-color;
+  border-radius: 45px;
+  background-color: vars.$white-color;
+  box-shadow: vars.$box-shadow;
+
+  &.empty {
+    background-color: vars.$grey-color;
+  }
+
+  &.selected {
+    background-color: vars.$primary-color;
+  }
+}
+
+// CardTag
+.cardBannerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+
+  width: 170px;
+  height: 62px;
+  z-index: 101;
+  transform: rotate(-10deg);
+  border: 2px solid vars.$dark-color;
+  border-radius: 7px;
+  background-color: vars.$primary-color;
+
+  &.fail {
+    background-color: vars.$red-color;
+  }
+}
