@@ -65,4 +65,8 @@ public class Player {
     public void updateAuthorization(){
         this.authorization=PlayerAuthorization.creator;
     }
+
+    public void updateStatus(PlayerStatus status) {
+        this.status = status;
+    }
 }

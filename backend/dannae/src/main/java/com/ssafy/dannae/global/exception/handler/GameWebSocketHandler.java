@@ -1,5 +1,7 @@
 package com.ssafy.dannae.global.exception.handler;
 
+import com.ssafy.dannae.domain.player.entity.PlayerStatus;
+import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -19,10 +21,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, List<WebSocketSession>> gameRoomSessions = new ConcurrentHashMap<>();
     private final WaitingRoomWebSocketHandler waitingRoomHandler;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PlayerCommandService playerCommandService;
 
-    public GameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider) {
+    public GameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService) {
         this.waitingRoomHandler = waitingRoomHandler;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.playerCommandService=playerCommandService;
     }
 
     @Override
@@ -33,6 +37,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
         Integer image = getImageFromSession(session);
 
+
         if (!jwtTokenProvider.validateToken(token) || !waitingRoomHandler.isPlayerInWaitingRoom(roomId, playerId)) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이거나 대기실에 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
@@ -41,8 +46,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"image\": " + image + "}"));
+
+        // Update player status to 'playing'
+        playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
+
+        // Notify the player about the successful game connection and status change
+        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"image\": " + image + ", \"status\": \"playing\"}"));
+
+        // Broadcast the status update to all players in the game room
+        String statusUpdateMessage = String.format("{\"type\": \"status_update\", \"playerId\": \"%s\", \"status\": \"playing\"}", playerId);
+        broadcastToRoom(roomId, statusUpdateMessage);
     }
+
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
@@ -112,4 +127,5 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
         return 0;
     }
+
 }
