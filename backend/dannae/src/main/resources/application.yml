@@ -18,7 +18,6 @@ spring:
     show-sql: '${SPRING_JPA_SHOW_SQL}'
 server:
   port: 8080
-
 jwt:
   secret-key: '${JWT_SECRET_KEY}'
 
