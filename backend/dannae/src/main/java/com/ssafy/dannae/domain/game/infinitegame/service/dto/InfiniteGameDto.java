@@ -3,7 +3,7 @@ package com.ssafy.dannae.domain.game.infinitegame.service.dto;
 import lombok.Builder;
 
 @Builder
-public record InfinitegameDto(
+public record InfiniteGameDto(
 	String word,
 	Long roomId,
 	Long gameId,

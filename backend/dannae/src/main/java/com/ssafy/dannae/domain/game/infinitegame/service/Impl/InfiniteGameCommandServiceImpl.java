@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.game.entity.Word;
-import com.ssafy.dannae.domain.game.infinitegame.entity.Infinitegame;
-import com.ssafy.dannae.domain.game.infinitegame.repository.InfinitegameRepository;
-import com.ssafy.dannae.domain.game.infinitegame.service.InfinitegameCommandService;
-import com.ssafy.dannae.domain.game.infinitegame.service.dto.InfinitegameDto;
+import com.ssafy.dannae.domain.game.infinitegame.entity.InfiniteGame;
+import com.ssafy.dannae.domain.game.infinitegame.repository.InfiniteGameRepository;
+import com.ssafy.dannae.domain.game.infinitegame.service.InfiniteGameCommandService;
+import com.ssafy.dannae.domain.game.infinitegame.service.dto.InfiniteGameDto;
 import com.ssafy.dannae.domain.game.repository.WordRepository;
 import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
@@ -23,9 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional
 @Service
-public class InfinitegameCommandServiceImpl implements InfinitegameCommandService {
+class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 
-	private final InfinitegameRepository infinitegameRepository;
+	private final InfiniteGameRepository infinitegameRepository;
 	private final WordRepository wordRepository;
 	private final PlayerRepository playerRepository;
 
@@ -56,22 +56,22 @@ public class InfinitegameCommandServiceImpl implements InfinitegameCommandServic
 	 * @return
 	 */
 	@Override
-	public InfinitegameDto createInitial(InfinitegameDto infinitegameDto) {
+	public InfiniteGameDto createInitial(InfiniteGameDto infinitegameDto) {
 
 		String initial = randomInitial();
-		Infinitegame infinitegame = Infinitegame.builder()
+		InfiniteGame infinitegame = InfiniteGame.builder()
 			.roomId(infinitegameDto.roomId())
 			.initial(initial)
 			.build();
 
-		Infinitegame createInfinitegame = infinitegameRepository.save(infinitegame);
+		InfiniteGame createInfiniteGame = infinitegameRepository.save(infinitegame);
 
-		InfinitegameDto res = InfinitegameDto.builder()
-			.initial(createInfinitegame.getInitial())
-			.gameId(createInfinitegame.getId())
+		InfiniteGameDto dto = InfiniteGameDto.builder()
+			.initial(createInfiniteGame.getInitial())
+			.gameId(createInfiniteGame.getId())
 			.build();
 
-		return res;
+		return dto;
 	}
 
 	/**
@@ -80,24 +80,24 @@ public class InfinitegameCommandServiceImpl implements InfinitegameCommandServic
 	 * @return
 	 */
 	@Override
-	public InfinitegameDto updateWord(InfinitegameDto infinitegameDto) {
+	public InfiniteGameDto updateWord(InfiniteGameDto infinitegameDto) {
 
-		InfinitegameDto res;
+		InfiniteGameDto dto;
 
 		if(!checkInitial(infinitegameDto.initial(), infinitegameDto.word())) {
-			res = InfinitegameDto.builder()
+			dto = InfiniteGameDto.builder()
 				.correct(false)
 				.meaning("초성에 맞지 않은 단어입니다.")
 				.build();
-			return res;
+			return dto;
 		}
 
-		Infinitegame infinitegame = infinitegameRepository.findById(infinitegameDto.gameId())
+		InfiniteGame infinitegame = infinitegameRepository.findById(infinitegameDto.gameId())
 			.orElseThrow(() -> new NoRoomException("게임방이 존재하지 않습니다."));
 
 		for(String word : infinitegame.getList()){
 			if(word.equals(infinitegameDto.word())){
-				return InfinitegameDto.builder()
+				return InfiniteGameDto.builder()
 					.correct(false)
 					.meaning("이미 사용된 단어입니다.")
 					.build();
@@ -107,7 +107,7 @@ public class InfinitegameCommandServiceImpl implements InfinitegameCommandServic
 		Optional<Word> optionalWord = wordRepository.findByInitialAndWord(infinitegameDto.initial(), infinitegameDto.word());
 
 		if (optionalWord.isEmpty()) {
-			return InfinitegameDto.builder()
+			return InfiniteGameDto.builder()
 				.correct(false)
 				.meaning("존재하지 않는 단어입니다.")
 				.build();
@@ -125,14 +125,14 @@ public class InfinitegameCommandServiceImpl implements InfinitegameCommandServic
 		player.updateScore(score[word.getDifficulty()]);
 		playerRepository.save(player);
 
-		res = InfinitegameDto.builder()
+		dto = InfiniteGameDto.builder()
 			.correct(true)
 			.word(word.getWord())
 			.meaning(word.getMeaning())
 			.difficulty(word.getDifficulty())
 			.build();
 
-		return res;
+		return dto;
 	}
 
 	/**

@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "initial_consonant")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Infinitegame {
+public class InfiniteGame {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,12 +42,12 @@ public class Infinitegame {
 	 * 방 아이디와 초성값을 받아서 객체를 생성
 	 */
 	@Builder
-	public Infinitegame(Long roomId, String initial) {
+	public InfiniteGame(Long roomId, String initial) {
 		this(roomId, initial, new ArrayList<>());
 	}
 
 
-	public Infinitegame(Long roomId, String initial, List<String> list) {
+	public InfiniteGame(Long roomId, String initial, List<String> list) {
 		this.roomId = roomId;
 		this.initial = initial;
 		this.list = list;
