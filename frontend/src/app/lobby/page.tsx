@@ -10,7 +10,7 @@ const Lobby = () => {
 
     useEffect(() => {
         const fetchProfile = async () => {
-            const response = await fetch('/api/get-profile');
+            const response = await fetch('/api/next/get-profile');
             const data = await response.json();
             console.log(data);
             setNickname(data.nickname);
