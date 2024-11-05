@@ -54,6 +54,14 @@ public class Player {
         this.image = image;
     }
 
+    public void updateScore(Integer score) {
+        this.score+=score;
+    }
+
+    public void resetScore(){
+        this.score = 0L;
+    }
+
     public void updateAuthorization(){
         this.authorization=PlayerAuthorization.creator;
     }
