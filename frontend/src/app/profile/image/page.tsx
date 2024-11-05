@@ -17,7 +17,7 @@ const ProfileImage = () => {
 
     const confirmImage = async () => {
         try {
-            const response = await fetch('/api/set-image', {
+            const response = await fetch('/api/next/set-image', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
