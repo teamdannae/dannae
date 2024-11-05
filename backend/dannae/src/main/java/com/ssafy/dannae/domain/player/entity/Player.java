@@ -60,9 +60,9 @@ public class Player {
 
     public void resetScore(){
         this.score = 0L;
+    }
 
     public void updateAuthorization(){
         this.authorization=PlayerAuthorization.creator;
-
     }
 }
