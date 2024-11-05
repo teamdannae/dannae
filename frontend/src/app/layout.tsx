@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "/src/styles/globals.scss";
-import { ModalProvider } from "./components/ModalContext";
+import { ModalProvider } from "../hooks/useModal/ModalProvider";
 
 const headFont = localFont({
   src: "./fonts/Gumi Romance.ttf",
