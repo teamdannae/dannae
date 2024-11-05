@@ -269,6 +269,7 @@
 
   &:disabled {
     background-color: vars.$disabled-color;
+    border: none;
     cursor: not-allowed;
   }
 }
