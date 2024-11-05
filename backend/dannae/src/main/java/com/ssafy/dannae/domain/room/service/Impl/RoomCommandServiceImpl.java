@@ -1,12 +1,12 @@
 package com.ssafy.dannae.domain.room.service.Impl;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Random;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.room.entity.Room;
+import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.repository.RoomRepository;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.dto.RoomDto;
@@ -16,23 +16,31 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 @Service
 class RoomCommandServiceImpl implements RoomCommandService {
 
 	private final RoomRepository roomRepository;
 
 	@Override
-	public List<RoomDto> getReleasedRooms() {
-		List<Room> roomList = roomRepository.findByRelease("true");
-		return roomList.stream()
-			.map(room -> RoomDto.builder()
-				.roomId(room.getId())
-				.title(room.getTitle())
-				.mode(room.getMode())
-				.release(room.getRelease())
-				.build())
-			.collect(Collectors.toList());
+	public RoomDto createRoom(RoomDto dto) {
+		String randomCode = String.valueOf(100000 + new Random().nextInt(900000));
+		Room room = roomRepository.save(Room.builder()
+			.title(dto.title())
+			.mode(dto.mode())
+			.code(randomCode)
+			.release(dto.release())
+			.build());
+		return RoomDto.builder()
+			.roomId(room.getId())
+			.build();
+	}
+
+	@Override
+	public void updateRoom(Long roomId, RoomDto dto) {
+		Room room = roomRepository.findById(roomId)
+			.orElseThrow(() -> new NoRoomException("Room not found"));
+		room.update(dto.title(), dto.mode(), dto.release());
 	}
 
 }
