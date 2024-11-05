@@ -164,9 +164,9 @@ export default function WaitingRoom() {
           handleSend={handleSend}
         />
       </section>
-      {/* <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
+      <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
       <button onClick={handleClick}>방장 입장</button>
-      <button onClick={handleClickGuest}>게스트 입장</button> */}
+      <button onClick={handleClickGuest}>게스트 입장</button>
     </main>
   );
 }
