@@ -30,9 +30,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String token = getTokenFromSession(session);
         String nickname = getNicknameFromSession(session);
+        String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
         Integer image = getImageFromSession(session);
 
-        if (!jwtTokenProvider.validateToken(token) || !waitingRoomHandler.isPlayerInWaitingRoom(roomId, jwtTokenProvider.getPlayerIdFromToken(token))) {
+        if (!jwtTokenProvider.validateToken(token) || !waitingRoomHandler.isPlayerInWaitingRoom(roomId, playerId)) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이거나 대기실에 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
@@ -40,7 +41,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"image\": " + image + "}"));
+        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"image\": " + image + "}"));
     }
 
     @Override
@@ -58,6 +59,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
         Long roomId = getRoomIdFromSession(session);
+        String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
         String nickname = getNicknameFromSession(session);
         Integer image = getImageFromSession(session);
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
@@ -67,7 +69,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             if (sessions.isEmpty()) {
                 gameRoomSessions.remove(roomId);
             } else {
-                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"image\": %d}", nickname, image));
+                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d}", nickname, playerId, nickname, image));
             }
         }
     }
