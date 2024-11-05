@@ -39,7 +39,7 @@ class RoomQueryServiceImpl implements RoomQueryService {
 	@Override
 	public void updateRoom(Long roomId, RoomDto dto) {
 		Room room = roomRepository.findById(roomId)
-			.orElseThrow(() -> new 	NoRoomException("Room not found"));
+			.orElseThrow(() -> new NoRoomException("Room not found"));
 		room.update(dto.title(), dto.mode(), dto.release());
 	}
 

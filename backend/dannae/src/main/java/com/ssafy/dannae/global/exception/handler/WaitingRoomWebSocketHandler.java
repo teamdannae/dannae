@@ -1,12 +1,14 @@
 package com.ssafy.dannae.global.exception.handler;
 
 import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
+import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -23,6 +25,7 @@ import static com.ssafy.dannae.domain.player.entity.PlayerAuthorization.creator;
 import static com.ssafy.dannae.domain.player.entity.PlayerAuthorization.player;
 import static com.ssafy.dannae.domain.player.entity.PlayerStatus.nonready;
 
+@Slf4j
 @Component
 public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
@@ -72,7 +75,12 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         Integer image = (playerDto != null) ? playerDto.image() : 0;
         String nickname = (playerDto != null) ? playerDto.nickname() : "";
 
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"creator\", \"message\": \"방장으로 대기실에 입장했습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"image\": " + image + ", \"playerCount\": " + playerCount + "}"));
+        String token = sessionTokenMap.get(session);
+
+        session.sendMessage(new TextMessage(
+                String.format("{\"type\": \"enter\", \"event\": \"creator\", \"message\": \"방장으로 대기실에 입장했습니다.\", \"playerId\": \"%s\", \"token\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"playerCount\": %d}",
+                        playerId, token, nickname, image, playerCount)
+        ));
     }
 
     private void handleGeneralPlayerEntry(WebSocketSession session, Long roomId, String nickname, Integer image) throws IOException {
@@ -101,6 +109,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         StringBuilder playerListMessage = new StringBuilder("{\"type\": \"current_players\", \"players\": [");
         for (WebSocketSession s : sessions) {
+            String token = sessionTokenMap.get(s);
             String existingPlayerId = getPlayerIdFromSession(s);
             String existingNickname = getNicknameFromSession(s);
             Integer existingImage = getImageFromSession(s);
@@ -110,6 +119,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             playerListMessage.append("{\"playerId\": \"").append(existingPlayerId)
                     .append("\", \"nickname\": \"").append(existingNickname)
                     .append("\", \"image\": ").append(existingImage)
+                    .append(", \"token\": \"").append(token).append("\"")
                     .append(", \"authorization\": \"").append(authorization).append("\"},");
         }
         if (playerListMessage.charAt(playerListMessage.length() - 1) == ',') {
@@ -119,10 +129,11 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         session.sendMessage(new TextMessage(playerListMessage.toString()));
 
-        String enterMessage = String.format("{\"type\": \"enter\", \"event\": \"player\", \"message\": \"%s님이 대기실에 들어왔습니다.\", \"image\": %d, \"playerId\": \"%s\", \"nickname\": \"%s\", \"authorization\": \"player\", \"playerCount\": %d}",
-                nickname, image, playerDto.playerId(), nickname, playerCount);
+        String enterMessage = String.format(
+                "{\"type\": \"enter\", \"event\": \"player\", \"message\": \"%s님이 대기실에 들어왔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"authorization\": \"player\", \"playerCount\": %d}",
+                nickname, playerDto.playerId(), nickname, image, playerCount
+        );
 
-        // 입장 메시지를 자기 자신을 제외한 다른 플레이어에게만 전송
         for (WebSocketSession s : sessions) {
             if (s != session) {
                 s.sendMessage(new TextMessage(enterMessage));
@@ -140,6 +151,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         String chatMessage = String.format("{\"type\": \"chat\", \"nickname\": \"%s\", \"message\": \"%s\", \"playerId\": \"%s\"}", nickname, payload, playerId);
         broadcastToRoom(roomId, chatMessage);
     }
+
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
         try {
@@ -153,14 +165,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
             sessions.remove(session);
 
-            // 토큰 매핑에서 session 제거
             String token = sessionTokenMap.remove(session);
-            String playerId = null;
-
-            // token이 있다면 playerId를 가져옴
-            if (token != null) {
-                playerId = jwtTokenProvider.getPlayerIdFromToken(token);
-            }
+            String playerId = (token != null) ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
 
             if (isCreator) {
                 roomCreatorMap.remove(roomId);
@@ -179,30 +185,18 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
             if (nickname != null && playerId != null) {
                 String leaveMessage = String.format(
-                        "{\"type\": \"leave\", \"event\": \"player\", \"message\": \"%s님이 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"playerCount\": %d}",
-                        nickname, playerId, nickname, playerCount
+                        "{\"type\": \"leave\", \"event\": \"player\", \"message\": \"%s님이 나갔습니다.\", \"playerId\": \"%s\", \"token\": \"%s\", \"nickname\": \"%s\", \"playerCount\": %d}",
+                        nickname, playerId, token, nickname, playerCount
                 );
                 broadcastToRoom(roomId, leaveMessage);
             }
-
-            for (WebSocketSession remainingSession : sessions) {
-                String remainingPlayerId = getPlayerIdFromSession(remainingSession);
-                String remainingNickname = getNicknameFromSession(remainingSession);
-                Integer remainingImage = getImageFromSession(remainingSession);
-                String authorization = roomCreatorMap.get(roomId) == remainingSession ? "creator" : "player";
-
-                remainingSession.sendMessage(new TextMessage(
-                        String.format("{\"type\": \"update\", \"event\": \"player_list\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"authorization\": \"%s\", \"playerCount\": %d}",
-                                remainingPlayerId, remainingNickname, remainingImage, authorization, playerCount)
-                ));
-            }
-
         } catch (Exception e) {
-            System.err.println("Error in afterConnectionClosed: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error in afterConnectionClosed", e);
         }
     }
 
+
+    // 방장 권한 양도
     private void assignNewCreator(List<WebSocketSession> sessions, Long roomId) {
         if (sessions.isEmpty()) return;
 
@@ -316,5 +310,22 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     public int getRoomPlayerCount(Long roomId) {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
         return sessions != null ? sessions.size() : 0;
+    }
+
+    public void broadcastPlayerStatusUpdate(Long playerId, PlayerStatus status) {
+        String message = String.format(
+                "{\"type\": \"status_update\", \"playerId\": \"%s\", \"status\": \"%s\"}",
+                playerId, status
+        );
+
+        waitingRoomSessions.values().forEach(sessions ->
+                sessions.forEach(session -> {
+                    try {
+                        session.sendMessage(new TextMessage(message));
+                    } catch (IOException e) {
+                        log.error("Failed to send status update message", e);
+                    }
+                })
+        );
     }
 }

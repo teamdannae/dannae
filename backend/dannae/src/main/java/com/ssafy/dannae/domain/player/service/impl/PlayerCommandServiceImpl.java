@@ -1,6 +1,7 @@
 package com.ssafy.dannae.domain.player.service.impl;
 
 import com.ssafy.dannae.domain.player.entity.Player;
+import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
@@ -22,6 +23,13 @@ public class PlayerCommandServiceImpl implements PlayerCommandService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new NoRoomException("player not found"));
         player.updateAuthorization();
+    }
+
+    @Override
+    public void updateStatus(Long playerId, PlayerStatus status) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new NoRoomException("player not found"));
+        player.updateStatus(status);
     }
 
 }

@@ -20,7 +20,10 @@ public enum ResponseCode {
 	OPENAI_AUTHENTICATION_ERROR("4002", "OpenAI 인증에 실패했습니다"),
 	OPENAI_TOO_MANY_REQUESTS_ERROR("4003", "OpenAI API 요청 한도를 초과했습니다"),
 	OPENAI_TIMEOUT_ERROR("4004", "OpenAI API 요청 시간이 초과되었습니다"),
-	OPENAI_UNEXPECTED_ERROR("4005", "OpenAI 서비스 처리 중 예상치 못한 오류가 발생했습니다");
+	OPENAI_UNEXPECTED_ERROR("4005", "OpenAI 서비스 처리 중 예상치 못한 오류가 발생했습니다"),
+
+	// 5000 - jwt 토큰 에러
+	TOKEN_ERROR("5000", "JWT 토큰이 유효하지않습니다.");
 
 	private String code;
 	private String message;
