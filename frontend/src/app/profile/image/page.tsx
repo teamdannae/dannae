@@ -15,10 +15,24 @@ const ProfileImage = () => {
         setSelectedImage(index);
     };
 
-    const confirmImage = () => {
-        sessionStorage.setItem("image", (selectedImage + 1).toString());
-        router.replace("/lobby");
+    const confirmImage = async () => {
+        try {
+            const response = await fetch('/api/set-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: selectedImage + 1 }),
+            });
 
+            if (response.ok) {
+                router.replace("/lobby");
+            } else {
+                console.error('Failed to set nickname');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
 
     return (

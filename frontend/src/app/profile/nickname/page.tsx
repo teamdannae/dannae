@@ -49,10 +49,25 @@ const ProfileNickname = () => {
         setIsValid(nicknamePattern.test(inputValue));
     }
 
-    const confirmNickname = () => {
-        sessionStorage.setItem("nickname", nickname);
-        router.push("/profile/image");
-    }
+    const confirmNickname = async () => {
+        try {
+            const response = await fetch('/api/set-nickname', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nickname }),
+            });
+
+            if (response.ok) {
+                router.push("/profile/image");
+            } else {
+                console.error('Failed to set nickname');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
 
     return (
         <section className={styles.pageWrapper}>
@@ -69,7 +84,7 @@ const ProfileNickname = () => {
                 <Input value={nickname} onChangeEvent={changeNickname} inputLabel="별명" placeholder='한글, 8자 이내로 입력해주세요' isValid={isValid} />
                 <Button buttonText="설정하기" onClickEvent={confirmNickname} buttonColor="black" disabled={nickname === "" || !isValid} />
             </article>
-            <Image src="/illustration/illustration.svg" alt='main illustration' width={600} height={600} priority className={styles.illustration} /> 
+            <Image src="/illustration/illustration-main.svg" alt='main illustration' width={600} height={600} priority className={styles.illustration} /> 
         </section>
     );
 };

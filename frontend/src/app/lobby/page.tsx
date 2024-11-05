@@ -1,28 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "./page.module.scss";
 import Image from "next/image";
+import styles from "./page.module.scss";
 
 const Lobby = () => {
     const [nickname, setNickname] = useState("");
     const [image, setImage] = useState("");
 
     useEffect(() => {
-        // sessionStorage에서 nickname과 image 값을 가져옴
-        const storedNickname = sessionStorage.getItem("nickname");
-        const storedImage = sessionStorage.getItem("image");
+        const fetchProfile = async () => {
+            const response = await fetch('/api/get-profile');
+            const data = await response.json();
+            console.log(data);
+            setNickname(data.nickname);
+            setImage(data.image);
+        };
 
-        // 가져온 값이 있으면 상태를 업데이트
-        if (storedNickname) setNickname(storedNickname);
-        if (storedImage) setImage(storedImage);
+        fetchProfile();
     }, []);
 
     return (
         <div className={styles.lobbyContainer}>
             <h1>현재 프로필</h1>
-            <p>닉네임: {nickname}</p>
-            {image && <Image src={`/profiles/profile${image}.svg`}  alt="profile" width={180} height={180} priority />}
+            {nickname && <p>닉네임: {nickname}</p>}
+            {image && (
+                <div>
+                    <p>프로필 이미지:</p>
+                    <Image
+                        src={`/profiles/profile${image}.svg`}
+                        alt="Profile"
+                        width={100}
+                        height={100}
+                        priority
+                    />
+                </div>
+            )}
         </div>
     );
 };
