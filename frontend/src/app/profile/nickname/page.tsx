@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Button, Input, Radio } from '../../components';
-import ProfileContainer from '../page';
 import styles from './page.module.scss';
 import { nicknamePattern } from '@/utils/regex';
 import { useRouter } from 'next/navigation';
@@ -56,8 +55,8 @@ const ProfileNickname = () => {
     }
 
     return (
-        <ProfileContainer>
-            <section className={styles.nicknameContainer}>
+        <section className={styles.pageWrapper}>
+            <article className={styles.nicknameContainer}>
                 <header className={styles.headerText}>
                     <h2>별명을 정해주세요</h2>
                     <p>
@@ -69,9 +68,9 @@ const ProfileNickname = () => {
                 <Radio selectedIndex={namingMode} values={["직접 설정", "임의 설정"]} onChangeEvent={changeMode} />
                 <Input value={nickname} onChangeEvent={changeNickname} inputLabel="별명" placeholder='한글, 8자 이내로 입력해주세요' isValid={isValid} />
                 <Button buttonText="설정하기" onClickEvent={confirmNickname} buttonColor="black" disabled={nickname === "" || !isValid} />
-            </section>
+            </article>
             <Image src="/illustration/illustration.svg" alt='main illustration' width={600} height={600} priority className={styles.illustration} /> 
-        </ProfileContainer>
+        </section>
     );
 };
 
