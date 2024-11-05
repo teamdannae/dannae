@@ -28,6 +28,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
     private static final int MAX_ROOM_CAPACITY = 4;
     private final Map<Long, List<WebSocketSession>> waitingRoomSessions = new ConcurrentHashMap<>();
+    private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
+    private final Map<Long, WebSocketSession> roomCreatorMap = new ConcurrentHashMap<>(); // 각 방의 현재 방장 세션 추적
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerQueryService playerQueryService;
     private final PlayerCommandService playerCommandService;
@@ -50,19 +52,22 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         if (roomId == null || !roomQueryService.existsById(roomId)) {
             throw new NoRoomException("존재하지 않는 방입니다.");
         }
-        // 일반 유저 입장
-        if (token == null || token.isEmpty()) {
-            handleGeneralPlayerEntry(session, roomId, nickname, image);
-        } else {
+
+        if (token != null && !token.isEmpty()) {
             String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
             handleCreatorEntry(session, roomId, playerId);
+            sessionTokenMap.put(session, token);
+            roomCreatorMap.put(roomId, session); // 방장 세션 등록
+        } else {
+            handleGeneralPlayerEntry(session, roomId, nickname, image);
         }
     }
 
     private void handleCreatorEntry(WebSocketSession session, Long roomId, String playerId) throws IOException {
         List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"creator\", \"message\": \"방장으로 대기실에 입장했습니다.\"}"));
+        int playerCount = getRoomPlayerCount(roomId);
+        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"creator\", \"message\": \"방장으로 대기실에 입장했습니다.\", \"playerCount\": " + playerCount + "}"));
     }
 
     private void handleGeneralPlayerEntry(WebSocketSession session, Long roomId, String nickname, Integer image) throws IOException {
@@ -84,10 +89,15 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 .build());
 
         String playerToken = jwtTokenProvider.createToken(roomId.toString(), playerDto.playerId().toString());
+        sessionTokenMap.put(session, playerToken);
 
         sessions.add(session);
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"player\", \"token\": \"" + playerToken + "\", \"message\": \"" + nickname + "님이 대기실에 들어왔습니다.\", \"image\": " + image + "}"));
-        broadcastToRoom(roomId, "{\"type\": \"enter\", \"event\": \"player\", \"message\": \"" + nickname + "님이 대기실에 들어왔습니다.\", \"image\": " + image + "}");
+        int playerCount = getRoomPlayerCount(roomId);
+        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"player\", \"token\": \"" + playerToken +
+                "\", \"message\": \"" + nickname + "님이 대기실에 들어왔습니다.\", \"image\": " + image +
+                ", \"playerCount\": " + playerCount + "}"));
+        broadcastToRoom(roomId, "{\"type\": \"enter\", \"event\": \"player\", \"message\": \"" + nickname +
+                "님이 대기실에 들어왔습니다.\", \"image\": " + image + ", \"playerCount\": " + playerCount + "}");
     }
 
     @Override
@@ -102,39 +112,99 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
-        Long roomId = getRoomIdFromSession(session);
-        String nickname = getNicknameFromSession(session);
-        String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
-        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+        try {
+            Long roomId = getRoomIdFromSession(session);
+            if (roomId == null) return;
 
-        if (sessions != null) {
+            List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+            if (sessions == null || sessions.isEmpty()) return;
+
+            // 현재 방장의 세션인지 확인
+            WebSocketSession currentCreator = roomCreatorMap.get(roomId);
+            boolean isCreator = (currentCreator != null && session.equals(currentCreator));
+
+            // 세션을 목록에서 제거
             sessions.remove(session);
+            sessionTokenMap.remove(session);
 
-            PlayerDto playerDto = playerQueryService.findPlayerById(Long.valueOf(playerId));
-            if (playerDto.authorization() == creator) {
+            // 방장이 나간 후에만 양도 로직 실행
+            if (isCreator) {
+                roomCreatorMap.remove(roomId); // 방장 세션 제거
                 if (!sessions.isEmpty()) {
-                    WebSocketSession newCreatorSession = sessions.get(1);
-                    String newCreatorToken = getTokenFromSession(newCreatorSession);
-                    Long newCreatorId = Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(newCreatorToken));
-
-                    playerCommandService.updateAuthorization(newCreatorId);
-                    String newCreatorNickname = getNicknameFromSession(newCreatorSession);
-
-                    newCreatorSession.sendMessage(new TextMessage(
-                            "{\"type\": \"enter\", \"event\": \"creator_change\", \"message\": \"" + newCreatorNickname + "님이 방장이 되었습니다.\"}"
-                    ));
-
-                    broadcastToRoom(roomId, String.format("{\"type\": \"enter\", \"event\": \"creator_change\", \"message\": \"%s님이 방장이 되었습니다.\"}", newCreatorNickname));
-                } else {
-                    waitingRoomSessions.remove(roomId);
-                    session.close(CloseStatus.NORMAL);
-                    return;
+                    assignNewCreator(sessions, roomId); // 새로운 방장 할당
                 }
             }
 
-            broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"player\", \"message\": \"%s님이 나갔습니다.\"}", nickname));
+            // 모든 사용자가 나갔다면 방 삭제
+            if (sessions.isEmpty()) {
+                waitingRoomSessions.remove(roomId);
+                return;
+            }
+
+            // 퇴장 메시지 브로드캐스트
+            String nickname = getNicknameFromSession(session);
+            int playerCount = getRoomPlayerCount(roomId);
+            if (nickname != null) {
+                String leaveMessage = String.format(
+                        "{\"type\": \"leave\", \"event\": \"player\", \"message\": \"%s님이 나갔습니다.\", \"playerCount\": %d}",
+                        nickname, playerCount
+                );
+                broadcastToRoom(roomId, leaveMessage);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error in afterConnectionClosed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
+    private void assignNewCreator(List<WebSocketSession> sessions, Long roomId) {
+        if (sessions.isEmpty()) return;
+
+        try {
+            WebSocketSession newCreatorSession = sessions.get(0);
+            String newCreatorToken = sessionTokenMap.get(newCreatorSession);
+
+            if (newCreatorToken != null && !newCreatorToken.isEmpty()) {
+                String playerIdFromToken = jwtTokenProvider.getPlayerIdFromToken(newCreatorToken);
+                Long newCreatorId = Long.parseLong(playerIdFromToken);
+
+                playerCommandService.updateAuthorization(newCreatorId);
+                roomCreatorMap.put(roomId, newCreatorSession); // 새로운 방장 세션 업데이트
+
+                String newCreatorNickname = getNicknameFromSession(newCreatorSession);
+                if (newCreatorNickname != null) {
+                    int playerCount = getRoomPlayerCount(roomId);
+                    String creatorChangeMessage = String.format(
+                            "{\"type\": \"enter\", \"event\": \"creator_change\", \"message\": \"%s님이 방장이 되었습니다.\", \"newCreatorToken\": \"%s\", \"playerCount\": %d}",
+                            newCreatorNickname, newCreatorToken, playerCount
+                    );
+
+                    try {
+                        // 새로운 방장에게만 한 번 보내고, 나머지 사용자들에게는 방장 변경 알림만 전송
+                        newCreatorSession.sendMessage(new TextMessage(creatorChangeMessage));
+                        String otherMessage = String.format(
+                                "{\"type\": \"enter\", \"event\": \"creator_change\", \"message\": \"%s님이 방장이 되었습니다.\", \"playerCount\": %d}",
+                                newCreatorNickname, playerCount
+                        );
+                        for (WebSocketSession otherSession : sessions) {
+                            if (!otherSession.equals(newCreatorSession)) {
+                                otherSession.sendMessage(new TextMessage(otherMessage));
+                            }
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Failed to send creator change message: " + e.getMessage());
+                    }
+                }
+            } else {
+                System.err.println("New creator token not found in sessionTokenMap");
+            }
+        } catch (Exception e) {
+            System.err.println("Error in assignNewCreator: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     private void broadcastToRoom(Long roomId, String message) throws IOException {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
@@ -169,10 +239,10 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             try {
                 return Integer.parseInt(query.split("image=")[1].split("&")[0]);
             } catch (NumberFormatException e) {
-                return 0;  // 기본 이미지 값 설정
+                return 0;
             }
         }
-        return 0; // 기본 이미지 값 설정
+        return 0;
     }
 
     public boolean isPlayerInWaitingRoom(Long roomId, String playerId) {
@@ -182,7 +252,10 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         }
         return sessions.stream()
                 .anyMatch(session -> {
-                    String token = getTokenFromSession(session);
+                    String token = sessionTokenMap.get(session);
+                    if (token == null || token.isEmpty()) {
+                        return false;
+                    }
                     String tokenPlayerId = jwtTokenProvider.getPlayerIdFromToken(token);
                     return playerId.equals(tokenPlayerId);
                 });
@@ -191,4 +264,10 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     public List<WebSocketSession> getRoomSessions(Long roomId) {
         return waitingRoomSessions.getOrDefault(roomId, new CopyOnWriteArrayList<>());
     }
+
+    public int getRoomPlayerCount(Long roomId) {
+        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+        return sessions != null ? sessions.size() : 0;
+    }
 }
+
