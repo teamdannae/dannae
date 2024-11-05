@@ -1,7 +1,24 @@
 spring:
   application:
     name: dannae
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: '${SPRING_DATASOURCE_URL}'
+    username: '${SPRING_DATASOURCE_USERNAME}'
+    password: '${SPRING_DATASOURCE_PASSWORD}'
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: '${SPRING_JPA_HIBERNATE_DDL_AUTO}'
+    show-sql: '${SPRING_JPA_SHOW_SQL}'
+server:
   port: 8080
+
 jwt:
   secret-key: '${JWT_SECRET_KEY}'
 
