@@ -2,7 +2,7 @@
 
 .headerContainer {
   display: flex;
-  width: 100%;
+  width: 80%;
   justify-content: space-around;
   align-items: flex-end;
 }
@@ -51,4 +51,98 @@
   margin: 0;
   outline: none;
   cursor: pointer;
+}
+
+.infoContainer {
+  height: 280px;
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.infoMain {
+  background-color: vars.$grey-color;
+  width: 75%;
+  border-radius: 24px;
+  height: 280px;
+}
+
+.leftButton {
+  width: 24px;
+  height: 24px;
+  background: url("/icons/chevron-left.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+
+  &:hover {
+    background-image: url("/icons/chevron-double-left.svg");
+    transform: scale(1.5);
+  }
+}
+
+.rightButton {
+  width: 24px;
+  height: 24px;
+  background: url("/icons/chevron-right.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+
+  &:hover {
+    background-image: url("/icons/chevron-double-right.svg");
+    transform: scale(1.5);
+  }
+}
+
+.playerContainer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(100px, 260px));
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 8px;
+}
+
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  width: 75%;
+  margin: auto;
+}
+
+.messagesContainer {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 12px;
+  height: 160px;
+  border: vars.$border;
+  border-radius: 12px;
+  background-color: vars.$white-color;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.inputContainer {
+  display: flex;
+  padding-top: 8px;
+  gap: 12px;
+}
+
+.inputContainer > :first-child {
+  flex: 10;
+}
+
+.inputContainer > :last-child {
+  flex: 1;
 }
