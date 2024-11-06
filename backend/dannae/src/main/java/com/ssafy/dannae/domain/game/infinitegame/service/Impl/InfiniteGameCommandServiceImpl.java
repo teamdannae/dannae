@@ -52,19 +52,19 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 
 	/**
 	 * 랜덤 초성을 만들어서 방 번호와 함께 반환해주는 메서드
-	 * @param infinitegameDto
+	 * @param infiniteGameDto
 	 * @return
 	 */
 	@Override
-	public InfiniteGameDto createInitial(InfiniteGameDto infinitegameDto) {
+	public InfiniteGameDto createInitial(InfiniteGameDto infiniteGameDto) {
 
 		String initial = randomInitial();
-		InfiniteGame infinitegame = InfiniteGame.builder()
-			.roomId(infinitegameDto.roomId())
+		InfiniteGame infiniteGame = InfiniteGame.builder()
+			.roomId(infiniteGameDto.roomId())
 			.initial(initial)
 			.build();
 
-		InfiniteGame createInfiniteGame = infinitegameRepository.save(infinitegame);
+		InfiniteGame createInfiniteGame = infinitegameRepository.save(infiniteGame);
 
 		InfiniteGameDto dto = InfiniteGameDto.builder()
 			.initial(createInfiniteGame.getInitial())
@@ -76,42 +76,42 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 
 	/**
 	 * 단어가 의미가 맞고, db에 존재하는지 확인하기 위한 서비스
-	 * @param infinitegameDto
+	 * @param infiniteGameDto
 	 * @return
 	 */
 	@Override
-	public InfiniteGameDto updateWord(InfiniteGameDto infinitegameDto) {
+	public InfiniteGameDto updateWord(InfiniteGameDto infiniteGameDto) {
 
 		InfiniteGameDto dto;
 
-		if(!checkInitial(infinitegameDto.initial(), infinitegameDto.word())) {
+		if(!checkInitial(infiniteGameDto.initial(), infiniteGameDto.word())) {
 			dto = InfiniteGameDto.builder()
 				.correct(false)
-				.word(infinitegameDto.word())
+				.word(infiniteGameDto.word())
 				.meaning("초성에 맞지 않은 단어입니다.")
 				.build();
 			return dto;
 		}
 
-		InfiniteGame infinitegame = infinitegameRepository.findById(infinitegameDto.gameId())
+		InfiniteGame infinitegame = infinitegameRepository.findById(infiniteGameDto.gameId())
 			.orElseThrow(() -> new NoRoomException("게임방이 존재하지 않습니다."));
 
 		for(String word : infinitegame.getList()){
-			if(word.equals(infinitegameDto.word())){
+			if(word.equals(infiniteGameDto.word())){
 				return InfiniteGameDto.builder()
 					.correct(false)
-					.word(infinitegameDto.word())
+					.word(infiniteGameDto.word())
 					.meaning("이미 사용된 단어입니다.")
 					.build();
 			}
 		}
 
-		Optional<Word> optionalWord = wordRepository.findByInitialAndWord(infinitegameDto.initial(), infinitegameDto.word());
+		Optional<Word> optionalWord = wordRepository.findByInitialAndWord(infiniteGameDto.initial(), infiniteGameDto.word());
 
 		if (optionalWord.isEmpty()) {
 			return InfiniteGameDto.builder()
 				.correct(false)
-				.word(infinitegameDto.word())
+				.word(infiniteGameDto.word())
 				.meaning("존재하지 않는 단어입니다.")
 				.build();
 		}
@@ -124,7 +124,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		infinitegame.updateList(word.getWord());
 		infinitegameRepository.save(infinitegame);
 
-		Player player = playerRepository.findById(infinitegameDto.playerId()).get();
+		Player player = playerRepository.findById(infiniteGameDto.playerId()).get();
 		player.updateScore(score[word.getDifficulty()]);
 		playerRepository.save(player);
 
