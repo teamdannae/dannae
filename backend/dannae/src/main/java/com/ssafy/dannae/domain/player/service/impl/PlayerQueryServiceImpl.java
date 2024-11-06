@@ -24,7 +24,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                 .roomId(dto.roomId())
                 .score(dto.score())
                 .status(dto.status())  // 열거형으로 바로 설정
-                .authorization(dto.authorization())  // 열거형으로 바로 설정
                 .nickname(dto.nickname())
                 .image(dto.image())
                 .build());
@@ -34,7 +33,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                 .roomId(player.getRoomId())
                 .score(player.getScore())
                 .status(player.getStatus())
-                .authorization(player.getAuthorization())
                 .nickname(player.getNickname())
                 .image(player.getImage())
                 .build();
@@ -50,7 +48,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                 .roomId(player.getRoomId())
                 .score(player.getScore())
                 .status(player.getStatus())
-                .authorization(player.getAuthorization())
                 .nickname(player.getNickname())
                 .image(player.getImage())
                 .build();

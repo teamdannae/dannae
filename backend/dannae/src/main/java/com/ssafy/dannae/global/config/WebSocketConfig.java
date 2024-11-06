@@ -1,6 +1,6 @@
 package com.ssafy.dannae.global.config;
 
-import com.ssafy.dannae.global.exception.handler.AgainWaitingRoomWebSocketHandler;
+import com.ssafy.dannae.global.exception.handler.SentenceGameWebSocketHandler;
 import com.ssafy.dannae.global.exception.handler.GameWebSocketHandler;
 import com.ssafy.dannae.global.exception.handler.WaitingRoomWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
@@ -15,17 +15,17 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final GameWebSocketHandler gameWebSocketHandler;
     private final WaitingRoomWebSocketHandler waitingRoomWebSocketHandler;
-    private final AgainWaitingRoomWebSocketHandler againWaitingRoomWebSocketHandler;
+    private final SentenceGameWebSocketHandler sentenceGameWebSocketHandler;
 
-    public WebSocketConfig(GameWebSocketHandler gameWebSocketHandler, WaitingRoomWebSocketHandler waitingRoomWebSocketHandler,  AgainWaitingRoomWebSocketHandler againWaitingRoomWebSocketHandler) {
+    public WebSocketConfig(GameWebSocketHandler gameWebSocketHandler, WaitingRoomWebSocketHandler waitingRoomWebSocketHandler,  SentenceGameWebSocketHandler sentenceGameWebSocketHandler) {
         this.gameWebSocketHandler = gameWebSocketHandler;
         this.waitingRoomWebSocketHandler = waitingRoomWebSocketHandler;
-        this.againWaitingRoomWebSocketHandler =againWaitingRoomWebSocketHandler;
+        this.sentenceGameWebSocketHandler = sentenceGameWebSocketHandler;
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(gameWebSocketHandler, "/ws/game")
+        registry.addHandler(gameWebSocketHandler, "/ws/infinitegame")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOriginPatterns("*");
 
@@ -33,7 +33,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOriginPatterns("*");
 
-        registry.addHandler(againWaitingRoomWebSocketHandler, "/ws/againwaitingroom")
+        registry.addHandler(sentenceGameWebSocketHandler, "/ws/sentencegame")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOriginPatterns("*");
     }

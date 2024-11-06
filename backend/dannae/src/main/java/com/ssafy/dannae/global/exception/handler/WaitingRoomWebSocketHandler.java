@@ -6,6 +6,7 @@ import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
+import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -36,12 +37,14 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final PlayerCommandService playerCommandService;
     private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
 
-    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, PlayerCommandService playerCommandService) {
+    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, PlayerCommandService playerCommandService, RoomCommandService roomCommandService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerQueryService = playerQueryService;
         this.roomQueryService = roomQueryService;
         this.playerCommandService = playerCommandService;
+        this.roomCommandService = roomCommandService;
     }
 
     @Override
@@ -254,8 +257,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             if (newCreatorToken != null && !newCreatorToken.isEmpty()) {
                 String playerIdFromToken = jwtTokenProvider.getPlayerIdFromToken(newCreatorToken);
                 Long newCreatorId = Long.parseLong(playerIdFromToken);
+//                roomCommandService.updateCreator(newCreatorId);
 
-                playerCommandService.updateAuthorization(newCreatorId);
                 roomCreatorMap.put(roomId, newCreatorSession);
 
                 String newCreatorNickname = getNicknameFromSession(newCreatorSession);
