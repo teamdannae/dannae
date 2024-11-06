@@ -40,32 +40,13 @@ public class RoomController {
 	private final PlayerQueryService playerQueryService;
 
 	@PostMapping("")
-	public ResponseEntity<BaseResponse<Map<String, Object>>> createRoom(@RequestBody RoomCreaterReq req){
-		RoomDto roomDto= roomCommandService.createRoom(RoomDto.builder()
+	public ResponseEntity<BaseResponse<RoomDto>> createRoom(@RequestBody RoomReq req){
+		RoomDto res = roomCommandService.createRoom(RoomDto.builder()
 				.title(req.title())
 				.mode(req.mode())
 				.release(req.release())
 				.build());
-
-		Long roomId = roomDto.roomId();
-
-		PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
-				.roomId(roomId)
-				.score(0L)
-				.status(PlayerStatus.nonready)
-				.authorization(PlayerAuthorization.creator)
-				.nickname(req.nickname())
-				.image(req.image())
-				.build());
-
-		String token = jwtTokenProvider.createToken( roomId.toString(),playerDto.playerId().toString());
-
-		Map<String, Object> response = new HashMap<>();
-		response.put("roomId", roomDto.roomId());
-		response.put("playerId", playerDto.playerId());
-		response.put("token", token);
-
-		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
+		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
 	}
 
 	@PatchMapping("/{room-id}")

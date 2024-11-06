@@ -55,13 +55,62 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             throw new NoRoomException("존재하지 않는 방입니다.");
         }
 
-        if (token != null && !token.isEmpty()) {
-            String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
-            sessionTokenMap.put(session, token);
-            handleCreatorEntry(session, roomId, playerId);
-            roomCreatorMap.put(roomId, session); // 방장 세션 등록
-        } else {
-            handleGeneralPlayerEntry(session, roomId, nickname, image);
+        // 토큰 유효성 검사
+        if (token == null || !jwtTokenProvider.validateToken(token)) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"유효하지 않은 토큰입니다.\"}"));
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
+        }
+
+        for (String existingToken : sessionTokenMap.values()) {
+            if (existingToken.equals(token)) {
+                session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 사용 중인 토큰입니다.\"}"));
+                session.close(CloseStatus.POLICY_VIOLATION);
+                return;
+            }
+        }
+
+        List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
+        sessions.add(session);
+        sessionTokenMap.put(session, token);
+
+        if (roomCreatorMap.get(roomId) == null) {
+            roomCreatorMap.put(roomId, session); // 방장 설정
+        }
+
+        int playerCount = sessions.size();
+
+        // 현재 대기실에 있는 플레이어 목록 생성
+        StringBuilder playerListMessage = new StringBuilder("{\"type\": \"current_players\", \"players\": [");
+        for (WebSocketSession s : sessions) {
+            String existingToken = getTokenFromSession(s);
+            String existingPlayerId = getPlayerIdFromSession(s);
+            String existingNickname = getNicknameFromSession(s);
+            Integer existingImage = getImageFromSession(s);
+
+            playerListMessage.append("{\"playerId\": \"").append(existingPlayerId)
+                    .append("\", \"nickname\": \"").append(existingNickname)
+                    .append("\", \"image\": ").append(existingImage)
+                    .append(", \"token\": \"").append(existingToken).append("\"},");
+        }
+        if (playerListMessage.charAt(playerListMessage.length() - 1) == ',') {
+            playerListMessage.deleteCharAt(playerListMessage.length() - 1);
+        }
+        playerListMessage.append("], \"playerCount\": ").append(playerCount).append("}");
+
+        // 새로 입장한 사용자에게 전체 플레이어 목록 전송
+        session.sendMessage(new TextMessage(playerListMessage.toString()));
+
+        // 입장 메시지를 다른 플레이어에게도 전달
+        String enterMessage = String.format(
+                "{\"type\": \"enter\", \"event\": \"rejoin_waiting\", \"message\": \"%s님이 대기실에 재입장했습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"playerCount\": %d}",
+                nickname, "playerId_placeholder", nickname, image, playerCount
+        );
+
+        for (WebSocketSession s : sessions) {
+            if (s != session) {
+                s.sendMessage(new TextMessage(enterMessage));
+            }
         }
     }
 
@@ -100,7 +149,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 .image(image)
                 .build());
 
-        String playerToken = jwtTokenProvider.createToken(roomId.toString(), playerDto.playerId().toString());
+        String playerToken = jwtTokenProvider.createToken(playerDto.playerId().toString());
         sessionTokenMap.put(session, playerToken);
 
         sessions.add(session);
