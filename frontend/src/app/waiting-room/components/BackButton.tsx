@@ -7,7 +7,7 @@ export default function BackButton() {
   return (
     <button
       className={`${styles.buttonReset} ${styles.backButton}`}
-      onClick={() => router.push("/board")}
+      onClick={() => router.push("/lobby")}
     >
       <div className={styles.backIcon} />
       나가기
