@@ -1,6 +1,5 @@
 package com.ssafy.dannae.global.exception.handler;
 
-import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -21,7 +20,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.ssafy.dannae.domain.player.entity.PlayerAuthorization.creator;
 import static com.ssafy.dannae.domain.player.entity.PlayerAuthorization.player;
 import static com.ssafy.dannae.domain.player.entity.PlayerStatus.nonready;
 
@@ -58,8 +56,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         if (token != null && !token.isEmpty()) {
             String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
-            handleCreatorEntry(session, roomId, playerId);
             sessionTokenMap.put(session, token);
+            handleCreatorEntry(session, roomId, playerId);
             roomCreatorMap.put(roomId, session); // 방장 세션 등록
         } else {
             handleGeneralPlayerEntry(session, roomId, nickname, image);
@@ -194,7 +192,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             log.error("Error in afterConnectionClosed", e);
         }
     }
-
 
     // 방장 권한 양도
     private void assignNewCreator(List<WebSocketSession> sessions, Long roomId) {
