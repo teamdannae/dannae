@@ -1,6 +1,7 @@
 package com.ssafy.dannae.domain.room.service.Impl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -37,5 +38,9 @@ class RoomQueryServiceImpl implements RoomQueryService {
 
 	public boolean existsById(Long roomId) {
 		return roomRepository.existsById(roomId);
+	}
+
+	public Optional<Room> findById(Long roomId) {
+		return roomRepository.findById(roomId);
 	}
 }
