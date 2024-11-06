@@ -56,7 +56,6 @@ public class PlayerController {
         PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
                 .score(0L)
                 .status(PlayerStatus.nonready)
-                .authorization(PlayerAuthorization.player)
                 .nickname(req.nickname())
                 .image(req.image())
                 .build());

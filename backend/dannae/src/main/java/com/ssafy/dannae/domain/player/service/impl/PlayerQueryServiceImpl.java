@@ -21,7 +21,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
 
     public PlayerDto createPlayer(PlayerDto dto){
         Player player = playerRepository.save(Player.builder()
-                .roomId(dto.roomId())
                 .score(dto.score())
                 .status(dto.status())  // 열거형으로 바로 설정
                 .nickname(dto.nickname())
@@ -30,7 +29,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
 
         return PlayerDto.builder()
                 .playerId(player.getId())
-                .roomId(player.getRoomId())
                 .score(player.getScore())
                 .status(player.getStatus())
                 .nickname(player.getNickname())
@@ -45,7 +43,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
 
         return PlayerDto.builder()
                 .playerId(player.getId())
-                .roomId(player.getRoomId())
                 .score(player.getScore())
                 .status(player.getStatus())
                 .nickname(player.getNickname())

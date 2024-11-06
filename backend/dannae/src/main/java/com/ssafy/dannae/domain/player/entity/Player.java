@@ -24,9 +24,6 @@ public class Player {
     @Column(name = "player_id")
     private Long id;
 
-    @Column(name = "room_id", nullable = false)
-    private Long roomId;
-
     @Column(name = "score", nullable = false)
     private Long score;
 
@@ -41,8 +38,7 @@ public class Player {
     private Integer image;
 
     @Builder
-    public Player(Long roomId, Long score, PlayerStatus status, String nickname, int image) {
-        this.roomId = roomId;
+    public Player(Long score, PlayerStatus status, String nickname, int image) {
         this.score = score;
         this.status = status;
         this.nickname = nickname;
