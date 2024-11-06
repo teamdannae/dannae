@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/infinitegame")
+@RequestMapping("/api/v1/infinitegames")
 @RestController
 public class InfiniteGameController {
 

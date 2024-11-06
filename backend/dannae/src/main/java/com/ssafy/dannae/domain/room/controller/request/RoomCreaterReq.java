@@ -6,7 +6,7 @@ import lombok.Builder;
 public record RoomCreaterReq(
         String title,
         String mode,
-        String release,
+        Boolean release,
         String nickname,
         int image
 ) {
