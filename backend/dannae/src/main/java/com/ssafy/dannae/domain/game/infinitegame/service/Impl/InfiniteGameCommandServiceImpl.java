@@ -87,6 +87,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		if(!checkInitial(infinitegameDto.initial(), infinitegameDto.word())) {
 			dto = InfiniteGameDto.builder()
 				.correct(false)
+				.word(infinitegameDto.word())
 				.meaning("초성에 맞지 않은 단어입니다.")
 				.build();
 			return dto;
@@ -99,6 +100,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 			if(word.equals(infinitegameDto.word())){
 				return InfiniteGameDto.builder()
 					.correct(false)
+					.word(infinitegameDto.word())
 					.meaning("이미 사용된 단어입니다.")
 					.build();
 			}
@@ -109,6 +111,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		if (optionalWord.isEmpty()) {
 			return InfiniteGameDto.builder()
 				.correct(false)
+				.word(infinitegameDto.word())
 				.meaning("존재하지 않는 단어입니다.")
 				.build();
 		}
