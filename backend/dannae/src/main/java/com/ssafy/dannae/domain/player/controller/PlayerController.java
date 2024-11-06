@@ -1,5 +1,6 @@
 package com.ssafy.dannae.domain.player.controller;
 
+import com.ssafy.dannae.domain.player.controller.response.PlayerRes;
 import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.exception.TokenException;
@@ -49,7 +50,7 @@ public class PlayerController {
     }
 
     @PostMapping("")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> createPlayer(@RequestBody RoomCreaterReq req){
+    public ResponseEntity<BaseResponse<PlayerRes>> createPlayer(@RequestBody RoomCreaterReq req){
 
         PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
                 .score(0L)
@@ -61,10 +62,12 @@ public class PlayerController {
 
         String token = jwtTokenProvider.createToken( playerDto.playerId().toString());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("playerId", playerDto.playerId());
-        response.put("token", token);
+        PlayerRes playerRes = PlayerRes.builder()
+                .playerId(playerDto.playerId())
+                .token(token)
+                .build();
 
-        return ResponseEntity.ok(BaseResponse.ofSuccess(response));
+
+        return ResponseEntity.ok(BaseResponse.ofSuccess(playerRes));
     }
 }
