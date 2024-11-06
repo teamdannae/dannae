@@ -8,14 +8,10 @@ interface game {
   isEmpty?: boolean;
 }
 
-interface newGame extends game {
-  isPublic: boolean;
-}
-
 import { useEffect, useState } from "react";
 import styles from "./page.module.scss";
 import Image from "next/image";
-import { Card, Radio } from "../components";
+import { Card } from "../components";
 import { fetchRooms } from "@/services/roomService";
 import { useModal } from "@/hooks";
 import CreateRoomModal from "./components/CreateRoomModal";
@@ -23,8 +19,6 @@ import CreateRoomModal from "./components/CreateRoomModal";
 const gamesPerPage = 12;
 
 const Lobby = () => {
-  const [nickname, setNickname] = useState<string>("");
-  const [image, setImage] = useState<string>("");
   const [selectedGameIndex, setSelectedGameIndex] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [games, setGames] = useState<game[]>([]);
@@ -45,14 +39,6 @@ const Lobby = () => {
   };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const response = await fetch("/api/next/get-profile");
-      const data = await response.json();
-      setNickname(data.nickname);
-      setImage(data.image);
-    };
-
-    fetchProfile();
     loadGames();
   }, []);
 
