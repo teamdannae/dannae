@@ -6,6 +6,7 @@ import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
+import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.ssafy.dannae.domain.player.entity.PlayerAuthorization.player;
-import static com.ssafy.dannae.domain.player.entity.PlayerStatus.nonready;
-
 @Slf4j
 @Component
 public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
@@ -36,12 +34,14 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final PlayerCommandService playerCommandService;
     private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
 
-    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, PlayerCommandService playerCommandService) {
+    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, PlayerCommandService playerCommandService, RoomCommandService roomCommandService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerQueryService = playerQueryService;
         this.roomQueryService = roomQueryService;
         this.playerCommandService = playerCommandService;
+        this.roomCommandService = roomCommandService;
     }
 
     @Override
@@ -114,80 +114,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void handleCreatorEntry(WebSocketSession session, Long roomId, String playerId) throws IOException {
-        List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
-        sessions.add(session);
-        int playerCount = getRoomPlayerCount(roomId);
-
-        PlayerDto playerDto = playerQueryService.findPlayerById(Long.valueOf(playerId));
-        Integer image = (playerDto != null) ? playerDto.image() : 0;
-        String nickname = (playerDto != null) ? playerDto.nickname() : "";
-
-        String token = sessionTokenMap.get(session);
-
-        session.sendMessage(new TextMessage(
-                String.format("{\"type\": \"enter\", \"event\": \"creator\", \"message\": \"방장으로 대기실에 입장했습니다.\", \"playerId\": \"%s\", \"token\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"playerCount\": %d}",
-                        playerId, token, nickname, image, playerCount)
-        ));
-    }
-
-    private void handleGeneralPlayerEntry(WebSocketSession session, Long roomId, String nickname, Integer image) throws IOException {
-        List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
-
-        if (sessions.size() >= MAX_ROOM_CAPACITY) {
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"인원 초과로 방에 입장할 수 없습니다.\"}"));
-            session.close(CloseStatus.POLICY_VIOLATION);
-            return;
-        }
-
-        PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
-                .roomId(roomId)
-                .score(0L)
-                .status(nonready)
-                .authorization(player)
-                .nickname(nickname)
-                .image(image)
-                .build());
-
-        String playerToken = jwtTokenProvider.createToken(playerDto.playerId().toString());
-        sessionTokenMap.put(session, playerToken);
-
-        sessions.add(session);
-        int playerCount = getRoomPlayerCount(roomId);
-
-        StringBuilder playerListMessage = new StringBuilder("{\"type\": \"current_players\", \"players\": [");
-        for (WebSocketSession s : sessions) {
-            String token = sessionTokenMap.get(s);
-            String existingPlayerId = getPlayerIdFromSession(s);
-            String existingNickname = getNicknameFromSession(s);
-            Integer existingImage = getImageFromSession(s);
-
-            String authorization = roomCreatorMap.get(roomId) == s ? "creator" : "player";
-
-            playerListMessage.append("{\"playerId\": \"").append(existingPlayerId)
-                    .append("\", \"nickname\": \"").append(existingNickname)
-                    .append("\", \"image\": ").append(existingImage)
-                    .append(", \"token\": \"").append(token).append("\"")
-                    .append(", \"authorization\": \"").append(authorization).append("\"},");
-        }
-        if (playerListMessage.charAt(playerListMessage.length() - 1) == ',') {
-            playerListMessage.deleteCharAt(playerListMessage.length() - 1);
-        }
-        playerListMessage.append("], \"playerCount\": ").append(playerCount).append("}");
-
-        session.sendMessage(new TextMessage(playerListMessage.toString()));
-
-        String enterMessage = String.format(
-                "{\"type\": \"enter\", \"event\": \"player\", \"message\": \"%s님이 대기실에 들어왔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"authorization\": \"player\", \"playerCount\": %d}",
-                nickname, playerDto.playerId(), nickname, image, playerCount
-        );
-
-        for (WebSocketSession s : sessions) {
-            if (s != session) {
-                s.sendMessage(new TextMessage(enterMessage));
-            }
-        }
-    }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
@@ -254,8 +180,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             if (newCreatorToken != null && !newCreatorToken.isEmpty()) {
                 String playerIdFromToken = jwtTokenProvider.getPlayerIdFromToken(newCreatorToken);
                 Long newCreatorId = Long.parseLong(playerIdFromToken);
+//                roomCommandService.updateCreator(newCreatorId);
 
-                playerCommandService.updateAuthorization(newCreatorId);
                 roomCreatorMap.put(roomId, newCreatorSession);
 
                 String newCreatorNickname = getNicknameFromSession(newCreatorSession);

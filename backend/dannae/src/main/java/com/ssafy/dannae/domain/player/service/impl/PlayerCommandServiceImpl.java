@@ -18,12 +18,7 @@ public class PlayerCommandServiceImpl implements PlayerCommandService {
 
     private final PlayerRepository playerRepository;
 
-    @Override
-    public void updateAuthorization(Long playerId) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new NoRoomException("player not found"));
-        player.updateAuthorization();
-    }
+
 
     @Override
     public void updateStatus(Long playerId, PlayerStatus status) {

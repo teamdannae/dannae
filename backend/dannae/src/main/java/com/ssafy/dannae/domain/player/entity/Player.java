@@ -24,19 +24,12 @@ public class Player {
     @Column(name = "player_id")
     private Long id;
 
-    @Column(name = "room_id", nullable = false)
-    private Long roomId;
-
     @Column(name = "score", nullable = false)
     private Long score;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private PlayerStatus status;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "player_authorization", nullable = false)
-    private PlayerAuthorization authorization;
 
     @Column(name = "nickname", length = 24, nullable = false)
     private String nickname;
@@ -45,11 +38,9 @@ public class Player {
     private Integer image;
 
     @Builder
-    public Player(Long roomId, Long score, PlayerStatus status, PlayerAuthorization authorization, String nickname, int image) {
-        this.roomId = roomId;
+    public Player(Long score, PlayerStatus status, String nickname, int image) {
         this.score = score;
         this.status = status;
-        this.authorization = authorization;
         this.nickname = nickname;
         this.image = image;
     }
@@ -60,10 +51,6 @@ public class Player {
 
     public void resetScore(){
         this.score = 0L;
-    }
-
-    public void updateAuthorization(){
-        this.authorization=PlayerAuthorization.creator;
     }
 
     public void updateStatus(PlayerStatus status) {
