@@ -8,7 +8,7 @@ import com.ssafy.dannae.domain.room.entity.Room;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-	List<Room> findByRelease(String release);
+	List<Room> findByRelease(Boolean release);
 
 	boolean existsById(Long id);
 }
