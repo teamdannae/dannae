@@ -2,6 +2,7 @@ package com.ssafy.dannae.global.exception.handler;
 
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
+import com.ssafy.dannae.global.util.JwtTokenProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -19,10 +20,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, List<WebSocketSession>> waitingRoomSessions = new ConcurrentHashMap<>();
+    private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
+    private final Map<Long, WebSocketSession> roomCreatorMap = new ConcurrentHashMap<>(); // 각 방의 현재 방장 세션 추적
     private final RoomQueryService roomQueryService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AgainWaitingRoomWebSocketHandler(RoomQueryService roomQueryService) {
+    public AgainWaitingRoomWebSocketHandler(RoomQueryService roomQueryService, JwtTokenProvider jwtTokenProvider) {
         this.roomQueryService = roomQueryService;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
@@ -36,8 +41,30 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
             throw new NoRoomException("존재하지 않는 방입니다.");
         }
 
+        // 토큰 유효성 검사
+        if (token == null || !jwtTokenProvider.validateToken(token)) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"유효하지 않은 토큰입니다.\"}"));
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
+        }
+
+        // 같은 토큰이 이미 세션에 존재하는지 확인
+        for (String existingToken : sessionTokenMap.values()) {
+            if (existingToken.equals(token)) {
+                session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 사용 중인 토큰입니다.\"}"));
+                session.close(CloseStatus.POLICY_VIOLATION);
+                return;
+            }
+        }
+
         List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
+        sessionTokenMap.put(session, token);
+
+        if (roomCreatorMap.get(roomId) == null) {
+            roomCreatorMap.put(roomId, session); // 방장 설정
+        }
+
         int playerCount = sessions.size();
 
         // 현재 대기실에 있는 플레이어 목록 생성
@@ -81,11 +108,55 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         if (sessions != null) {
             sessions.remove(session);
+            String token = sessionTokenMap.remove(session);
+            boolean isCreator = roomCreatorMap.get(roomId) == session;
+
+            String nickname = getNicknameFromSession(session); // 닉네임 가져오기
+
+            if (isCreator) {
+                roomCreatorMap.remove(roomId);
+                if (!sessions.isEmpty()) {
+                    assignNewCreator(sessions, roomId);
+                }
+            }
+
             if (sessions.isEmpty()) {
                 waitingRoomSessions.remove(roomId);
             } else {
-                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"player_leave\", \"message\": \"사용자가 대기실에서 나갔습니다.\", \"roomId\": \"%s\"}", roomId));
+                broadcastToRoom(roomId, String.format(
+                        "{\"type\": \"leave\", \"event\": \"player_leave\", \"message\": \"%s님이 대기실에서 나갔습니다.\", \"nickname\": \"%s\", \"roomId\": \"%s\"}",
+                        nickname, nickname, roomId
+                ));
             }
+        }
+    }
+
+    private void assignNewCreator(List<WebSocketSession> sessions, Long roomId) {
+        if (sessions.isEmpty()) return;
+
+        try {
+            WebSocketSession newCreatorSession = sessions.get(0);
+            String newCreatorToken = sessionTokenMap.get(newCreatorSession);
+
+            if (newCreatorToken != null && !newCreatorToken.isEmpty()) {
+                roomCreatorMap.put(roomId, newCreatorSession);
+
+                String newCreatorNickname = getNicknameFromSession(newCreatorSession);
+                int playerCount = sessions.size();
+                String creatorChangeMessage = String.format(
+                        "{\"type\": \"enter\", \"event\": \"creator_change\", \"message\": \"%s님이 방장이 되었습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"playerCount\": %d}",
+                        newCreatorNickname, newCreatorToken, newCreatorNickname, playerCount
+                );
+
+                newCreatorSession.sendMessage(new TextMessage(creatorChangeMessage));
+                for (WebSocketSession otherSession : sessions) {
+                    if (!otherSession.equals(newCreatorSession)) {
+                        otherSession.sendMessage(new TextMessage(creatorChangeMessage));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error in assignNewCreator", e);
         }
     }
 
@@ -113,7 +184,7 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
     private String getNicknameFromSession(WebSocketSession session) {
         String query = session.getUri().getQuery();
-        return query != null && query.contains("nickname=") ? query.split("nickname=")[1].split("&")[0] : "Unknown";
+        return query != null && query.contains("nickname=") ? query.split("nickname=")[1].split("&")[0] : null;
     }
 
     private Integer getImageFromSession(WebSocketSession session) {
@@ -129,7 +200,8 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
     }
 
     private String getPlayerIdFromSession(WebSocketSession session) {
-        String token = getTokenFromSession(session);
-        return token != null ? token : "Unknown"; // 토큰에서 playerId를 추출하는 방법이 정의되어 있다면 수정
+        String token = sessionTokenMap.get(session);
+        return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
+
 }
