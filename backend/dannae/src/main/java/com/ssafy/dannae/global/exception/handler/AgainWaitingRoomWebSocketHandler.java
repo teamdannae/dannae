@@ -1,5 +1,6 @@
 package com.ssafy.dannae.global.exception.handler;
 
+import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
@@ -169,6 +170,38 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    public void startGame(Long roomId) throws IOException {
+        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+        if (sessions != null) {
+            // 방 정보 가져오기
+            Room room = roomQueryService.findById(roomId)
+                    .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
+
+            // 게임 시작 메시지 생성
+            String startGameMessage = String.format(
+                    "{\"type\": \"game_start\", \"message\": \"게임이 시작되었습니다!\", \"room\": {\"id\": \"%d\", \"title\": \"%s\", \"mode\": \"%s\", \"release\": %b, \"code\": \"%s\", \"joinCount\": %d}}",
+                    room.getId(), room.getTitle(), room.getMode(), room.getRelease(), room.getCode(), room.getJoinCount()
+            );
+
+            // 모든 세션에 게임 시작 메시지 전송
+            for (WebSocketSession session : sessions) {
+                session.sendMessage(new TextMessage(startGameMessage));
+            }
+
+            // 필요 시, 대기실 세션 목록 초기화 (게임 시작 후 대기실 비우기)
+            waitingRoomSessions.remove(roomId);
+        }
+    }
+
+    public void onGameStartButtonClicked(Long roomId, WebSocketSession session) throws IOException {
+        // 요청한 사용자가 방장인지 확인
+        if (roomCreatorMap.get(roomId) == session) {
+            startGame(roomId); // 방장일 경우 게임 시작
+        } else {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"게임 시작 권한이 없습니다.\"}"));
+        }
+    }
+
     private Long getRoomIdFromSession(WebSocketSession session) {
         String query = session.getUri().getQuery();
         return query != null && query.contains("roomId=") ? Long.valueOf(query.split("roomId=")[1].split("&")[0]) : null;
@@ -203,5 +236,4 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
         String token = sessionTokenMap.get(session);
         return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
-
 }
