@@ -33,7 +33,7 @@ public class Room {
 	private String mode;
 
 	@Column(name = "release", nullable = false)
-	private String release;
+	private Boolean release;
 
 	@Column(name = "code", nullable = false)
 	private String code;
@@ -42,18 +42,22 @@ public class Room {
 	@Column(name = "status", nullable = false)
 	private RoomStatus status;
 
+	@Column(name = "join_count", nullable = false)
+	private Long joinCount;
+
 	@Builder
-	public Room(String title, String mode, String release, String code) {
-		this(title, mode, release, code, RoomStatus.READY);
+	public Room(String title, String mode, Boolean release, String code) {
+		this(title, mode, release, code, RoomStatus.READY, 1L);
 	}
 
-	public Room(String title, String mode, String release, String code, RoomStatus status) {
+	public Room(String title, String mode, Boolean release, String code, RoomStatus status, Long joinCount) {
 		checkRoomTitle(title);
 		this.title = title;
 		this.mode = mode;
 		this.release = release;
 		this.code = code;
 		this.status = status;
+		this.joinCount = joinCount;
 	}
 
 	private void checkRoomTitle(String title) {
@@ -74,11 +78,16 @@ public class Room {
 		return this.status;
 	}
 
-	public void update(String title, String mode, String release){
+	public void update(String title, String mode, Boolean release){
 		checkRoomTitle(title);
 		this.title = title;
 		this.mode = mode;
 		this.release = release;
 	}
+
+	public void updateJoinCount(Long joinCount){
+		this.joinCount = joinCount;
+	}
+
 
 }

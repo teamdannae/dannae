@@ -24,7 +24,7 @@ class RoomQueryServiceImpl implements RoomQueryService {
 
 	@Override
 	public List<RoomDto> readReleasedRooms() {
-		List<Room> roomList = roomRepository.findByRelease("true"); // release가 "true"인 방만 조회
+		List<Room> roomList = roomRepository.findByRelease(true); // release가 "true"인 방만 조회
 		return roomList.stream()
 			.map(room -> RoomDto.builder()
 				.roomId(room.getId())

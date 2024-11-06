@@ -7,6 +7,6 @@ public record RoomDto(
 	Long roomId,
 	String title,
 	String mode,
-	String release
+	Boolean release
 ) {
 }
