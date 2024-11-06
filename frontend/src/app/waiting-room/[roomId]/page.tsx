@@ -6,7 +6,7 @@ import { Header, GameInfo, PlayerList, Chat } from "../components";
 import styles from "./page.module.scss";
 
 export default function WaitingRoom() {
-  const [url, setUrl] = useState<string>("");
+  const [url] = useState<string>("");
   const [messages, setMessages] = useState<string[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [users, setUsers] = useState<player[]>([
@@ -110,6 +110,21 @@ export default function WaitingRoom() {
           return updatedUsers;
         });
       }
+      fetch("/api/next/set-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data.players[data.players.length - 1].token),
+      });
+    } else if (data.type === "status_update") {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.playerId === data.playerId
+            ? { ...user, isReady: true }
+            : { ...user, isReady: false }
+        )
+      );
     }
     if (!data.token && data.event !== "creator") {
       const newMessage =
@@ -123,25 +138,27 @@ export default function WaitingRoom() {
 
   const { isConnected, sendMessage } = useWebSocket(url, handleMessage);
 
+  console.log(isConnected);
+
   const handleSend = () => {
     sendMessage(newMessage);
     setNewMessage("");
   };
 
-  const token =
-    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0Iiwicm9vbUlkIjoiMiIsImlhdCI6MTczMDc4MjYwMSwiZXhwIjoxNzMwNzg0NDAxfQ.499J5QKXTKhrdM7MatOSsmfvg4YEX_JOUC5sY7ias78";
+  // const token =
+  //   "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9vbUlkIjoiMyIsImlhdCI6MTczMDg1MTI1MCwiZXhwIjoxNzMwODUzMDUwfQ.me09_ZBvoMcFZE3DD-KXiQDbyIWSiYb7P6s4yiBOlJA";
 
-  const handleClick = () => {
-    setUrl(
-      `ws://70.12.247.135:8080/ws/waitingroom?roomId=2&token=${token}&nickname=윤이사랑김범수&image=3`
-    );
-  };
+  // const handleClick = () => {
+  //   setUrl(
+  //     `ws://70.12.247.135:8080/ws/waitingroom?roomId=2&token=${token}&nickname=윤이사랑김범수&image=3`
+  //   );
+  // };
 
-  const handleClickGuest = () => {
-    setUrl(
-      "ws://70.12.247.135:8080/ws/waitingroom?roomId=2&nickname=김일태&image=5"
-    );
-  };
+  // const handleClickGuest = () => {
+  //   setUrl(
+  //     "ws://70.12.247.135:8080/ws/waitingroom?roomId=2&nickname=김일태&image=5"
+  //   );
+  // };
 
   return (
     <main
@@ -164,9 +181,9 @@ export default function WaitingRoom() {
           handleSend={handleSend}
         />
       </section>
-      <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
+      {/* <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
       <button onClick={handleClick}>방장 입장</button>
-      <button onClick={handleClickGuest}>게스트 입장</button>
+      <button onClick={handleClickGuest}>게스트 입장</button> */}
     </main>
   );
 }
