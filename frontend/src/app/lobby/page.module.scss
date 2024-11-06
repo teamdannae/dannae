@@ -1,3 +1,110 @@
+@use "../../styles/variables.scss" as vars;
+
 .lobbyContainer {
-    display: flex;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  padding: 76px 103px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navButton {
+  display: flex;
+  width: 14.2857rem;
+  height: 68px;
+  padding: 20px 35px;
+  justify-content: center;
+  align-items: center;
+  color: vars.$dark-color;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.selectedGame {
+    background-color: vars.$primary-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.deselectedGame {
+    background-color: vars.$dark-color;
+    color: vars.$white-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.gameFinder {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.iconButton {
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.disabled {
+    background-color: vars.$disabled-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.pageController {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.gameListContainer {
+  display: grid;
+  height: 648px;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 48px;
+}
+
+.cardItem {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 10px;
+  cursor: pointer;
+
+  .playerCount {
+    text-align: right;
+  }
 }

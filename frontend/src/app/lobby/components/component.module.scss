@@ -1,0 +1,48 @@
+@use "../../../styles/variables.scss" as vars;
+
+.modalContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 20px;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navButton {
+  display: flex;
+  width: 14.2857rem;
+  height: 68px;
+  padding: 20px 35px;
+  justify-content: center;
+  align-items: center;
+  color: vars.$dark-color;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.selectedGame {
+    background-color: vars.$primary-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.deselectedGame {
+    background-color: vars.$dark-color;
+    color: vars.$white-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
