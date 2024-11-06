@@ -1,5 +1,5 @@
 export const fetchRooms = async () => {
-  const response = await fetch("http://dannae.kr/api/v1/rooms/list", {
+  const response = await fetch("https://dannae.kr/api/v1/rooms/list", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
