@@ -5,6 +5,7 @@
   width: 80%;
   justify-content: space-around;
   align-items: flex-end;
+  padding-top: 8px;
 }
 
 .backButton {
@@ -57,22 +58,79 @@
   height: 280px;
   width: 100%;
   display: flex;
-  gap: 8px;
+  gap: 16px;
   justify-content: center;
   align-items: center;
   margin-top: 16px;
 }
 
 .infoMain {
+  position: relative;
   background-color: vars.$grey-color;
   width: 75%;
   border-radius: 24px;
   height: 280px;
+  padding: 24px;
+
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+
+  &.flip {
+    transform: rotateY(90deg);
+  }
+}
+
+.infoMainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  backface-visibility: hidden;
+}
+
+.infoMainBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+}
+
+.description {
+  color: vars.$darkgray-color;
+  font-size: vars.$font-size-p2;
+}
+
+.infoIcon {
+  width: 32px;
+  height: 32px;
+  background: url("/icons/info-octagon.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+.illustration {
+  position: absolute;
+  bottom: -5%;
+  right: 5%;
+}
+
+.detailButton {
+  width: fit-content;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .leftButton {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   background: url("/icons/chevron-left.svg") no-repeat center;
   background-size: contain;
   border: none;
@@ -86,8 +144,8 @@
 }
 
 .rightButton {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   background: url("/icons/chevron-right.svg") no-repeat center;
   background-size: contain;
   border: none;
@@ -100,13 +158,22 @@
   }
 }
 
+.readyButton {
+  width: 25%;
+  border-radius: 12px;
+
+  &:hover {
+    border: vars.$border;
+  }
+}
+
 .playerContainer {
   display: grid;
   grid-template-columns: repeat(4, minmax(100px, 260px));
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin: 8px;
+  margin: 8px 0;
 }
 
 .chatContainer {
