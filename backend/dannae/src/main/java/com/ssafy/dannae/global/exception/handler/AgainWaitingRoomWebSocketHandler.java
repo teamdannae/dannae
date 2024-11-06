@@ -94,7 +94,6 @@ public class AgainWaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 "{\"type\": \"enter\", \"event\": \"rejoin_waiting\", \"message\": \"%s님이 대기실에 재입장했습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d, \"playerCount\": %d}",
                 nickname, "playerId_placeholder", nickname, image, playerCount
         );
-
         for (WebSocketSession s : sessions) {
             if (s != session) {
                 s.sendMessage(new TextMessage(enterMessage));

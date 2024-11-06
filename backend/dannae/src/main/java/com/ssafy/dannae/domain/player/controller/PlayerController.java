@@ -1,5 +1,6 @@
 package com.ssafy.dannae.domain.player.controller;
 
+import com.ssafy.dannae.domain.player.controller.request.PlayerReq;
 import com.ssafy.dannae.domain.player.controller.response.PlayerRes;
 import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
@@ -50,12 +51,12 @@ public class PlayerController {
     }
 
     @PostMapping("")
-    public ResponseEntity<BaseResponse<PlayerRes>> createPlayer(@RequestBody RoomCreaterReq req){
+    public ResponseEntity<BaseResponse<PlayerRes>> createPlayer(@RequestBody PlayerReq req){
 
         PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
                 .score(0L)
                 .status(PlayerStatus.nonready)
-                .authorization(PlayerAuthorization.creator)
+                .authorization(PlayerAuthorization.player)
                 .nickname(req.nickname())
                 .image(req.image())
                 .build());
@@ -66,7 +67,6 @@ public class PlayerController {
                 .playerId(playerDto.playerId())
                 .token(token)
                 .build();
-
 
         return ResponseEntity.ok(BaseResponse.ofSuccess(playerRes));
     }
