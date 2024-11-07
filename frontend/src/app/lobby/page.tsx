@@ -1,27 +1,21 @@
 "use client";
 
-interface game {
-  roomId: number;
-  title: string;
-  mode: string;
-  playerCount: number;
-  isEmpty?: boolean;
-}
-
 import { useEffect, useState } from "react";
 import styles from "./page.module.scss";
 import Image from "next/image";
 import { Card } from "../components";
-import { fetchRooms } from "@/services/roomService";
 import { useModal } from "@/hooks";
 import CreateRoomModal from "./components/CreateRoomModal";
+import { useRouter } from "next/navigation";
 
 const gamesPerPage = 12;
 
 const Lobby = () => {
   const [selectedGameIndex, setSelectedGameIndex] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [games, setGames] = useState<game[]>([]);
+  const [games, setGames] = useState<gameroom[]>([]);
+
+  const router = useRouter();
 
   const { openModal } = useModal();
 
@@ -31,8 +25,14 @@ const Lobby = () => {
 
   const loadGames = async () => {
     try {
-      const data = await fetchRooms();
-      setGames(data);
+      const response = await fetch("/api/next/rooms/list");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch games");
+      }
+
+      const gamesData = await response.json();
+      setGames(gamesData.data);
     } catch (error) {
       console.error("Failed to load games:", error);
     }
@@ -50,7 +50,7 @@ const Lobby = () => {
     return true;
   });
 
-  // 현재 페이지에 맞는 게임 리스트를 9개의 카드로 맞춰 반환
+  // 현재 페이지에 맞는 게임 리스트를 gamesPerPage개의 카드로 맞춰 반환
   const paginatedGames = Array.from(
     { length: gamesPerPage },
     (_, i) => filteredGames[currentPage * gamesPerPage + i] || { isEmpty: true }
@@ -64,6 +64,23 @@ const Lobby = () => {
 
   const handlePrevPage = () => {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
+  };
+
+  const enterGameroom = async (roomId: number) => {
+    try {
+      const response = await fetch(`/api/next/rooms/${roomId.toString()}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to load room data");
+      }
+
+      const roomData = await response.json();
+      console.log(roomData);
+
+      router.push(`/waiting-room/${roomId}`);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   // 게임 모드 변경 시 페이지를 첫 페이지로 초기화
@@ -126,6 +143,7 @@ const Lobby = () => {
                 alt="refresh button"
                 width={48}
                 height={48}
+                priority
               />
             </div>
           </nav>
@@ -141,6 +159,7 @@ const Lobby = () => {
                 alt="left button"
                 width={48}
                 height={48}
+                priority
               />
             </div>
             <p>
@@ -158,13 +177,21 @@ const Lobby = () => {
                 alt="rifht button"
                 width={48}
                 height={48}
+                priority
               />
             </div>
           </div>
         </div>
         <div className={styles.gameListContainer}>
           {paginatedGames.map((game, index) => (
-            <Card isReady={false} isEmpty={game.isEmpty || false} key={index}>
+            <Card
+              isReady={false}
+              isEmpty={game.isEmpty || false}
+              key={index}
+              onClickEvent={
+                game.isEmpty ? undefined : () => enterGameroom(game.roomId)
+              }
+            >
               {!game.isEmpty && (
                 <div className={styles.cardItem}>
                   <h4>{game.mode}</h4>
