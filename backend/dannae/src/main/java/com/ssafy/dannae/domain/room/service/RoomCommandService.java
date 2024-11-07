@@ -13,4 +13,5 @@ public interface RoomCommandService {
 
 	void updateRoomCreator(Long roomId, Long roomCreatorId);
 
+	void updateStatus(Long roomId);
 }
