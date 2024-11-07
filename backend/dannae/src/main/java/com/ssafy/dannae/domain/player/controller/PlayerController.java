@@ -62,7 +62,7 @@ public class PlayerController {
         Long playerId = Long.parseLong(id);
         playerCommandService.updateStatus(playerId, PlayerStatus.nonready);
 
-        waitingRoomWebSocketHandler.broadcastPlayerStatusUpdate(playerId, PlayerStatus.ready);
+        waitingRoomWebSocketHandler.broadcastPlayerStatusUpdate(playerId, PlayerStatus.nonready);
         return ResponseEntity.ok(BaseResponse.ofSuccess());
     }
 
