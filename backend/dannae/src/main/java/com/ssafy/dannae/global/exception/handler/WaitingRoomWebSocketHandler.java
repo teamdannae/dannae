@@ -1,6 +1,5 @@
 package com.ssafy.dannae.global.exception.handler;
 
-import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -34,15 +33,13 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, WebSocketSession> roomCreatorMap = new ConcurrentHashMap<>(); // 각 방의 현재 방장 세션 추적
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerQueryService playerQueryService;
-    private final PlayerCommandService playerCommandService;
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
 
-    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, PlayerCommandService playerCommandService, RoomCommandService roomCommandService) {
+    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, RoomCommandService roomCommandService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerQueryService = playerQueryService;
         this.roomQueryService = roomQueryService;
-        this.playerCommandService = playerCommandService;
         this.roomCommandService = roomCommandService;
     }
 
@@ -53,6 +50,16 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         if (roomId == null || !roomQueryService.existsById(roomId)) {
             throw new NoRoomException("존재하지 않는 방입니다.");
+        }
+
+        // 현재 방의 세션 리스트 가져오기
+        List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
+
+        // 방 인원 제한 확인
+        if (sessions.size() >= MAX_ROOM_CAPACITY) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"방 인원이 최대치에 도달했습니다.\"}"));
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
         }
 
         // 토큰 유효성 검사
@@ -70,7 +77,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             }
         }
 
-        List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
         sessionTokenMap.put(session, token);
 
