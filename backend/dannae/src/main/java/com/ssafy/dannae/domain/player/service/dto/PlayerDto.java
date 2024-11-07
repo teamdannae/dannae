@@ -7,10 +7,8 @@ import lombok.Builder;
 @Builder
 public record PlayerDto(
         Long playerId,
-        Long roomId,
         Long score,
         PlayerStatus status,
-        PlayerAuthorization authorization,
         String nickname,
         int image
 ) {

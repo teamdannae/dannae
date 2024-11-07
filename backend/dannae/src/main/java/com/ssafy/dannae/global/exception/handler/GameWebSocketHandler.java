@@ -47,13 +47,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
 
-        // Update player status to 'playing'
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
-        // Notify the player about the successful game connection and status change
         session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"image\": " + image + ", \"status\": \"playing\"}"));
 
-        // Broadcast the status update to all players in the game room
         String statusUpdateMessage = String.format("{\"type\": \"status_update\", \"playerId\": \"%s\", \"status\": \"playing\"}", playerId);
         broadcastToRoom(roomId, statusUpdateMessage);
     }

@@ -17,9 +17,8 @@ public class JwtTokenProvider {
     public JwtTokenProvider(@Value("${jwt.secret-key}") String secretKey) {
         this.secretKey = secretKey;
     }
-    public String createToken(String roomId, String playerId) {
+    public String createToken(String playerId) {
         Claims claims = Jwts.claims().setSubject(playerId);
-        claims.put("roomId", roomId);
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + tokenValidity);
@@ -39,15 +38,6 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
-    }
-
-    // 3. 토큰에서 방 ID 추출
-    public String getRoomIdFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(token)
-                .getBody()
-                .get("roomId", String.class);
     }
 
     // 4. 토큰의 유효성 검증
