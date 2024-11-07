@@ -50,6 +50,22 @@ public class PlayerController {
         return ResponseEntity.ok(BaseResponse.ofSuccess());
     }
 
+    @PatchMapping("/nonready")
+    public ResponseEntity<BaseResponse<?>> updateStatusNonReady(@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
+        String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+
+        if (!jwtTokenProvider.validateToken(jwtToken)) {
+            throw new TokenException("유효하지 않거나 만료된 토큰입니다.");
+        }
+
+        String id = jwtTokenProvider.getPlayerIdFromToken(jwtToken);
+        Long playerId = Long.parseLong(id);
+        playerCommandService.updateStatus(playerId, PlayerStatus.nonready);
+
+        waitingRoomWebSocketHandler.broadcastPlayerStatusUpdate(playerId, PlayerStatus.ready);
+        return ResponseEntity.ok(BaseResponse.ofSuccess());
+    }
+
     @PostMapping("")
     public ResponseEntity<BaseResponse<PlayerRes>> createPlayer(@RequestBody PlayerReq req){
 
