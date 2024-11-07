@@ -59,6 +59,15 @@ class RoomCommandServiceImpl implements RoomCommandService {
 
 	}
 
+	@Override
+	public void updatePlayerCount(Long roomId, Long roomPlayerCount) {
+
+		Room room = verifiedById(roomId);
+		room.updatePlayerCount(roomPlayerCount);
+		roomRepository.save(room);
+
+	}
+
 	private Room verifiedById(Long roomId) {
 
 		Room room = roomRepository.findById(roomId)

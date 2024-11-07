@@ -9,6 +9,8 @@ public interface RoomCommandService {
 
 	void updateRoom(Long roomId, RoomDetailDto roomDetailDto);
 
+	void updatePlayerCount(Long roomId, Long playerCount);
+
 	void updateRoomCreator(Long roomId, Long roomCreatorId);
 
 }
