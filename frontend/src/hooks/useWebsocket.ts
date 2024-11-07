@@ -41,7 +41,7 @@ function useWebSocket(url: string, onMessage: (data: message) => void) {
 
       socketRef.current.onclose = () => {
         setIsConnected(false);
-        alert("웹소켓 연결이 닫혔습니다.");
+        console.log("웹소켓 연결이 닫혔습니다.");
       };
 
       socketRef.current.onerror = (error) => {
@@ -52,9 +52,7 @@ function useWebSocket(url: string, onMessage: (data: message) => void) {
     connectWebSocket();
 
     const handleBeforeUnload = () => {
-      console.log("웹소켓 연결이 페이지 떠날 때 닫혔습니다.1");
       socketRef.current?.close();
-      console.log("웹소켓 연결이 페이지 떠날 때 닫혔습니다.2");
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -68,9 +66,9 @@ function useWebSocket(url: string, onMessage: (data: message) => void) {
     };
   }, [url, memoizedOnMessage]);
 
-  const sendMessage = (message: string) => {
+  const sendMessage = (message: chat) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(message);
+      socketRef.current.send(JSON.stringify(message));
     } else {
       console.warn("웹소켓이 연결되지 않았습니다.");
     }

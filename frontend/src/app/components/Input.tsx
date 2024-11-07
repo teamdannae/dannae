@@ -4,7 +4,7 @@ import styles from "./common.module.scss";
 interface InputProps {
   value: string;
   onChangeEvent: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlurEvent: () => void;
+  onBlurEvent?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onEnterKey?: () => void;
   inputLabel?: string;
   placeholder?: string;

@@ -6,7 +6,8 @@ interface message {
     | "current_players"
     | "status_update"
     | "error";
-  event?: "creator" | "creator_change" | "player";
+  event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
+  creatorId?: string;
   nickname?: string;
   token?: string;
   message: string;
@@ -22,6 +23,12 @@ interface message {
     authorization: "creator" | "player";
     token: string;
   }[];
+}
+
+interface chat {
+  type: string;
+  playerId: string;
+  message?: string;
 }
 
 interface player {

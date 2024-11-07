@@ -6,7 +6,7 @@ import { Header, GameInfo, PlayerList, Chat } from "../components";
 import styles from "./page.module.scss";
 
 export default function WaitingRoom() {
-  const [url] = useState<string>("");
+  const [url, setUrl] = useState<string>("");
   const [messages, setMessages] = useState<string[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [users, setUsers] = useState<player[]>([
@@ -46,7 +46,11 @@ export default function WaitingRoom() {
 
   const handleMessage = useCallback((data: message) => {
     if (data.type === "enter") {
-      if (data.event === "creator" || data.event === "player") {
+      if (
+        data.event === "creator" ||
+        data.event === "player" ||
+        data.event === "rejoin_waiting"
+      ) {
         setUsers((prevUsers) => {
           const updatedUsers = [...prevUsers];
           for (let i = 0; i < updatedUsers.length; i++) {
@@ -126,7 +130,17 @@ export default function WaitingRoom() {
         )
       );
     }
-    if (!data.token && data.event !== "creator") {
+
+    if (data.creatorId) {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.playerId === data.creatorId
+            ? { ...user, isHost: true }
+            : { ...user, isHost: false }
+        )
+      );
+    }
+    if (data.message) {
       const newMessage =
         data.type === "chat"
           ? `${data.nickname}: ${data.message}`
@@ -138,27 +152,42 @@ export default function WaitingRoom() {
 
   const { isConnected, sendMessage } = useWebSocket(url, handleMessage);
 
-  console.log(isConnected);
-
   const handleSend = () => {
-    sendMessage(newMessage);
+    const temp = {
+      type: "chat",
+      playerId: "",
+      message: newMessage,
+    };
+    sendMessage(temp);
     setNewMessage("");
   };
 
-  // const token =
-  //   "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9vbUlkIjoiMyIsImlhdCI6MTczMDg1MTI1MCwiZXhwIjoxNzMwODUzMDUwfQ.me09_ZBvoMcFZE3DD-KXiQDbyIWSiYb7P6s4yiBOlJA";
+  const areAllPlayersReady = () => {
+    return users.filter((user) => !user.isEmpty).every((user) => user.isReady);
+  };
 
-  // const handleClick = () => {
-  //   setUrl(
-  //     `ws://70.12.247.135:8080/ws/waitingroom?roomId=2&token=${token}&nickname=윤이사랑김범수&image=3`
-  //   );
-  // };
+  const hostPlayerId = users.find((user) => user.isHost)?.playerId || "";
 
-  // const handleClickGuest = () => {
-  //   setUrl(
-  //     "ws://70.12.247.135:8080/ws/waitingroom?roomId=2&nickname=김일태&image=5"
-  //   );
-  // };
+  const token =
+    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzMwOTUyOTY5LCJleHAiOjE3MzA5NTQ3Njl9.YTy9fbYiW1Do5_P04eST5jSX6S1_Eg2Fnhwl2mHE_S0";
+
+  const token2 =
+    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNzMwOTUzMDExLCJleHAiOjE3MzA5NTQ4MTF9.Vh_R3SKXiHy8gNfb4KyBEiAFf5vv8zWWb8qupBKLyy4";
+
+  const token3 =
+    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzMwOTUzMDIzLCJleHAiOjE3MzA5NTQ4MjN9.z2vr4DD9ycpqEfgvlpbYSAjiAbxLz4ZU-ErUGhK15kY";
+
+  const handleClick = () => {
+    setUrl(`wss://dannae.kr/ws/waitingroom?roomId=1&token=${token}`);
+  };
+
+  const handleClickGuest1 = () => {
+    setUrl(`wss://dannae.kr/ws/waitingroom?roomId=1&token=${token2}`);
+  };
+
+  const handleClickGuest2 = () => {
+    setUrl(`wss://dannae.kr/ws/waitingroom?roomId=1&token=${token3}`);
+  };
 
   return (
     <main
@@ -168,7 +197,11 @@ export default function WaitingRoom() {
     >
       <Header />
       <section aria-labelledby="game-info" className={styles.section}>
-        <GameInfo />
+        <GameInfo
+          areAllPlayersReady={areAllPlayersReady()}
+          hostPlayerId={hostPlayerId}
+          sendMessage={sendMessage}
+        />
       </section>
       <section aria-labelledby="player-list" className={styles.section}>
         <PlayerList users={users} />
@@ -181,9 +214,10 @@ export default function WaitingRoom() {
           handleSend={handleSend}
         />
       </section>
-      {/* <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
+      <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
       <button onClick={handleClick}>방장 입장</button>
-      <button onClick={handleClickGuest}>게스트 입장</button> */}
+      <button onClick={handleClickGuest1}>게스트 입장</button>
+      <button onClick={handleClickGuest2}>게스트 입장</button>
     </main>
   );
 }
