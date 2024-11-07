@@ -24,6 +24,8 @@ export async function GET() {
     // JSON 데이터로 응답
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
       { message: "서버 에러가 발생했습니다." },
       { status: 500 }

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
-    const roomId = params.roomId;
+    const roomId = (await params).roomId;
 
     const apiUrl = `https://dannae.kr/api/v1/rooms/${roomId}`;
 
@@ -30,6 +30,8 @@ export async function GET(
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
       { message: "서버 에러가 발생했습니다." },
       { status: 500 }
