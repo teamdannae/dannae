@@ -89,17 +89,29 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
         Long creatorId = room.getCreator();
 
+        // 새로 입장한 사용자의 PlayerDto 가져오기
+        String playerId = getPlayerIdFromSession(session);
+        PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
+        String nickname = dto.nickname();
+        int image = dto.image();
+
+        // 새로 입장한 사용자가 방장인 경우 roomCreatorMap에 등록
+        if (creatorId.equals(Long.parseLong(playerId))) {
+            roomCreatorMap.put(roomId, session);
+            System.out.println("방장 등록됨: roomId=" + roomId + ", playerId=" + playerId);
+        }
+
         // 현재 대기실에 있는 플레이어 목록 생성
         StringBuilder playerListMessage = new StringBuilder("{\"type\": \"current_players\", \"players\": [");
         for (WebSocketSession s : sessions) {
             String existingToken = getTokenFromSession(s);
             String existingPlayerId = getPlayerIdFromSession(s);
-            long playerId = Long.parseLong(existingPlayerId);
-            PlayerDto dto = playerQueryService.findPlayerById(playerId);
+            long existingPlayerLongId = Long.parseLong(existingPlayerId);
+            PlayerDto existingDto = playerQueryService.findPlayerById(existingPlayerLongId);
 
             playerListMessage.append("{\"playerId\": \"").append(existingPlayerId)
-                    .append("\", \"nickname\": \"").append(dto.nickname())
-                    .append("\", \"image\": ").append(dto.image())
+                    .append("\", \"nickname\": \"").append(existingDto.nickname())
+                    .append("\", \"image\": ").append(existingDto.image())
                     .append(", \"token\": \"").append(existingToken).append("\"},");
         }
         if (playerListMessage.charAt(playerListMessage.length() - 1) == ',') {
@@ -110,12 +122,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         // 새로 입장한 사용자에게 전체 플레이어 목록 전송
         session.sendMessage(new TextMessage(playerListMessage.toString()));
-
-        // 새로 입장한 사용자의 PlayerDto 가져오기
-        String playerId = getPlayerIdFromSession(session);
-        PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
-        String nickname = dto.nickname();
-        int image = dto.image();
 
         // 다른 사용자들에게 입장 메시지 전송
         String enterMessage = String.format(
@@ -293,7 +299,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         return sessions != null ? sessions.size() : 0;
     }
 
-    public void broadcastPlayerStatusUpdate(Long playerId, PlayerStatus status) {
+    public void broadcastPlayerStatusUpdate(Long roomId, Long playerId, PlayerStatus status) {
+
         String message = String.format(
                 "{\"type\": \"status_update\", \"playerId\": \"%s\", \"status\": \"%s\"}",
                 playerId, status
@@ -308,7 +315,61 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                     }
                 })
         );
+
+        checkAllPlayersReadyAndNotify(roomId);
     }
+
+    private void checkAllPlayersReadyAndNotify(Long roomId) {
+        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+
+        // Step 1: 확인 메시지 - 세션이 비어있거나 null일 경우
+        if (sessions == null || sessions.isEmpty()) {
+            System.out.println("No sessions found for roomId: " + roomId);
+            return;
+        }
+
+        // Step 2: 모든 플레이어가 ready 상태인지 확인
+        boolean allReady = sessions.stream()
+                .map(this::getPlayerIdFromSession)
+                .map(Long::valueOf)
+                .map(playerQueryService::findPlayerById)
+                .allMatch(dto -> {
+                    boolean isReady = dto.status() == PlayerStatus.ready;
+                    System.out.println("Player " + dto.playerId() + " status is ready: " + isReady);
+                    return isReady;
+                });
+
+        // Step 3: 모든 플레이어가 ready 상태인지 여부 출력
+        System.out.println("All players in roomId " + roomId + " are ready: " + allReady);
+
+        if (allReady) {
+            // Step 4: 방 정보 가져오기 및 준비 완료 메시지 생성
+            Room room = roomQueryService.findById(roomId)
+                    .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
+
+            String readyMessage = String.format(
+                    "{\"type\": \"game_start_ready\", \"creatorId\": \"%s\", \"message\": \"모든 플레이어가 준비되었습니다. 게임을 시작할 수 있습니다.\", \"playerCount\": %d}",
+                    room.getCreator(), sessions.size()
+            );
+
+            // Step 5: 방장에게 메시지 전송 시도
+            WebSocketSession creatorSession = roomCreatorMap.get(roomId);
+            if (creatorSession != null) {
+                try {
+                    creatorSession.sendMessage(new TextMessage(readyMessage));
+                    System.out.println("Sent game start ready message to creator of roomId " + roomId);
+                } catch (IOException e) {
+                    System.out.println("Failed to send game start ready message to creator of roomId " + roomId);
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("No creator session found for roomId " + roomId);
+            }
+        } else {
+            System.out.println("Not all players in roomId " + roomId + " are ready");
+        }
+    }
+
 
     public void startGame(Long roomId) throws IOException {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
