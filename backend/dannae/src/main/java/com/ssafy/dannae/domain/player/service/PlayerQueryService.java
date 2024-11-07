@@ -8,4 +8,5 @@ public interface PlayerQueryService {
     PlayerDto createPlayer(PlayerDto playerDto);
 
     PlayerDto findPlayerById(Long playerId);
+
 }

@@ -18,8 +18,6 @@ public class PlayerCommandServiceImpl implements PlayerCommandService {
 
     private final PlayerRepository playerRepository;
 
-
-
     @Override
     public void updateStatus(Long playerId, PlayerStatus status) {
         Player player = playerRepository.findById(playerId)
