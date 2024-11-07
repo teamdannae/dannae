@@ -93,8 +93,8 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.landingContainer}>
-      <div className={styles.landingMain}>
+    <main className={styles.landingContainer}>
+      <section className={styles.landingMain}>
         <h1>
           단<span className={styles.fontChange}>어를</span> 내{" "}
           <span className={styles.fontChange}>것으로</span>
@@ -112,7 +112,7 @@ export default function Home() {
             buttonColor="black"
           />
         </div>
-      </div>
+      </section>
       <div className={styles.wordAnimationContainer}>
         {fallingWords.map((word, index) => (
           <div key={index} className={`${styles.fallingWord} falling-word`}>
@@ -120,6 +120,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-    </div>
+    </main>
   );
 }
