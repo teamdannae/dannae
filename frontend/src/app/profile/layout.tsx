@@ -1,9 +1,9 @@
-import { ReactNode } from 'react';
-import { Metadata } from 'next';
-import styles from './layout.module.scss';
+import { ReactNode } from "react";
+import { Metadata } from "next";
+import styles from "./layout.module.scss";
 
 interface ProfileContainerProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 export const metadata: Metadata = {
@@ -12,11 +12,11 @@ export const metadata: Metadata = {
 };
 
 const ProfileContainer = ({ children }: ProfileContainerProps) => {
-    return (
-        <main className={styles.profileContainer}>
-            {children}
-        </main>
-    );
+  return (
+    <main className={styles.container}>
+      <section className={styles.profileContainer}>{children}</section>
+    </main>
+  );
 };
 
 export default ProfileContainer;

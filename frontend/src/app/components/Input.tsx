@@ -4,6 +4,7 @@ import styles from "./common.module.scss";
 interface InputProps {
   value: string;
   onChangeEvent: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlurEvent: () => void;
   onEnterKey?: () => void;
   inputLabel?: string;
   placeholder?: string;
@@ -14,6 +15,7 @@ interface InputProps {
 const Input: React.FC<InputProps> = ({
   value,
   onChangeEvent,
+  onBlurEvent,
   onEnterKey,
   inputLabel,
   placeholder = "",
@@ -33,6 +35,7 @@ const Input: React.FC<InputProps> = ({
           type="text"
           value={value}
           onChange={onChangeEvent}
+          onBlur={onBlurEvent}
           onKeyUp={handleKeyUp}
           placeholder={placeholder}
           disabled={disabled}
