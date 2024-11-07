@@ -11,6 +11,7 @@ interface CardProps {
   newScore?: number;
   isSelected?: boolean;
   isFail?: boolean;
+  onClickEvent?: () => void;
   children?: ReactNode;
 }
 
@@ -21,6 +22,7 @@ const Card: React.FC<CardProps> = ({
   newScore,
   isSelected,
   isFail,
+  onClickEvent,
   children,
 }) => {
   const [showBanner, setShowBanner] = useState(isNewScore);
@@ -36,8 +38,18 @@ const Card: React.FC<CardProps> = ({
   }, [isNewScore]);
 
   const renderBanner = () => {
-    if (isFail) return <CardBanner type="fail"><h4>탈락</h4></CardBanner>;
-    if (isReady) return <CardBanner type="ready"><h4>준비 완료</h4></CardBanner>;
+    if (isFail)
+      return (
+        <CardBanner type="fail">
+          <h4>탈락</h4>
+        </CardBanner>
+      );
+    if (isReady)
+      return (
+        <CardBanner type="ready">
+          <h4>준비 완료</h4>
+        </CardBanner>
+      );
     if (isNewScore && showBanner) {
       return (
         <CardBanner type={newScore === 0 ? "fail" : "newScore"}>
@@ -53,6 +65,7 @@ const Card: React.FC<CardProps> = ({
       className={`${styles.cardContainer} ${isEmpty ? styles.empty : ""} ${
         isSelected ? styles.selected : ""
       }`}
+      onClick={onClickEvent}
     >
       {renderBanner()}
       {children}

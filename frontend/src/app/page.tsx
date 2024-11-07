@@ -104,6 +104,7 @@ export default function Home() {
           alt="home illustration"
           width={480}
           height={480}
+          priority
         />
         <div className={styles.startButton}>
           <Button

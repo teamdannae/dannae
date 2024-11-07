@@ -57,7 +57,7 @@ const ProfileNickname = () => {
 
   const confirmNickname = async () => {
     try {
-      const response = await fetch("/api/next/set-nickname", {
+      const response = await fetch("/api/next/profile/set-nickname", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
