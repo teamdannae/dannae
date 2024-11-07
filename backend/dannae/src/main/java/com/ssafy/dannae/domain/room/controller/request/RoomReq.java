@@ -6,6 +6,6 @@ import lombok.Builder;
 public record RoomReq(
 	String title,
 	String mode,
-	Boolean release
+	Boolean isPublic
 ) {
 }

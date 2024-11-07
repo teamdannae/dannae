@@ -32,7 +32,7 @@ class RoomCommandServiceImpl implements RoomCommandService {
 			.title(dto.title())
 			.mode(dto.mode())
 			.code(randomCode)
-			.release(dto.release())
+			.release(dto.isPublic())
 			.creator(dto.creator())
 			.build());
 
@@ -46,7 +46,7 @@ class RoomCommandServiceImpl implements RoomCommandService {
 	public void updateRoom(Long roomId, RoomDetailDto dto) {
 
 		Room room = verifiedById(roomId);
-		room.update(dto.title(), dto.mode(), dto.release());
+		room.update(dto.title(), dto.mode(), dto.isPublic());
 		roomRepository.save(room);
 	}
 

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssafy.dannae.domain.room.controller.request.RoomCreaterReq;
+import com.ssafy.dannae.domain.room.controller.request.RoomCreateReq;
 import com.ssafy.dannae.domain.room.controller.request.RoomReq;
 import com.ssafy.dannae.domain.room.controller.response.RoomCreateRes;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
@@ -37,14 +37,14 @@ public class RoomController {
 	private final JwtTokenDecoder jwtTokenDecoder;
 
 	@PostMapping("")
-	public ResponseEntity<BaseResponse<?>> createRoom(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestBody RoomCreaterReq req){
+	public ResponseEntity<BaseResponse<?>> createRoom(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestBody RoomCreateReq req){
 
 		Long creator = jwtTokenDecoder.getPlayerId(token);
 
 		RoomDto roomDto = roomCommandService.createRoom(RoomDetailDto.builder()
 				.title(req.title())
 				.mode(req.mode())
-				.release(req.release())
+				.isPublic(req.isPublic())
 				.creator(creator)
 				.build());
 
@@ -62,7 +62,7 @@ public class RoomController {
 		roomCommandService.updateRoom(roomId, RoomDetailDto.builder()
 				.title(req.title())
 				.mode(req.mode())
-				.release(req.release())
+				.isPublic(req.isPublic())
 				.build());
 
 		return ResponseEntity.ok(BaseResponse.ofSuccess());

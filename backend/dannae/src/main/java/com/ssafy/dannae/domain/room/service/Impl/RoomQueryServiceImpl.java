@@ -51,7 +51,7 @@ class RoomQueryServiceImpl implements RoomQueryService {
 			.roomId(room.getId())
 			.title(room.getTitle())
 			.mode(room.getMode())
-			.release(room.getRelease())
+			.isPublic(room.getRelease())
 			.code(room.getCode())
 			.playerCount(room.getPlayerCount())
 			.creator(room.getCreator())
