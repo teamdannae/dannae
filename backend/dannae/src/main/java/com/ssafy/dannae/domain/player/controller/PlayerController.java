@@ -1,27 +1,27 @@
 package com.ssafy.dannae.domain.player.controller;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.ssafy.dannae.domain.player.controller.request.PlayerReq;
 import com.ssafy.dannae.domain.player.controller.response.PlayerRes;
-import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.exception.TokenException;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
-import com.ssafy.dannae.domain.room.controller.request.RoomCreaterReq;
-import com.ssafy.dannae.domain.room.service.dto.RoomDto;
-import com.ssafy.dannae.global.exception.ResponseCode;
 import com.ssafy.dannae.global.exception.handler.WaitingRoomWebSocketHandler;
 import com.ssafy.dannae.global.template.response.BaseResponse;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
