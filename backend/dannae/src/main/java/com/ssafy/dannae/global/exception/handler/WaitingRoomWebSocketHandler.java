@@ -322,13 +322,10 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private void checkAllPlayersReadyAndNotify(Long roomId) {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
 
-        // Step 1: 확인 메시지 - 세션이 비어있거나 null일 경우
         if (sessions == null || sessions.isEmpty()) {
-            System.out.println("No sessions found for roomId: " + roomId);
             return;
         }
 
-        // Step 2: 모든 플레이어가 ready 상태인지 확인
         boolean allReady = sessions.stream()
                 .map(this::getPlayerIdFromSession)
                 .map(Long::valueOf)
@@ -339,11 +336,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                     return isReady;
                 });
 
-        // Step 3: 모든 플레이어가 ready 상태인지 여부 출력
-        System.out.println("All players in roomId " + roomId + " are ready: " + allReady);
 
         if (allReady) {
-            // Step 4: 방 정보 가져오기 및 준비 완료 메시지 생성
             Room room = roomQueryService.findById(roomId)
                     .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
 
@@ -357,9 +351,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             if (creatorSession != null) {
                 try {
                     creatorSession.sendMessage(new TextMessage(readyMessage));
-                    System.out.println("Sent game start ready message to creator of roomId " + roomId);
                 } catch (IOException e) {
-                    System.out.println("Failed to send game start ready message to creator of roomId " + roomId);
                     e.printStackTrace();
                 }
             } else {
