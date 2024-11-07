@@ -1,9 +1,11 @@
 import { Button, Input, Radio } from "@/app/components";
 import styles from "./component.module.scss";
-import { createRoom } from "@/services/roomService";
 import { useModal } from "@/hooks";
+import { useRouter } from "next/navigation";
 
 const CreateRoomModal = () => {
+  const router = useRouter();
+
   // Context에서 직접 상태를 가져와서 사용
   const { createRoomModalState, setCreateRoomModalState, closeModal } =
     useModal();
@@ -34,10 +36,31 @@ const CreateRoomModal = () => {
 
   const handleCreateRoom = async () => {
     try {
-      await createRoom();
+      const response = await fetch("/api/next/rooms/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: createRoomModalState.newRoomTitle,
+          mode: createRoomModalState.selectedMode,
+          isPublic: createRoomModalState.isPublic,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create room");
+      }
+
+      const data = await response.json();
+      const roomId = data.data.roomId;
+      console.log("방 생성 성공:", data);
+      console.log(roomId);
+
       closeModal(); // 성공 시 모달 닫기
+      router.push(`/waiting-room/${roomId}`);
     } catch (error) {
-      console.error("Failed to create room:", error);
+      console.error("방 생성에 실패했습니다.", error);
     }
   };
 
@@ -75,7 +98,6 @@ const CreateRoomModal = () => {
         value={newRoomTitle}
         onChangeEvent={handleNewRoomTitleChange}
         inputLabel="방 제목"
-        disabled={!isPublic}
       />
       <Button
         buttonText="생성하기"

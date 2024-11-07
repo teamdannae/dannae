@@ -17,7 +17,7 @@ const ProfileImage = () => {
 
   const confirmImage = async () => {
     try {
-      const response = await fetch("/api/next/set-image", {
+      const response = await fetch("/api/next/profile/set-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -26,9 +26,23 @@ const ProfileImage = () => {
       });
 
       if (response.ok) {
-        router.push("/lobby");
+        const createPlayerResponse = await fetch(
+          "/api/next/profile/create-player",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (createPlayerResponse.ok) {
+          router.push("/lobby");
+        } else {
+          console.error("클라이언트에서 실패", createPlayerResponse);
+        }
       } else {
-        console.error("Failed to set nickname");
+        console.error("Failed to set image");
       }
     } catch (error) {
       console.error("Error:", error);

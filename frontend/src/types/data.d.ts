@@ -39,3 +39,12 @@ interface player {
   isReady: boolean;
   isEmpty: boolean;
 }
+
+interface gameroom {
+  roomId: number;
+  title: string;
+  mode: string;
+  playerCount: number;
+  creator: number;
+  isEmpty?: boolean;
+}
