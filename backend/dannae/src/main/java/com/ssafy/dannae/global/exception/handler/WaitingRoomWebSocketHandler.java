@@ -310,8 +310,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
             // 게임 시작 메시지 생성
             String startGameMessage = String.format(
-                    "{\"type\": \"game_start\", \"message\": \"게임이 시작되었습니다!\", \"room\": {\"id\": \"%d\", \"title\": \"%s\", \"mode\": \"%s\", \"release\": %b, \"code\": \"%s\", \"joinCount\": %d}}",
-                    room.getId(), room.getTitle(), room.getMode(), room.getRelease(), room.getCode(), room.getJoinCount()
+                    "{\"type\": \"game_start\", \"message\": \"게임이 시작되었습니다!\", \"room\": {\"id\": \"%d\", \"title\": \"%s\", \"mode\": \"%s\", \"release\": %b, \"code\": \"%s\", \"playerCount\": %d}}",
+                    room.getId(), room.getTitle(), room.getMode(), room.getRelease(), room.getCode(), room.getPlayerCount()
             );
 
             // 모든 세션에 게임 시작 메시지 전송
