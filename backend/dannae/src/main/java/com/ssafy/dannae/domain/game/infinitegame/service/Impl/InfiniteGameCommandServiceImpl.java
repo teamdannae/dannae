@@ -35,7 +35,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 	};
 
 	private static final int[] score = {
-		10, 20, 40, 60
+		0, 10, 20, 40, 60, 100
 	};
 
 	private static final boolean[][] invalidCombinations = new boolean[19][19];

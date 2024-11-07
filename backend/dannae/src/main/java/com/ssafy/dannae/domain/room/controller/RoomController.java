@@ -1,89 +1,88 @@
 package com.ssafy.dannae.domain.room.controller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
-import com.ssafy.dannae.domain.player.entity.PlayerStatus;
-import com.ssafy.dannae.domain.player.service.PlayerQueryService;
-import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.controller.request.RoomCreaterReq;
 import com.ssafy.dannae.domain.room.controller.request.RoomReq;
+import com.ssafy.dannae.domain.room.controller.response.RoomCreateRes;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
+import com.ssafy.dannae.domain.room.service.dto.RoomDetailDto;
 import com.ssafy.dannae.domain.room.service.dto.RoomDto;
 import com.ssafy.dannae.global.template.response.BaseResponse;
-import com.ssafy.dannae.global.util.JwtTokenProvider;
+import com.ssafy.dannae.global.util.JwtTokenDecoder;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/room")
+@RequestMapping("/api/v1/rooms")
 @RestController
 public class RoomController {
 
-	private final JwtTokenProvider jwtTokenProvider;
 	private final RoomCommandService roomCommandService;
 	private final RoomQueryService roomQueryService;
-	private final PlayerQueryService playerQueryService;
+	private final JwtTokenDecoder jwtTokenDecoder;
 
 	@PostMapping("")
-	public ResponseEntity<BaseResponse<Map<String, Object>>> createRoom(@RequestBody RoomCreaterReq req){
-		RoomDto roomDto= roomCommandService.createRoom(RoomDto.builder()
+	public ResponseEntity<BaseResponse<?>> createRoom(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestBody RoomCreaterReq req){
+
+		Long creator = jwtTokenDecoder.getPlayerId(token);
+
+		RoomDto roomDto = roomCommandService.createRoom(RoomDetailDto.builder()
 				.title(req.title())
 				.mode(req.mode())
 				.release(req.release())
+				.creator(creator)
 				.build());
 
-		Long roomId = roomDto.roomId();
+		RoomCreateRes roomCreateRes = RoomCreateRes.builder()
+			.roomId(roomDto.roomId())
+			.build();
 
-		PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
-				.roomId(roomId)
-				.score(0L)
-				.status(PlayerStatus.nonready)
-				.authorization(PlayerAuthorization.creator)
-				.nickname(req.nickname())
-				.image(req.image())
-				.build());
+		return ResponseEntity.ok(BaseResponse.ofSuccess(roomCreateRes));
 
-		String token = jwtTokenProvider.createToken( roomId.toString(),playerDto.playerId().toString());
-
-		Map<String, Object> response = new HashMap<>();
-		response.put("roomId", roomDto.roomId());
-		response.put("playerId", playerDto.playerId());
-		response.put("token", token);
-
-		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
 
 	@PatchMapping("/{room-id}")
-	public ResponseEntity<BaseResponse<?>> updateRoom(
-		@PathVariable("room-id") Long roomId,
-		@RequestBody RoomReq req){
-		roomCommandService.updateRoom(roomId, RoomDto.builder()
+	public ResponseEntity<BaseResponse<?>> updateRoom(@PathVariable("room-id") Long roomId,	@RequestBody RoomReq req){
+
+		roomCommandService.updateRoom(roomId, RoomDetailDto.builder()
 				.title(req.title())
 				.mode(req.mode())
 				.release(req.release())
 				.build());
+
 		return ResponseEntity.ok(BaseResponse.ofSuccess());
+
 	}
 
 	@GetMapping("/list")
-	public ResponseEntity<BaseResponse<List<RoomDto>>> getReleasedRooms(){
+	public ResponseEntity<BaseResponse<List<?>>> readReleasedRooms(){
+
 		List<RoomDto> res = roomQueryService.readReleasedRooms();
 		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+
+	}
+
+	@GetMapping("/{room-id}")
+	public ResponseEntity<BaseResponse<?>> readRoom(@PathVariable("room-id") Long roomId){
+
+		RoomDetailDto res = roomQueryService.readDetail(roomId);
+		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+
 	}
 
 }

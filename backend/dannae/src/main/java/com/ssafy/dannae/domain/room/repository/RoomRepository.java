@@ -5,10 +5,11 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ssafy.dannae.domain.room.entity.Room;
+import com.ssafy.dannae.domain.room.entity.RoomStatus;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-	List<Room> findByRelease(Boolean release);
+	List<Room> findByReleaseAndStatus(Boolean release, RoomStatus Status);
 
 	boolean existsById(Long id);
 }

@@ -9,6 +9,7 @@ import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.repository.RoomRepository;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
+import com.ssafy.dannae.domain.room.service.dto.RoomDetailDto;
 import com.ssafy.dannae.domain.room.service.dto.RoomDto;
 
 import lombok.RequiredArgsConstructor;
@@ -23,24 +24,47 @@ class RoomCommandServiceImpl implements RoomCommandService {
 	private final RoomRepository roomRepository;
 
 	@Override
-	public RoomDto createRoom(RoomDto dto) {
+	public RoomDto createRoom(RoomDetailDto dto) {
+
 		String randomCode = String.valueOf(100000 + new Random().nextInt(900000));
+
 		Room room = roomRepository.save(Room.builder()
 			.title(dto.title())
 			.mode(dto.mode())
 			.code(randomCode)
 			.release(dto.release())
+			.creator(dto.creator())
 			.build());
+
 		return RoomDto.builder()
 			.roomId(room.getId())
 			.build();
+
 	}
 
 	@Override
-	public void updateRoom(Long roomId, RoomDto dto) {
+	public void updateRoom(Long roomId, RoomDetailDto dto) {
+
+		Room room = verifiedById(roomId);
+		room.update(dto.title(), dto.mode(), dto.release());
+		roomRepository.save(room);
+	}
+
+	@Override
+	public void updateRoomCreator(Long roomId, Long roomCreatorId) {
+
+		Room room = verifiedById(roomId);
+		room.updateCreator(roomCreatorId);
+		roomRepository.save(room);
+
+	}
+
+	private Room verifiedById(Long roomId) {
+
 		Room room = roomRepository.findById(roomId)
 			.orElseThrow(() -> new NoRoomException("Room not found"));
-		room.update(dto.title(), dto.mode(), dto.release());
+
+		return room;
 	}
 
 }
