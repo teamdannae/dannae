@@ -200,8 +200,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-
-
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         Long roomId = getRoomIdFromSession(session);
@@ -212,7 +210,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         String type = jsonMessage.getString("type");
 
         if ("start_game".equals(type)) {
-            // playerId가 메시지에 포함되어 있어야 함
+
             String playerId = jsonMessage.getString("playerId");
 
             // 요청한 사용자가 방장인지 확인
@@ -225,24 +223,21 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"게임 시작 권한이 없습니다.\"}"));
             }
         } else if ("chat".equals(type)) {
-            // playerId를 사용하여 PlayerDto 조회
+
             String playerId = getPlayerIdFromSession(session);
             PlayerDto playerDto = playerQueryService.findPlayerById(Long.parseLong(playerId));
 
-            // 채팅 메시지 생성
             String chatMessage = String.format(
                     "{\"type\": \"chat\", \"nickname\": \"%s\", \"message\": \"%s\", \"playerId\": \"%s\", \"image\": %d}",
                     playerDto.nickname(), jsonMessage.getString("message"), playerId, playerDto.image()
             );
 
-            // 채팅 메시지 브로드캐스트
             broadcastToRoom(roomId, chatMessage);
         } else {
             // 알 수 없는 타입의 메시지 처리
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"알 수 없는 메시지 타입입니다.\"}"));
         }
     }
-
 
     private void broadcastToRoom(Long roomId, String message) throws IOException {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
@@ -287,10 +282,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 });
     }
 
-    public List<WebSocketSession> getRoomSessions(Long roomId) {
-        return waitingRoomSessions.getOrDefault(roomId, new CopyOnWriteArrayList<>());
-    }
-
     public int getRoomPlayerCount(Long roomId) {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
         return sessions != null ? sessions.size() : 0;
@@ -312,6 +303,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 })
         );
     }
+
     public void startGame(Long roomId) throws IOException {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
         if (sessions != null) {
@@ -320,6 +312,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                     .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
 
             // 게임 시작 메시지 생성
+            roomCommandService.updateStatus(roomId);
             String startGameMessage = String.format(
                     "{\"type\": \"game_start\", \"message\": \"게임이 시작되었습니다!\", \"room\": {\"id\": \"%d\", \"title\": \"%s\", \"mode\": \"%s\", \"release\": %b, \"code\": \"%s\", \"playerCount\": %d}}",
                     room.getId(), room.getTitle(), room.getMode(), room.getRelease(), room.getCode(), room.getPlayerCount()
@@ -337,7 +330,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
 
     public void onGameStartButtonClicked(Long roomId, WebSocketSession session) throws IOException {
-        // 요청한 사용자가 방장인지 확인
+
         if (roomCreatorMap.get(roomId) == session) {
             startGame(roomId); // 방장일 경우 게임 시작
         } else {
