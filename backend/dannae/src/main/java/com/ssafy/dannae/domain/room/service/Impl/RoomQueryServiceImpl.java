@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ssafy.dannae.domain.player.exception.NoPlayerException;
+import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.entity.RoomStatus;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
@@ -25,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 class RoomQueryServiceImpl implements RoomQueryService {
 
 	private final RoomRepository roomRepository;
+	private final PlayerRepository playerRepository;
 
 	@Override
 	public List<RoomDto> readReleasedRooms() {
@@ -38,6 +41,10 @@ class RoomQueryServiceImpl implements RoomQueryService {
 				.mode(room.getMode())
 				.playerCount(room.getPlayerCount())
 				.creator(room.getCreator())
+				.creatorNickname(
+					playerRepository.findById(room.getCreator())
+						.orElseThrow(() -> new NoPlayerException("없는 사용자입니다."))
+						.getNickname())
 				.build())
 			.collect(Collectors.toList());
 	}
