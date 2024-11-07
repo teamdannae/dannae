@@ -7,7 +7,7 @@ public record RoomDetailDto(
 	Long roomId,
 	String title,
 	String mode,
-	Boolean release,
+	Boolean isPublic,
 	Long playerCount,
 	String code,
 	Long creator
