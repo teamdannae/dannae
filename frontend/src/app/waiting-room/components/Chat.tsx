@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Input, Button } from "../../components";
 import styles from "./components.module.scss";
 
@@ -14,6 +15,17 @@ export default function Chat({
   setNewMessage,
   handleSend,
 }: chatProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
   return (
     <>
       <div className={styles.chatContainer}>
@@ -23,6 +35,7 @@ export default function Chat({
               {message}
             </p>
           ))}
+          <div ref={messagesEndRef} />
         </div>
         <div className={styles.inputContainer}>
           <Input

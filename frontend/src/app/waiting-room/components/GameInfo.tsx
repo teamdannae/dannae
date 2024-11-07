@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "@/hooks";
 import { Button } from "@/app/components";
 import styles from "./components.module.scss";
 import Image from "next/image";
 
-export default function GameInfo() {
+interface GameInfoProps {
+  areAllPlayersReady: boolean;
+  hostPlayerId: string;
+  sendMessage: (message: chat) => void;
+}
+
+export default function GameInfo({
+  areAllPlayersReady,
+  hostPlayerId,
+  sendMessage,
+}: GameInfoProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [canStart, setCanStart] = useState(false);
   const infoContent = [
     {
       title: "단어의 방",
@@ -29,31 +41,60 @@ export default function GameInfo() {
   const { openModal } = useModal();
 
   const fetchReady = async () => {
-    try {
-      const token =
-        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwicm9vbUlkIjoiMyIsImlhdCI6MTczMDg1MTI1MCwiZXhwIjoxNzMwODUzMDUwfQ.me09_ZBvoMcFZE3DD-KXiQDbyIWSiYb7P6s4yiBOlJA";
+    if (canStart) {
+      sendMessage({
+        type: "start_game",
+        playerId: hostPlayerId,
+      });
+    } else {
+      try {
+        const token =
+          "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzMwOTUyOTY5LCJleHAiOjE3MzA5NTQ3Njl9.YTy9fbYiW1Do5_P04eST5jSX6S1_Eg2Fnhwl2mHE_S0";
 
-      const response = await fetch(
-        "http://70.12.247.135:8080/api/v1/players/ready",
-        {
+        const response = await fetch("https://dannae.kr/api/v1/players/ready", {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
           },
           // credentials: "include",
-        }
-      );
+        });
 
-      if (!response.ok) {
-        console.error("Error:", response.status, response.statusText);
-      } else {
-        const result = await response.json();
-        console.log(result);
+        if (!response.ok) {
+          console.error("Error:", response.status, response.statusText);
+        } else {
+          const result = await response.json();
+          setIsReady((prev) => !prev);
+          console.log(result);
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
       }
-    } catch (error) {
-      console.error("Fetch error:", error);
     }
   };
+  const getPlayerId = async () => {
+    try {
+      const response = await fetch("/api/next/profile/get-playerId", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Error fetching player ID: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.playerId;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    const checkCanStart = async () => {
+      const playerId = await getPlayerId();
+      setCanStart(areAllPlayersReady && hostPlayerId === playerId);
+    };
+    checkCanStart();
+  }, [areAllPlayersReady, hostPlayerId]);
 
   const handleOpenModal = () => {
     openModal(
@@ -64,11 +105,11 @@ export default function GameInfo() {
   };
 
   const handleFlip = (newIndex: number) => {
-    setIsFlipped(true); // 플립 시작
+    setIsFlipped(true);
     setTimeout(() => {
-      setCurrentIndex(newIndex); // 인덱스 변경
-      setIsFlipped(false); // 플립 초기화
-    }, 300); // 전환 효과 시간
+      setCurrentIndex(newIndex);
+      setIsFlipped(false);
+    }, 300);
   };
 
   const handleLeftClick = () => {
@@ -109,7 +150,9 @@ export default function GameInfo() {
           <div className={styles.readyButton}>
             <Button
               onClickEvent={fetchReady}
-              buttonText="준비하기"
+              buttonText={
+                canStart ? "시작하기" : isReady ? "준비취소" : "준비하기"
+              }
               buttonColor="green"
             />
           </div>
@@ -119,6 +162,7 @@ export default function GameInfo() {
             alt="room illustration"
             width={300}
             height={320}
+            priority
           />
         </div>
       </div>
