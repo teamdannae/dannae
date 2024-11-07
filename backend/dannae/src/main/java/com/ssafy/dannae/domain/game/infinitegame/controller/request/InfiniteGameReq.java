@@ -6,7 +6,6 @@ import lombok.Builder;
 public record InfiniteGameReq(
 	String word,
 	Long gameId,
-	String initial,
-	Long playerId
+	String initial
 ) {
 }

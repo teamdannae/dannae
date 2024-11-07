@@ -42,26 +42,30 @@ public class Room {
 	@Column(name = "status", nullable = false)
 	private RoomStatus status;
 
-	@Column(name = "join_count", nullable = false)
-	private Long joinCount;
+	@Column(name = "player_count", nullable = false)
+	private Long playerCount;
+
+	@Column(name = "creator", nullable = false)
+	private Long creator;
 
 	@Builder
-	public Room(String title, String mode, Boolean release, String code) {
-		this(title, mode, release, code, RoomStatus.READY, 1L);
+	public Room(String title, String mode, Boolean release, String code, Long creator) {
+		this(title, mode, release, code, RoomStatus.READY, 1L, creator);
 	}
 
-	public Room(String title, String mode, Boolean release, String code, RoomStatus status, Long joinCount) {
+	public Room(String title, String mode, Boolean release, String code, RoomStatus status, Long playerCount, Long creator) {
 		checkRoomTitle(title);
 		this.title = title;
 		this.mode = mode;
 		this.release = release;
 		this.code = code;
 		this.status = status;
-		this.joinCount = joinCount;
+		this.playerCount = playerCount;
+		this.creator = creator;
 	}
 
 	private void checkRoomTitle(String title) {
-		if (title.length() > 20) {
+		if (title.length() > 12) {
 			throw new TitleNumberOverflowException("Invalid Title value");
 		}
 	}
@@ -85,9 +89,12 @@ public class Room {
 		this.release = release;
 	}
 
-	public void updateJoinCount(Long joinCount){
-		this.joinCount = joinCount;
+	public void updatePlayerCount(Long playerCount ){
+		this.playerCount = playerCount;
 	}
 
+	public void updateCreator(Long creator){
+		this.creator = creator;
+	}
 
 }

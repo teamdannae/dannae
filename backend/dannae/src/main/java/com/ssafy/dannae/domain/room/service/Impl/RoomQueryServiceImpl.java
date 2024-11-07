@@ -8,8 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.room.entity.Room;
+import com.ssafy.dannae.domain.room.entity.RoomStatus;
+import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.repository.RoomRepository;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
+import com.ssafy.dannae.domain.room.service.dto.RoomDetailDto;
 import com.ssafy.dannae.domain.room.service.dto.RoomDto;
 
 import lombok.RequiredArgsConstructor;
@@ -25,22 +28,46 @@ class RoomQueryServiceImpl implements RoomQueryService {
 
 	@Override
 	public List<RoomDto> readReleasedRooms() {
-		List<Room> roomList = roomRepository.findByRelease(true); // release가 "true"인 방만 조회
+
+		List<Room> roomList = roomRepository.findByReleaseAndStatus(true, RoomStatus.READY);
+
 		return roomList.stream()
 			.map(room -> RoomDto.builder()
 				.roomId(room.getId())
 				.title(room.getTitle())
 				.mode(room.getMode())
-				.release(room.getRelease())
+				.playerCount(room.getPlayerCount())
+				.creator(room.getCreator())
 				.build())
 			.collect(Collectors.toList());
 	}
 
+	@Override
+	public RoomDetailDto readDetail(Long roomId) {
+
+		Room room = findById(roomId).orElseThrow(() -> new NoRoomException("Room not found"));
+
+		RoomDetailDto dto = RoomDetailDto.builder()
+			.roomId(room.getId())
+			.title(room.getTitle())
+			.mode(room.getMode())
+			.release(room.getRelease())
+			.code(room.getCode())
+			.playerCount(room.getPlayerCount())
+			.creator(room.getCreator())
+			.build();
+
+		return dto;
+	}
+
+	@Override
+	public Optional<Room> findById(Long roomId) {
+		return roomRepository.findById(roomId);
+	}
+
+	@Override
 	public boolean existsById(Long roomId) {
 		return roomRepository.existsById(roomId);
 	}
 
-	public Optional<Room> findById(Long roomId) {
-		return roomRepository.findById(roomId);
-	}
 }
