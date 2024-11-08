@@ -1,12 +1,29 @@
 package com.ssafy.dannae.domain.game.infinitegame.service.Impl;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import com.ssafy.dannae.domain.game.entity.Word;
 import com.ssafy.dannae.domain.game.infinitegame.entity.InfiniteGame;
@@ -49,6 +66,10 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 	private final InfiniteGameRepository infinitegameRepository;
 	private final WordRepository wordRepository;
 	private final PlayerRepository playerRepository;
+	@Value("${korean.api.url}")
+	private String apiUrl;
+	@Value("${openai.api.key}")
+	private String apiKey;
 
 	/**
 	 * 랜덤 초성을 만들어서 방 번호와 함께 반환해주는 메서드
@@ -85,8 +106,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		InfiniteGameDto dto;
 
 		if(!checkInitial(infiniteGameDto.initial(), infiniteGameDto.word())) {
-			List<String> message = new ArrayList<>();
-			message.add("초성에 맞지 않은 단어입니다.");
+			List<String> message = List.of("초성에 맞지 않은 단어입니다.");
 			dto = InfiniteGameDto.builder()
 				.correct(false)
 				.word(infiniteGameDto.word())
@@ -109,17 +129,24 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 
 		Optional<List<Word>> optionalWords = wordRepository.findAllByInitialAndWord(infiniteGameDto.initial(), infiniteGameDto.word());
 
+		List<Word> words;
 		if (optionalWords.isEmpty() || optionalWords.get().isEmpty()) {
-			List<String> message = new ArrayList<>();
-			message.add("존재하지 않는 단어입니다.");
-			return InfiniteGameDto.builder()
-				.correct(false)
-				.word(infiniteGameDto.word())
-				.meaning(message)
-				.build();
+			words = fetchWordsFromKoreanApi(infiniteGameDto.word());
+
+			if (words.isEmpty()) {
+				List<String> message = List.of("존재하지 않는 단어입니다.");
+				return InfiniteGameDto.builder()
+					.correct(false)
+					.word(infiniteGameDto.word())
+					.meaning(message)
+					.build();
+			}
+
+			wordRepository.saveAll(words);
+		} else {
+			words = optionalWords.get();
 		}
 
-		List<Word> words = optionalWords.get();
 		List<String> meaning = new ArrayList<>();
 
 		words.forEach(word -> {
@@ -226,6 +253,64 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * 국립국어원 API를 호출하여 단어와 뜻을 가져오는 메서드
+	 * @param word 검색할 단어
+	 * @return
+	 */
+	private List<Word> fetchWordsFromKoreanApi(String word) {
+
+		List<Word> words = new ArrayList<>();
+
+		try {
+			// API 요청 URL 구성
+			String requestUrl = apiUrl + "?key=" + apiKey + "&q=" + URLEncoder.encode(word, "UTF-8");
+
+			// HTTP 요청 수행
+			HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
+			connection.setRequestMethod("GET");
+
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+				InputStream responseStream = connection.getInputStream();
+				String response = new BufferedReader(new InputStreamReader(responseStream))
+					.lines().collect(Collectors.joining("\n"));
+
+				// XML 파싱 (예: org.w3c.dom 사용)
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				Document document = builder.parse(new InputSource(new StringReader(response)));
+
+				NodeList wordList = document.getElementsByTagName("item");
+				for (int i = 0; i < wordList.getLength(); i++) {
+					Node item = wordList.item(i);
+					if (item.getNodeType() == Node.ELEMENT_NODE) {
+						Element element = (Element) item;
+						String wordText = element.getElementsByTagName("word").item(0).getTextContent();
+						String meaning = element.getElementsByTagName("definition").item(0).getTextContent();
+
+						// 초성 추출
+						String initial = "";
+						for (char c : wordText.toCharArray()) {
+							int initialIndex = extractInitialIndex(c); // extractInitialIndex 호출
+							if (initialIndex != -1) {
+								initial += CHO_SUNG[initialIndex]; // 초성 추가
+							}
+						}
+						words.add(Word.builder()
+							.word(wordText)
+							.meaning(meaning)
+							.initial(initial)
+							.build());
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.error("Failed to fetch words from Korean API: {}", e.getMessage(), e);
+		}
+
+		return words;
 	}
 
 }
