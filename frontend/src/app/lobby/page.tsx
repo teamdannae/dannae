@@ -77,7 +77,7 @@ const Lobby = () => {
       const roomData = await response.json();
       console.log(roomData);
 
-      router.push(`/waiting-room/${roomId}`);
+      router.push(`/game/${roomId}/wait`);
     } catch (error) {
       console.error(error);
     }
@@ -137,13 +137,17 @@ const Lobby = () => {
             >
               <p>무한 초성 지옥</p>
             </div>
-            <div className={styles.iconButton} onClick={loadGames}>
+            <div
+              className={`${styles.iconButton} ${styles.refreshButton}`}
+              onClick={loadGames}
+            >
               <Image
                 src="/icons/refresh.svg"
                 alt="refresh button"
                 width={48}
                 height={48}
                 priority
+                className={styles.refreshIcon}
               />
             </div>
           </nav>
@@ -194,8 +198,27 @@ const Lobby = () => {
             >
               {!game.isEmpty && (
                 <div className={styles.cardItem}>
-                  <h4>{game.mode}</h4>
-                  <p>{game.title}</p>
+                  <h5>{game.title}</h5>
+                  <div>
+                    <div className={styles.info}>
+                      <Image
+                        src="/icons/gameboy.svg"
+                        alt="mode icon"
+                        width={24}
+                        height={24}
+                      />
+                      <p>{game.mode}</p>
+                    </div>
+                    <div className={styles.info}>
+                      <Image
+                        src="/icons/crown-alt.svg"
+                        alt="host icon"
+                        width={24}
+                        height={24}
+                      />
+                      <p>김범수</p>
+                    </div>
+                  </div>
                   <p className={styles.playerCount}>{game.playerCount} / 4</p>
                 </div>
               )}

@@ -5,14 +5,17 @@ import Image from "next/image";
 import { Toast } from "@/app/components";
 import styles from "./components.module.scss";
 
-export default function CopyCode() {
-  const roomCode = "241987";
+interface CopyCodeProps {
+  code: string;
+}
+
+export default function CopyCode({ code }: CopyCodeProps) {
   const [isToastVisible, setIsToastVisible] = useState(false);
 
   const copyToClipboard = () => {
     if (typeof window !== "undefined" && navigator.clipboard) {
       navigator.clipboard
-        .writeText(roomCode)
+        .writeText(code)
         .then(() => {
           setIsToastVisible(true);
           setTimeout(() => setIsToastVisible(false), 2000);
@@ -31,7 +34,7 @@ export default function CopyCode() {
         onClick={copyToClipboard}
       >
         <Image src="/icons/copy.svg" alt="copy-icon" width={18} height={18} />
-        {roomCode}
+        {code}
       </button>
       {isToastVisible && <Toast message="초대 링크가 복사되었습니다!" />}
     </>

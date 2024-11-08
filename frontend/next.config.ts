@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     silenceDeprecations: ["legacy-js-api"],
     // includePaths: [path.join(__dirname, "src/styles")],
   },
+  reactStrictMode: false,
 };
 
 export default nextConfig;

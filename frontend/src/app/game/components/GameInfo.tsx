@@ -8,14 +8,18 @@ interface GameInfoProps {
   areAllPlayersReady: boolean;
   hostPlayerId: string;
   sendMessage: (message: chat) => void;
+  mode: string;
 }
 
 export default function GameInfo({
   areAllPlayersReady,
   hostPlayerId,
   sendMessage,
+  mode,
 }: GameInfoProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(
+    mode === "단어의 방" ? 1 : 0
+  );
   const [isFlipped, setIsFlipped] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [canStart, setCanStart] = useState(false);
@@ -29,7 +33,7 @@ export default function GameInfo({
       imageSrc: "/illustration/Illustration-word.svg",
     },
     {
-      title: "새로운 방",
+      title: "무한 초성 지옥",
       description: [
         "초성만 보고 떠오르는 단어를 맞추는 당신의 상상력과 순발력을 시험해 보세요!",
         "함께 도전하고, 최고 기록에 도전해 보세요.",
@@ -37,6 +41,10 @@ export default function GameInfo({
       imageSrc: "/illustration/Illustration-hell.svg",
     },
   ];
+
+  useEffect(() => {
+    setCurrentIndex(mode === "단어의 방" ? 0 : 1);
+  }, [mode]);
 
   const { openModal } = useModal();
 
@@ -49,15 +57,20 @@ export default function GameInfo({
     } else {
       try {
         const token =
-          "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzMwOTUyOTY5LCJleHAiOjE3MzA5NTQ3Njl9.YTy9fbYiW1Do5_P04eST5jSX6S1_Eg2Fnhwl2mHE_S0";
+          "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzMwOTYxMzc5LCJleHAiOjE3MzA5NjMxNzl9.QQ2KDS7EfN1owImg0KDUhkELACRj2ghUwrPfspLdJlQ";
 
-        const response = await fetch("https://dannae.kr/api/v1/players/ready", {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          // credentials: "include",
-        });
+        const response = await fetch(
+          `https://dannae.kr/api/v1/players/${
+            isReady ? "nonready" : "ready"
+          }/${6}`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            // credentials: "include",
+          }
+        );
 
         if (!response.ok) {
           console.error("Error:", response.status, response.statusText);
@@ -147,7 +160,11 @@ export default function GameInfo({
             <div className={styles.infoIcon} />
             <p>자세히 보기</p>
           </button>
-          <div className={styles.readyButton}>
+          <div
+            className={`${styles.readyButton} ${
+              areAllPlayersReady && styles.startButton
+            }`}
+          >
             <Button
               onClickEvent={fetchReady}
               buttonText={
