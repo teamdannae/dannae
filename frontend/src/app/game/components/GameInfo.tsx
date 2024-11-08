@@ -9,6 +9,7 @@ interface GameInfoProps {
   hostPlayerId: string;
   sendMessage: (message: chat) => void;
   mode: string;
+  roomId: string | string[] | undefined;
 }
 
 export default function GameInfo({
@@ -16,6 +17,7 @@ export default function GameInfo({
   hostPlayerId,
   sendMessage,
   mode,
+  roomId,
 }: GameInfoProps) {
   const [currentIndex, setCurrentIndex] = useState(
     mode === "단어의 방" ? 1 : 0
@@ -64,8 +66,9 @@ export default function GameInfo({
 
         const response = await fetch(
           `https://dannae.kr/api/v1/players/${
+            // `http://70.12.247.93:8080/api/v1/players/${
             isReady ? "nonready" : "ready"
-          }/${6}`,
+          }/${roomId}`,
           {
             method: "PATCH",
             headers: {
