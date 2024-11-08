@@ -16,7 +16,7 @@ export default function Chat({
   handleSend,
 }: chatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [gameStart] = useState(true);
+  const [gameStart] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [showPopup, setShowPopup] = useState(true);
 

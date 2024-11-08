@@ -56,8 +56,11 @@ export default function GameInfo({
       });
     } else {
       try {
-        const token =
-          "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzMwOTYxMzc5LCJleHAiOjE3MzA5NjMxNzl9.QQ2KDS7EfN1owImg0KDUhkELACRj2ghUwrPfspLdJlQ";
+        const tokenResponse = await fetch("/api/next/profile/get-token");
+        if (!tokenResponse.ok) throw new Error("Failed to load token");
+
+        const tokenData = await tokenResponse.json();
+        const token = tokenData.token;
 
         const response = await fetch(
           `https://dannae.kr/api/v1/players/${
