@@ -3,7 +3,6 @@ package com.ssafy.dannae.domain.game.infinitegame.service.Impl;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -13,18 +12,12 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.dannae.domain.game.entity.Word;
 import com.ssafy.dannae.domain.game.infinitegame.entity.InfiniteGame;
 import com.ssafy.dannae.domain.game.infinitegame.repository.InfiniteGameRepository;
@@ -261,12 +254,16 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 	 * @return
 	 */
 	private List<Word> fetchWordsFromKoreanApi(String word) {
-
 		List<Word> words = new ArrayList<>();
 
 		try {
 			// API 요청 URL 구성
-			String requestUrl = apiUrl + "?key=" + apiKey + "&q=" + URLEncoder.encode(word, "UTF-8");
+			String requestUrl = apiUrl + "?key=" + apiKey
+				+ "&q=" + URLEncoder.encode(word, "UTF-8")
+				+ "&req_type=json"      // JSON 형식 요청
+				+ "&start=1"            // 검색의 시작 번호 (기본값: 1)
+				+ "&num=100"             // 결과 출력 건수 (기본값: 10)
+				+ "&advanced=n";        // 자세히 찾기 미사용 (기본값: n)
 
 			// HTTP 요청 수행
 			HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
@@ -277,33 +274,37 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				String response = new BufferedReader(new InputStreamReader(responseStream))
 					.lines().collect(Collectors.joining("\n"));
 
-				// XML 파싱 (예: org.w3c.dom 사용)
-				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder builder = factory.newDocumentBuilder();
-				Document document = builder.parse(new InputSource(new StringReader(response)));
+				// JSON 파싱
+				ObjectMapper objectMapper = new ObjectMapper();
+				JsonNode root = objectMapper.readTree(response);
+				JsonNode items = root.path("channel").path("item");
 
-				NodeList wordList = document.getElementsByTagName("item");
-				for (int i = 0; i < wordList.getLength(); i++) {
-					Node item = wordList.item(i);
-					if (item.getNodeType() == Node.ELEMENT_NODE) {
-						Element element = (Element) item;
-						String wordText = element.getElementsByTagName("word").item(0).getTextContent();
-						String meaning = element.getElementsByTagName("definition").item(0).getTextContent();
+				for (JsonNode item : items) {
+					String wordText = item.path("word").asText();
+					String meaning = item.path("sense").path("definition").asText();
 
-						// 초성 추출
-						String initial = "";
-						for (char c : wordText.toCharArray()) {
-							int initialIndex = extractInitialIndex(c); // extractInitialIndex 호출
-							if (initialIndex != -1) {
-								initial += CHO_SUNG[initialIndex]; // 초성 추가
-							}
+					// 초성 추출
+					String initial = "";
+					for (char c : wordText.toCharArray()) {
+						int initialIndex = extractInitialIndex(c); // extractInitialIndex 호출
+						if (initialIndex != -1) {
+							initial += CHO_SUNG[initialIndex]; // 초성 추가
 						}
-						words.add(Word.builder()
-							.word(wordText)
-							.meaning(meaning)
-							.initial(initial)
-							.build());
 					}
+
+					// Word 객체 생성 및 리스트에 추가
+					Word newWord = Word.builder()
+						.word(wordText)
+						.meaning(meaning)
+						.initial(initial)
+						.build();
+
+					words.add(newWord);
+				}
+
+				// 단어가 발견되면 데이터베이스에 추가
+				if (!words.isEmpty()) {
+					wordRepository.saveAll(words);
 				}
 			}
 		} catch (Exception e) {
