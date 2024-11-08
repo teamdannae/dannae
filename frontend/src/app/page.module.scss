@@ -233,8 +233,11 @@ a.secondary {
   0% {
     transform: translateY(0) rotate(var(--rotate));
   }
+  95% {
+    transform: translateY(105vh) rotate(var(--rotate));
+  }
   100% {
-    transform: translateY(110vh) rotate(var(--rotate));
+    transform: translateY(105vh);
   }
 }
 

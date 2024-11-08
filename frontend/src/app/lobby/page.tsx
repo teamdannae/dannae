@@ -5,7 +5,11 @@ import styles from "./page.module.scss";
 import Image from "next/image";
 import { Card } from "../components";
 import { useModal } from "@/hooks";
-import CreateRoomModal from "./components/CreateRoomModal";
+import {
+  CreateRoomModal,
+  CreateInviteCodeModal,
+  CreateRankingModal,
+} from "./components";
 import { useRouter } from "next/navigation";
 
 const gamesPerPage = 12;
@@ -21,6 +25,14 @@ const Lobby = () => {
 
   const handleCreateRoomModal = () => {
     openModal(<CreateRoomModal />);
+  };
+
+  const handleCreateInviteCodeModal = () => {
+    openModal(<CreateInviteCodeModal />);
+  };
+
+  const handleCreateRankingModal = () => {
+    openModal(<CreateRankingModal />);
   };
 
   const loadGames = async () => {
@@ -90,13 +102,16 @@ const Lobby = () => {
 
   return (
     <div className={styles.lobbyContainer}>
-      <header className={styles.header}>
+      <header className={`${styles.header} ${styles.mainHeader}`}>
         <h1>게임 목록</h1>
         <nav className={styles.navContainer}>
-          <div className={styles.navButton}>
+          <div onClick={handleCreateRankingModal} className={styles.navButton}>
             <p>순위표</p>
           </div>
-          <div className={styles.navButton}>
+          <div
+            onClick={handleCreateInviteCodeModal}
+            className={styles.navButton}
+          >
             <p>초대 코드 입력</p>
           </div>
           <div onClick={handleCreateRoomModal} className={styles.navButton}>

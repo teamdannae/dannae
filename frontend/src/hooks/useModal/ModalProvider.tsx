@@ -9,6 +9,10 @@ interface CreateRoomModalState {
   isPublic: boolean;
 }
 
+interface CreateInviteCodeState {
+  inviteCode: string;
+}
+
 // 초기값을 상수로 정의
 const INITIAL_CREATE_ROOM_STATE: CreateRoomModalState = {
   selectedMode: "단어의 방",
@@ -21,6 +25,8 @@ type ModalContextType = {
   closeModal: () => void;
   createRoomModalState: CreateRoomModalState;
   setCreateRoomModalState: (state: CreateRoomModalState) => void;
+  createInviteCodeState: CreateInviteCodeState;
+  setCreateInviteCodeState: (state: CreateInviteCodeState) => void;
 };
 
 export const ModalContext = createContext<ModalContextType | undefined>(
@@ -31,7 +37,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [modalContent, setModalContent] = useState<ReactNode | null>(null);
   const [createRoomModalState, setCreateRoomModalState] =
     useState<CreateRoomModalState>(INITIAL_CREATE_ROOM_STATE);
-
+  const [createInviteCodeState, setCreateInviteCodeState] =
+    useState<CreateInviteCodeState>({ inviteCode: "" });
   const openModal = useCallback((content: ReactNode) => {
     setModalContent(content);
   }, []);
@@ -40,6 +47,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     setModalContent(null);
     // 모달이 닫힐 때 상태를 초기값으로 리셋
     setCreateRoomModalState(INITIAL_CREATE_ROOM_STATE);
+    setCreateInviteCodeState({ inviteCode: "" });
   }, []);
 
   return (
@@ -49,6 +57,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         closeModal,
         createRoomModalState,
         setCreateRoomModalState,
+        createInviteCodeState,
+        setCreateInviteCodeState,
       }}
     >
       {children}
