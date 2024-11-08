@@ -15,6 +15,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 @Service
 public class RankQueryServiceImpl implements RankQueryService {
+
     private final RankRepository rankRepository;
 
     @Override

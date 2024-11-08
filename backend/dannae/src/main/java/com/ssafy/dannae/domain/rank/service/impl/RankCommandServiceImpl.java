@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @Service
 public class RankCommandServiceImpl implements RankCommandService {
+
     private final RankRepository rankRepository;
 
     @Override
