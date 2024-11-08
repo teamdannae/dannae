@@ -89,7 +89,7 @@ const Lobby = () => {
       const roomData = await response.json();
       console.log(roomData);
 
-      router.push(`/game/${roomId}/wait`);
+      router.push(`/game/${roomId}`);
     } catch (error) {
       console.error(error);
     }

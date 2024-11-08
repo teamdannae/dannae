@@ -30,7 +30,7 @@ export default function GameInfo({
         "주어진 단어들을 사용해 완성된 문장을 만들어 보세요.",
         "단어들을 자유롭게 조합하여 재미있고 창의적인 문장을 완성해보세요!",
       ],
-      imageSrc: "/illustration/Illustration-word.svg",
+      imageSrc: "/illustration/illustration-sentence.svg",
     },
     {
       title: "무한 초성 지옥",
@@ -38,7 +38,7 @@ export default function GameInfo({
         "초성만 보고 떠오르는 단어를 맞추는 당신의 상상력과 순발력을 시험해 보세요!",
         "함께 도전하고, 최고 기록에 도전해 보세요.",
       ],
-      imageSrc: "/illustration/Illustration-hell.svg",
+      imageSrc: "/illustration/illustration-infinite.svg",
     },
   ];
 

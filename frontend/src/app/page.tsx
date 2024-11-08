@@ -48,7 +48,7 @@ export default function Home() {
           <span className={styles.fontChange}>것으로</span>
         </h1>
         <Image
-          src="/illustration/illustration-home.svg"
+          src="/illustration/illustration-landing.svg"
           alt="home illustration"
           width={480}
           height={480}
