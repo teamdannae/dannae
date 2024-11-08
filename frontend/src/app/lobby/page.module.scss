@@ -5,13 +5,17 @@
   flex-direction: column;
   justify-content: space-between;
   height: 100vh;
-  padding: 76px 103px;
+  padding: 24px 76px 24px 76px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   width: 100%;
+}
+
+.mainHeader {
+  margin-bottom: 32px;
 }
 
 .navContainer {
@@ -101,9 +105,9 @@
 
 .gameListContainer {
   display: grid;
-  height: 648px;
   grid-template-columns: repeat(4, 1fr);
-  column-gap: 48px;
+  column-gap: 24px;
+  row-gap: 24px;
 }
 
 .cardItem {
