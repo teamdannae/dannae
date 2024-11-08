@@ -1,5 +1,7 @@
 package com.ssafy.dannae.domain.game.infinitegame.service.dto;
 
+import java.util.List;
+
 import lombok.Builder;
 
 @Builder
@@ -8,7 +10,7 @@ public record InfiniteGameDto(
 	Long roomId,
 	Long gameId,
 	String initial,
-	String meaning,
+	List<String> meaning,
 	Boolean correct,
 	Integer difficulty,
 	Long playerId
