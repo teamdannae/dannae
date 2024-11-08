@@ -14,8 +14,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.*;
 
 @Component
 public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
@@ -25,6 +24,13 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
     private final PlayerQueryService playerQueryService;
+    private final int roundTimeLimit = 20;
+    private final int roundWaitTime = 5;
+    private final Map<Long, Map<String, Boolean>> roundPlayerStatus = new ConcurrentHashMap<>();
+    private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
+    private int currentRound = 1;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public SentenceGameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService) {
         this.waitingRoomHandler = waitingRoomHandler;
@@ -50,6 +56,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
+        sessionTokenMap.put(session, token);
 
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
@@ -65,12 +72,23 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
-        String nickname = dto.nickname();
-        int image = dto.image();
-        String payload = message.getPayload();
 
-        String chatMessage = String.format("{\"type\": \"chat\", \"event\": \"message\", \"nickname\": \"%s\", \"playerId\": \"%s\", \"message\": \"%s\", \"image\": %d}", nickname, playerId, payload, image);
-        broadcastToRoom(roomId, chatMessage);
+        String payload = message.getPayload();
+        Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
+
+        // 플레이어가 이미 메시지를 보냈다면 무시
+        if (playerStatus != null && playerStatus.get(playerId)) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 메시지를 보냈습니다.\"}"));
+            return;
+        }
+
+        playerStatus.put(playerId, true);
+        String chatMessage = String.format("{\"type\": \"chat\", \"event\": \"message\", \"playerId\": \"%s\", \"message\": \"%s\"}", playerId, payload);
+        // 자기 자신에게만 메시지 전송
+        session.sendMessage(new TextMessage(chatMessage));
+        if (checkIfAllPlayersSentMessages(roomId)) {
+            endRound(roomId);
+        }
     }
 
     @Override
@@ -93,15 +111,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void broadcastToRoom(Long roomId, String message) throws IOException {
-        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-        if (sessions != null) {
-            for (WebSocketSession session : sessions) {
-                session.sendMessage(new TextMessage(message));
-            }
-        }
-    }
-
     private Long getRoomIdFromSession(WebSocketSession session) {
         String query = session.getUri().getQuery();
         return query != null && query.contains("roomId=") ? Long.valueOf(query.split("roomId=")[1].split("&")[0]) : null;
@@ -114,5 +123,61 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
         return null;
     }
+
+    public void startNewRound(Long roomId) {
+        Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
+        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+
+        if (sessions != null) {
+            sessions.forEach(session -> {
+                String playerId = getPlayerIdFromSession(session);
+                playerStatus.put(playerId, false); // 각 플레이어의 메시지 전송 상태 초기화
+            });
+        }
+
+        roundPlayerStatus.put(roomId, playerStatus);
+
+        // 타이머 시작
+        scheduler.schedule(() -> {
+            if (!checkIfAllPlayersSentMessages(roomId)) {
+                endRound(roomId); // 시간 초과로 라운드 종료
+            }
+        }, roundTimeLimit, TimeUnit.SECONDS);
+
+        broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", \"message\": \"새로운 라운드가 시작되었습니다!\"}");
+    }
+
+
+    private void endRound(Long roomId) {
+        // 여기서 채점로직 넣을 예정
+        broadcastToRoom(roomId, "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\"}");
+    }
+
+    private String getPlayerIdFromSession(WebSocketSession session) {
+        String token = sessionTokenMap.get(session);
+        return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
+    }
+
+    // 모든 플레이어가 메시지를 보냈는지 확인
+    private boolean checkIfAllPlayersSentMessages(Long roomId) {
+        Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
+        return playerStatus != null && playerStatus.values().stream().allMatch(sent -> sent);
+    }
+
+    private void broadcastToRoom(Long roomId, String message) {
+        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+        if (sessions != null) {
+            for (WebSocketSession session : sessions) {
+                try {
+                    session.sendMessage(new TextMessage(message)); // 메시지를 각 세션에 전송
+                } catch (IOException e) {
+                    System.err.println("Failed to send message to session " + session.getId() + ": " + e.getMessage());
+                }
+            }
+        } else {
+            System.out.println("No active sessions found for roomId " + roomId); // 방이 존재하지 않는 경우 로그 출력
+        }
+    }
+
 
 }
