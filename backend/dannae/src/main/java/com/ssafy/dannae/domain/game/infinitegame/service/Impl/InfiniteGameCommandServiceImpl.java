@@ -68,7 +68,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 	private final PlayerRepository playerRepository;
 	@Value("${korean.api.url}")
 	private String apiUrl;
-	@Value("${openai.api.key}")
+	@Value("${korean.api.key}")
 	private String apiKey;
 
 	/**
@@ -281,19 +281,12 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				String response = new BufferedReader(new InputStreamReader(responseStream))
 					.lines().collect(Collectors.joining("\n"));
 
-				// 응답 내용 출력 (디버깅용)
-				System.out.println("Response: " + response);
-
 				// XML 파싱
 				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = factory.newDocumentBuilder();
 				Document document = builder.parse(new InputSource(new StringReader(response)));
 
 				NodeList itemList = document.getElementsByTagName("item");
-
-				if (itemList.getLength() == 0) {
-					System.out.println("검색결과가 없습니다: " + word);
-				}
 
 				for (int i = 0; i < itemList.getLength(); i++) {
 					Node item = itemList.item(i);
@@ -339,6 +332,5 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 
 		return words;
 	}
-
 
 }
