@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Header, GameInfo, PlayerList, Chat } from "../components";
 import { useParams } from "next/navigation";
 import styles from "./page.module.scss";
+import Infinite from "../components/Infinite";
 
 export default function WaitingRoom() {
   // const router = useRouter();
@@ -57,28 +58,59 @@ export default function WaitingRoom() {
     playerCount: 0,
   });
   const [areAllPlayersReady, setAreAllPlayersReady] = useState(false);
+  const [yourPlayerId, setYourPlayerId] = useState("");
+  const [isStart, setIsStart] = useState(false);
+  const [wordList, setWordList] = useState<string[]>([]);
+
+  const handleStart = async () => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) => ({
+        ...user,
+        isReady: false,
+      }))
+    );
+    setMessages([]);
+    setIsStart(true);
+
+    const tokenResponse = await fetch("/api/next/profile/get-token");
+    const tokenData = await tokenResponse.json();
+
+    console.log("게임 소켓 연결");
+
+    const gameWebSocketUrl =
+      // 로컬 웹소켓 말고 서버 웹소켓으로 변경해야 함
+      roomInfo.mode === "무한 초성 지옥"
+        ? `wss://dannae.kr/ws//infinitegame?roomId=${roomId}&token=${tokenData.token}`
+        : `wss://dannae.kr/ws//sentencegame?roomId=${roomId}&token=${tokenData.token}`;
+    // `ws://70.12.247.93:8080/ws/infinitegame?roomId=${roomId}&token=${tokenData.token}`
+    // : `ws://70.12.247.93:8080/ws/sentencegame?roomId=${roomId}&token=${tokenData.token}`;
+
+    setUrl(gameWebSocketUrl);
+  };
 
   useEffect(() => {
-    const getRoomInfo = async () => {
+    const initializeRoom = async () => {
       try {
-        const response = await fetch(`/api/next/rooms/${roomId}`);
-        if (!response.ok) throw new Error("Failed to load room data");
+        // 병렬로 필요한 데이터 모두 가져오기
+        const [roomResponse, tokenResponse, playerIdResponse] =
+          await Promise.all([
+            fetch(`/api/next/rooms/${roomId}`),
+            fetch("/api/next/profile/get-token"),
+            fetch("/api/next/profile/get-playerId"),
+          ]);
 
-        const roomData = await response.json();
+        const roomData = await roomResponse.json();
+        const tokenData = await tokenResponse.json();
+        const playerIdData = await playerIdResponse.json();
+
+        // 상태 업데이트
         setRoomInfo(roomData.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+        setYourPlayerId(playerIdData.playerId);
 
-    const initializeWebSocket = async () => {
-      try {
-        const response = await fetch("/api/next/profile/get-token");
-        if (!response.ok) throw new Error("Failed to load token");
-
-        const data = await response.json();
+        // 토큰을 받은 후에 웹소켓 URL 설정
         setUrl(
-          `wss://dannae.kr/ws/waitingroom?roomId=${roomId}&token=${data.token}`
+          `wss://dannae.kr/ws//waitingroom?roomId=${roomId}&token=${tokenData.token}`
+          // `ws://70.12.247.93:8080/ws/waitingroom?roomId=${roomId}&token=${tokenData.token}`
         );
       } catch (error) {
         console.error(error);
@@ -86,8 +118,7 @@ export default function WaitingRoom() {
     };
 
     if (roomId) {
-      getRoomInfo();
-      initializeWebSocket();
+      initializeRoom();
     }
   }, [roomId]);
 
@@ -178,13 +209,12 @@ export default function WaitingRoom() {
         );
       }
     } else if (data.type === "game_start_ready") {
+      console.log("시작할 준비 완료");
       setAreAllPlayersReady(true);
     } else if (data.type === "game_start" && data.room) {
-      // if (data.room.mode === "무한 초성 지옥") {
-      //   router.push(`/game/${data.room.id}/infinite`);
-      // } else {
-      //   router.push(`/game/${data.room.id}/sentence`);
-      // }
+      handleStart();
+    } else if (data.type === "answer" && data.word) {
+      setWordList((prevWordList) => [...prevWordList, data.word as string]);
     }
 
     if (data.creatorId) {
@@ -210,11 +240,36 @@ export default function WaitingRoom() {
   // const { isConnected, sendMessage } = useWebSocket(url, handleMessage);
   const { sendMessage } = useWebSocket(url, handleMessage);
 
+  // 대기방에서 채팅 보낼때
   const handleSend = () => {
     const temp = {
       type: "chat",
       playerId: "",
       message: newMessage,
+    };
+    sendMessage(temp);
+    setNewMessage("");
+  };
+
+  // 문장의 방 답변 제출
+  const handleSentenceSend = () => {
+    const temp = {
+      type: "answer",
+      playerId: yourPlayerId,
+      roomId: roomInfo.roomId,
+      message: newMessage,
+    };
+    sendMessage(temp);
+    setNewMessage("");
+  };
+
+  // 초성 지옥 답변 제출
+  const handleInfiniteSend = () => {
+    const temp = {
+      type: "answer",
+      playerId: yourPlayerId,
+      roomId: roomInfo.roomId,
+      word: newMessage,
     };
     sendMessage(temp);
     setNewMessage("");
@@ -228,15 +283,22 @@ export default function WaitingRoom() {
       aria-labelledby="game-waiting-room"
       className={styles.container}
     >
-      <Header roomInfo={roomInfo} />
-      <section aria-labelledby="game-info" className={styles.section}>
-        <GameInfo
-          areAllPlayersReady={areAllPlayersReady}
-          hostPlayerId={hostPlayerId}
-          sendMessage={sendMessage}
-          mode={roomInfo.mode}
-        />
-      </section>
+      {isStart ? (
+        <Infinite wordList={wordList} />
+      ) : (
+        <>
+          <Header roomInfo={roomInfo} />
+          <section aria-labelledby="game-info" className={styles.section}>
+            <GameInfo
+              areAllPlayersReady={areAllPlayersReady}
+              hostPlayerId={hostPlayerId}
+              sendMessage={sendMessage}
+              mode={roomInfo.mode}
+              roomId={roomId}
+            />
+          </section>
+        </>
+      )}
       <section aria-labelledby="player-list" className={styles.section}>
         <PlayerList users={users} />
       </section>
@@ -245,7 +307,13 @@ export default function WaitingRoom() {
           messages={messages}
           newMessage={newMessage}
           setNewMessage={setNewMessage}
-          handleSend={handleSend}
+          handleSend={
+            isStart
+              ? roomInfo.mode === "단어의 방"
+                ? handleSentenceSend
+                : handleInfiniteSend
+              : handleSend
+          }
         />
       </section>
     </main>
