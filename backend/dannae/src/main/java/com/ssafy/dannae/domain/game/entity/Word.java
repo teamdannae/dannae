@@ -36,8 +36,8 @@ public class Word {
 	@Column(name = "initial")
 	private String initial;
 
-	@Column(name = "initialgame_count")
-	private Long initialGameCount;
+	@Column(name = "game_count")
+	private Long gameCount;
 
 	/**
 	 * 단어와 뜻만 지닌 data를 넣을 용도의 생성자
@@ -55,20 +55,20 @@ public class Word {
 		this(word, meaning, null, initial, 0L);
 	}
 
-	public Word(String word, String meaning, Integer difficulty, String initial, Long initialGameCount) {
+	public Word(String word, String meaning, Integer difficulty, String initial, Long gameCount) {
 		this.word = word;
 		this.meaning = meaning;
 		this.difficulty = difficulty;
 		this.initial = initial;
-		this.initialGameCount = initialGameCount;
+		this.gameCount = gameCount;
 	}
 
 	public void updateDifficulty(Integer difficulty){
 		this.difficulty = difficulty;
 	}
 
-	public void updateInitialCount(){
-		this.initialGameCount++;
+	public void updateGameCount(){
+		this.gameCount++;
 	}
 
 }
