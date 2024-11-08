@@ -8,6 +8,7 @@ public record RoomDto(
 	String title,
 	String mode,
 	Long playerCount,
-	Long creator
+	Long creator,
+	String creatorNickname
 ) {
 }
