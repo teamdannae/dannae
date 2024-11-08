@@ -19,10 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlayerQueryServiceImpl implements PlayerQueryService {
     private final PlayerRepository playerRepository;
 
+    @Override
     public PlayerDto createPlayer(PlayerDto dto){
         Player player = playerRepository.save(Player.builder()
                 .score(dto.score())
-                .status(dto.status())  // 열거형으로 바로 설정
+                .status(dto.status())
                 .nickname(dto.nickname())
                 .image(dto.image())
                 .build());

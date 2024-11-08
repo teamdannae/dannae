@@ -1,14 +1,15 @@
-package com.ssafy.dannae.domain.player.service.dto;
+package com.ssafy.dannae.domain.rank.service.dto;
 
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import lombok.Builder;
 
 @Builder
-public record PlayerDto(
-        Long playerId,
+public record RankDto(
+        Long id,
         Long score,
-        PlayerStatus status,
+        String mode,
         String nickname,
         int image
 ) {
+
 }
