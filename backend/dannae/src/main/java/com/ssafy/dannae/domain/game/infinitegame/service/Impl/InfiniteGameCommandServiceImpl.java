@@ -98,16 +98,13 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		InfiniteGame infinitegame = infinitegameRepository.findById(infiniteGameDto.gameId())
 			.orElseThrow(() -> new NoRoomException("게임방이 존재하지 않습니다."));
 
-		for(String word : infinitegame.getList()){
-			List<String> message = new ArrayList<>();
-			message.add("이미 사용된 단어입니다.");
-			if(word.equals(infiniteGameDto.word())){
-				return InfiniteGameDto.builder()
-					.correct(false)
-					.word(infiniteGameDto.word())
-					.meaning(message)
-					.build();
-			}
+		if (infinitegame.getList().stream().anyMatch(word -> word.equals(infiniteGameDto.word()))) {
+			List<String> message = List.of("이미 사용된 단어입니다.");
+			return InfiniteGameDto.builder()
+				.correct(false)
+				.word(infiniteGameDto.word())
+				.meaning(message)
+				.build();
 		}
 
 		Optional<List<Word>> optionalWords = wordRepository.findAllByInitialAndWord(infiniteGameDto.initial(), infiniteGameDto.word());
