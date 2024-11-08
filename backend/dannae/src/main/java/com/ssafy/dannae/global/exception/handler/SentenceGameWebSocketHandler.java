@@ -46,7 +46,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
-        int image = dto.image();
 
         if (!jwtTokenProvider.validateToken(token) || !waitingRoomHandler.isPlayerInWaitingRoom(roomId, playerId)) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이거나 대기실에 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
@@ -58,12 +57,20 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         sessions.add(session);
         sessionTokenMap.put(session, token);
 
-        playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
+        playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing); // 관련 메시지 생략...
 
-        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"image\": " + image + ", \"status\": \"playing\"}"));
+        session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"status\": \"playing\"}"));
 
-        String statusUpdateMessage = String.format("{\"type\": \"status_update\", \"playerId\": \"%s\", \"status\": \"playing\"}", playerId);
-        broadcastToRoom(roomId, statusUpdateMessage);
+        // 5초 후 게임 시작
+        scheduler.schedule(() -> {
+            try {
+                broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"게임이 5초 후에 시작됩니다.\"}");
+                Thread.sleep(roundWaitTime * 1000); // 5초 대기
+                startNewRound(roomId); // 첫 라운드 시작
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }, 0, TimeUnit.SECONDS);
     }
 
 
@@ -97,8 +104,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
-        int image = dto.image();
-
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
 
         if (sessions != null) {
@@ -106,7 +111,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             if (sessions.isEmpty()) {
                 gameRoomSessions.remove(roomId);
             } else {
-                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\", \"image\": %d}", nickname, playerId, nickname, image));
+                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s}", nickname, playerId, nickname));
             }
         }
     }
@@ -178,6 +183,5 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             System.out.println("No active sessions found for roomId " + roomId); // 방이 존재하지 않는 경우 로그 출력
         }
     }
-
 
 }
