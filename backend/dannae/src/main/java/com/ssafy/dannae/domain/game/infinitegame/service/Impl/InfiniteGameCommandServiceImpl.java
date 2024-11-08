@@ -257,15 +257,13 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		List<Word> words = new ArrayList<>();
 
 		try {
-			// API 요청 URL 구성
 			String requestUrl = apiUrl + "?key=" + apiKey
 				+ "&q=" + URLEncoder.encode(word, "UTF-8")
-				+ "&req_type=json"      // JSON 형식 요청
-				+ "&start=1"            // 검색의 시작 번호 (기본값: 1)
-				+ "&num=100"             // 결과 출력 건수 (기본값: 10)
-				+ "&advanced=n";        // 자세히 찾기 미사용 (기본값: n)
+				+ "&req_type=json"
+				+ "&start=1"
+				+ "&num=100"
+				+ "&advanced=n";
 
-			// HTTP 요청 수행
 			HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
 			connection.setRequestMethod("GET");
 
@@ -274,39 +272,59 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				String response = new BufferedReader(new InputStreamReader(responseStream))
 					.lines().collect(Collectors.joining("\n"));
 
-				// JSON 파싱
+				// 디버깅을 위한 응답 출력
+				log.debug("API Response: {}", response);
+
 				ObjectMapper objectMapper = new ObjectMapper();
 				JsonNode root = objectMapper.readTree(response);
-				JsonNode items = root.path("channel").path("item");
+				JsonNode channel = root.path("channel");
+				int total = channel.path("total").asInt(0);
 
-				for (JsonNode item : items) {
-					String wordText = item.path("word").asText();
-					String meaning = item.path("sense").path("definition").asText();
+				if (total > 0) {
+					JsonNode items = channel.path("item");
+					if (items.isArray()) {
+						for (JsonNode item : items) {
+							String wordText = item.path("word").asText().trim();
+							String meaning = item.path("sense").path("definition").asText().trim();
+							String pos = item.path("pos").asText().trim(); // 품사 정보
 
-					// 초성 추출
-					String initial = "";
-					for (char c : wordText.toCharArray()) {
-						int initialIndex = extractInitialIndex(c); // extractInitialIndex 호출
-						if (initialIndex != -1) {
-							initial += CHO_SUNG[initialIndex]; // 초성 추가
+							// 초성 추출
+							String initial = "";
+							for (char c : wordText.toCharArray()) {
+								int initialIndex = extractInitialIndex(c);
+								if (initialIndex != -1) {
+									initial += CHO_SUNG[initialIndex];
+								}
+							}
+
+							Word newWord = Word.builder()
+								.word(wordText)
+								.meaning(meaning)
+								.initial(initial)
+								.build();
+
+							words.add(newWord);
+
+							// 디버깅을 위한 로그
+							log.debug("Found word: {}, meaning: {}, initial: {}", wordText, meaning, initial);
 						}
 					}
-
-					// Word 객체 생성 및 리스트에 추가
-					Word newWord = Word.builder()
-						.word(wordText)
-						.meaning(meaning)
-						.initial(initial)
-						.build();
-
-					words.add(newWord);
 				}
 
-				// 단어가 발견되면 데이터베이스에 추가
-				if (!words.isEmpty()) {
-					wordRepository.saveAll(words);
+				responseStream.close();
+			} else {
+				// API 오류 응답 시 로깅
+				log.error("API returned error code: {}", connection.getResponseCode());
+				InputStream errorStream = connection.getErrorStream();
+				if (errorStream != null) {
+					String errorResponse = new BufferedReader(new InputStreamReader(errorStream))
+						.lines().collect(Collectors.joining("\n"));
+					log.error("API error response: {}", errorResponse);
+					errorStream.close();
 				}
 			}
+			connection.disconnect();
+
 		} catch (Exception e) {
 			log.error("Failed to fetch words from Korean API: {}", e.getMessage(), e);
 		}
