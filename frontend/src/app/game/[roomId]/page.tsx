@@ -56,28 +56,38 @@ export default function WaitingRoom() {
     isPublic: false,
     playerCount: 0,
   });
-
   const [areAllPlayersReady, setAreAllPlayersReady] = useState(false);
 
   useEffect(() => {
     const getRoomInfo = async () => {
       try {
         const response = await fetch(`/api/next/rooms/${roomId}`);
-
-        if (!response.ok) {
-          throw new Error("Failed to load room data");
-        }
+        if (!response.ok) throw new Error("Failed to load room data");
 
         const roomData = await response.json();
-        console.log(roomData);
         setRoomInfo(roomData.data);
       } catch (error) {
         console.error(error);
       }
     };
 
-    if (!!roomId) {
+    const initializeWebSocket = async () => {
+      try {
+        const response = await fetch("/api/next/profile/get-token");
+        if (!response.ok) throw new Error("Failed to load token");
+
+        const data = await response.json();
+        setUrl(
+          `wss://dannae.kr/ws/waitingroom?roomId=${roomId}&token=${data.token}`
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (roomId) {
       getRoomInfo();
+      initializeWebSocket();
     }
   }, [roomId]);
 
@@ -110,7 +120,7 @@ export default function WaitingRoom() {
       if (data.event === "creator_change") {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.playerId === data.playerId
+            user.playerId === data.creatorId
               ? { ...user, isHost: true }
               : { ...user, isHost: false }
           )
@@ -143,7 +153,7 @@ export default function WaitingRoom() {
                 nickname: player.nickname || "",
                 isReady: false,
                 isEmpty: false,
-                isHost: player.authorization === "creator",
+                isHost: data.creatorId === player.playerId,
               };
               break;
             }
@@ -151,13 +161,6 @@ export default function WaitingRoom() {
           return updatedUsers;
         });
       }
-      // fetch("/api/next/set-token", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(data.players[data.players.length - 1].token),
-      // });
     } else if (data.type === "status_update") {
       if (data.status === "ready") {
         setUsers((prevUsers) =>
@@ -204,7 +207,8 @@ export default function WaitingRoom() {
     console.log(data);
   }, []);
 
-  const { isConnected, sendMessage } = useWebSocket(url, handleMessage);
+  // const { isConnected, sendMessage } = useWebSocket(url, handleMessage);
+  const { sendMessage } = useWebSocket(url, handleMessage);
 
   const handleSend = () => {
     const temp = {
@@ -217,27 +221,6 @@ export default function WaitingRoom() {
   };
 
   const hostPlayerId = users.find((user) => user.isHost)?.playerId || "";
-
-  const token =
-    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzMwOTYxMzc5LCJleHAiOjE3MzA5NjMxNzl9.QQ2KDS7EfN1owImg0KDUhkELACRj2ghUwrPfspLdJlQ";
-
-  const token2 =
-    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2IiwiaWF0IjoxNzMwOTYxNDQ2LCJleHAiOjE3MzA5NjMyNDZ9.NLjmCUuDjXmB7uHGEqCiCtK2LhaBQXJPPe5V9SnUg6k";
-
-  const token3 =
-    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0IiwiaWF0IjoxNzMwOTU0OTU2LCJleHAiOjE3MzA5NTY3NTZ9.gfkZ2X6uMguJtFU8hR8wbmy-517nhw6CUqCOhaqGEW0";
-
-  const handleClick = () => {
-    setUrl(`wss://dannae.kr/ws/waitingroom?roomId=7&token=${token}`);
-  };
-
-  const handleClickGuest1 = () => {
-    setUrl(`wss://dannae.kr/ws/waitingroom?roomId=7&token=${token2}`);
-  };
-
-  const handleClickGuest2 = () => {
-    setUrl(`wss://dannae.kr/ws/waitingroom?roomId=7&token=${token3}`);
-  };
 
   return (
     <main
@@ -265,10 +248,6 @@ export default function WaitingRoom() {
           handleSend={handleSend}
         />
       </section>
-      <p>Connection status: {isConnected ? "Connected" : "Disconnected"}</p>
-      <button onClick={handleClick}>방장 입장</button>
-      <button onClick={handleClickGuest1}>게스트 입장</button>
-      <button onClick={handleClickGuest2}>게스트 입장</button>
     </main>
   );
 }

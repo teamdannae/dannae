@@ -3,7 +3,7 @@
 .lobbyContainer {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-evenly;
   height: 100vh;
   padding: 24px 76px 24px 76px;
 }
@@ -128,5 +128,5 @@
 .info {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
