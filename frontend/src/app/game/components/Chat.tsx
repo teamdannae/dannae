@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input, Button } from "../../components";
 import styles from "./components.module.scss";
 
@@ -16,6 +16,9 @@ export default function Chat({
   handleSend,
 }: chatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [gameStart] = useState(true);
+  const [countdown, setCountdown] = useState(5);
+  const [showPopup, setShowPopup] = useState(true);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -26,6 +29,21 @@ export default function Chat({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const countdownTimer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(countdownTimer);
+    } else {
+      const startTimer = setTimeout(() => {
+        setShowPopup(false);
+      }, 1000);
+      return () => clearTimeout(startTimer);
+    }
+  }, [countdown]);
+
   return (
     <>
       <div className={styles.chatContainer}>
@@ -36,6 +54,11 @@ export default function Chat({
             </p>
           ))}
           <div ref={messagesEndRef} />
+          {gameStart && showPopup && (
+            <div className={styles.popup}>
+              <h3>{countdown > 0 ? `${countdown}` : "게임 시작!"}</h3>
+            </div>
+          )}
         </div>
         <div className={styles.inputContainer}>
           <Input
