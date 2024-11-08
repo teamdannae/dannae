@@ -1,3 +1,15 @@
+interface room {
+  roomId?: number;
+  id?: string;
+  title: string;
+  mode: "무한 초성 지옥" | "단어의 방";
+  release: boolean;
+  code: string;
+  creator?: number;
+  isPublic?: boolean;
+  playerCount: number;
+}
+
 interface message {
   type:
     | "enter"
@@ -5,6 +17,8 @@ interface message {
     | "chat"
     | "current_players"
     | "status_update"
+    | "game_start_ready"
+    | "game_start"
     | "error";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
@@ -23,6 +37,7 @@ interface message {
     authorization: "creator" | "player";
     token: string;
   }[];
+  room?: room;
 }
 
 interface chat {

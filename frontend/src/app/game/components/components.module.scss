@@ -1,4 +1,4 @@
-@use "../../../styles/variables.scss" as vars;
+@use "@/styles/variables.scss" as vars;
 
 .headerContainer {
   display: flex;
@@ -128,6 +128,35 @@
   }
 }
 
+@keyframes rainbowBorder {
+  0% {
+    border-color: #ff0000; // 빨간색
+  }
+  16.66% {
+    border-color: #ff7f00; // 주황색
+  }
+  33.33% {
+    border-color: #ffff00; // 노란색
+  }
+  50% {
+    border-color: #00ff00; // 초록색
+  }
+  66.66% {
+    border-color: #0000ff; // 파란색
+  }
+  83.33% {
+    border-color: #4b0082; // 남색
+  }
+  100% {
+    border-color: #8b00ff; // 보라색
+  }
+}
+
+.startButton {
+  border: 4px solid;
+  animation: rainbowBorder 3s linear infinite;
+}
+
 .leftButton {
   width: 32px;
   height: 32px;
@@ -160,10 +189,10 @@
 
 .readyButton {
   width: 25%;
-  border-radius: 12px;
-
+  border-radius: 19px;
+  transition: transform 0.3s ease;
   &:hover {
-    border: vars.$border;
+    transform: scale(1.1);
   }
 }
 
