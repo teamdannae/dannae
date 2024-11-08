@@ -295,6 +295,10 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 						String wordText = element.getElementsByTagName("word").item(0).getTextContent().trim();
 						String meaning = element.getElementsByTagName("definition").item(0).getTextContent().trim();
 
+						// 콘솔 출력 - API 응답이 제대로 가져와졌는지 확인하기 위함
+						System.out.println("Word: " + wordText);
+						System.out.println("Meaning: " + meaning);
+
 						// 초성 추출
 						String initial = "";
 						for (char c : wordText.toCharArray()) {
@@ -319,6 +323,11 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				if (!words.isEmpty()) {
 					wordRepository.saveAll(words);
 				}
+				else{
+					System.out.println("검색결과가 없습니다");
+				}
+			} else {
+				System.out.println("API 요청 실패. 응답 코드: " + connection.getResponseCode());
 			}
 		} catch (Exception e) {
 			log.error("Failed to fetch words from Korean API: {}", e.getMessage(), e);
