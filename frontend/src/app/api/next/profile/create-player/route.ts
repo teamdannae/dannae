@@ -37,14 +37,32 @@ export async function POST(request: NextRequest) {
     );
 
     // 쿠키 설정
-    nextResponse.headers.append(
-      "Set-Cookie",
-      `playerId=${playerId}; Path=/; HttpOnly; Secure; SameSite=Strict`
-    );
-    nextResponse.headers.append(
-      "Set-Cookie",
-      `token=${token}; Path=/; HttpOnly; Secure; SameSite=Strict`
-    );
+    // nextResponse.headers.append(
+    //   "Set-Cookie",
+    //   `playerId=${playerId}; Path=/; HttpOnly; Secure; SameSite=Strict`
+    // );
+    // nextResponse.headers.append(
+    //   "Set-Cookie",
+    //   `token=${token}; Path=/; HttpOnly; Secure; SameSite=Strict`
+    // );
+
+    nextResponse.cookies.set({
+      name: "playerId",
+      value: String(playerId),
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    nextResponse.cookies.set({
+      name: "token",
+      value: token,
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
 
     return nextResponse;
   } catch (error) {
