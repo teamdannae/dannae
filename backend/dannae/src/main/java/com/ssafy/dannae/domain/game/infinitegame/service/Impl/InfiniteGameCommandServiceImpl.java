@@ -3,10 +3,10 @@ package com.ssafy.dannae.domain.game.infinitegame.service.Impl;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +23,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import com.ssafy.dannae.domain.game.entity.Word;
 import com.ssafy.dannae.domain.game.infinitegame.entity.InfiniteGame;
@@ -263,100 +264,67 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		List<Word> words = new ArrayList<>();
 
 		try {
+			// API 요청 URL 구성
 			String requestUrl = apiUrl + "?key=" + apiKey
 				+ "&q=" + URLEncoder.encode(word, "UTF-8")
-				+ "&req_type=xml"
-				+ "&start=1"
-				+ "&num=10"
-				+ "&advanced=n";
+				+ "&req_type=xml"      // XML 형식 요청
+				+ "&start=1"            // 검색의 시작 번호
+				+ "&num=100"             // 결과 출력 건수
+				+ "&advanced=n";        // 자세히 찾기 미사용
 
-			log.info("Searching for word: {}", word);
-
+			// HTTP 요청 수행
 			HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
 			connection.setRequestMethod("GET");
 
-			int responseCode = connection.getResponseCode();
-			log.info("API Response Code: {}", responseCode);
+			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+				InputStream responseStream = connection.getInputStream();
+				String response = new BufferedReader(new InputStreamReader(responseStream))
+					.lines().collect(Collectors.joining("\n"));
 
-			if (responseCode == HttpURLConnection.HTTP_OK) {
+				// XML 파싱
 				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = factory.newDocumentBuilder();
+				Document document = builder.parse(new InputSource(new StringReader(response)));
 
-				// 입력 스트림에서 XML 문서 파싱
-				try (InputStream is = connection.getInputStream()) {
-					Document doc = builder.parse(is);
+				NodeList itemList = document.getElementsByTagName("item");
 
-					// total 값 확인
-					NodeList totalNodes = doc.getElementsByTagName("total");
-					if (totalNodes.getLength() > 0) {
-						int total = Integer.parseInt(totalNodes.item(0).getTextContent().trim());
-						log.info("Found {} results", total);
+				for (int i = 0; i < itemList.getLength(); i++) {
+					Node item = itemList.item(i);
+					if (item.getNodeType() == Node.ELEMENT_NODE) {
+						Element element = (Element) item;
+						String wordText = element.getElementsByTagName("word").item(0).getTextContent().trim();
+						String meaning = element.getElementsByTagName("definition").item(0).getTextContent().trim();
 
-						if (total > 0) {
-							// item 태그들 가져오기
-							NodeList items = doc.getElementsByTagName("item");
-
-							for (int i = 0; i < items.getLength(); i++) {
-								Element item = (Element) items.item(i);
-
-								// word와 definition 추출
-								String wordText = getTextContent(item, "word");
-								String meaning = getTextContent(item.getElementsByTagName("sense").item(0), "definition");
-								String pos = getTextContent(item, "pos");  // 품사 정보
-
-								log.info("Processing word: {}, meaning: {}, pos: {}", wordText, meaning, pos);
-
-								// 초성 추출
-								String initial = "";
-								for (char c : wordText.toCharArray()) {
-									int initialIndex = extractInitialIndex(c);
-									if (initialIndex != -1) {
-										initial += CHO_SUNG[initialIndex];
-									}
-								}
-
-								Word newWord = Word.builder()
-									.word(wordText)
-									.meaning(meaning)
-									.initial(initial)
-									.build();
-
-								words.add(newWord);
-								log.info("Added word: {}", newWord);
+						// 초성 추출
+						String initial = "";
+						for (char c : wordText.toCharArray()) {
+							int initialIndex = extractInitialIndex(c); // extractInitialIndex 호출
+							if (initialIndex != -1) {
+								initial += CHO_SUNG[initialIndex]; // 초성 추가
 							}
 						}
+
+						// Word 객체 생성 및 리스트에 추가
+						Word newWord = Word.builder()
+							.word(wordText)
+							.meaning(meaning)
+							.initial(initial)
+							.build();
+
+						words.add(newWord);
 					}
 				}
-			} else {
-				// 에러 응답 처리
-				try (BufferedReader errorReader = new BufferedReader(
-					new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
-					String errorResponse = errorReader.lines().collect(Collectors.joining("\n"));
-					log.error("API error response: {}", errorResponse);
+
+				// 단어가 발견되면 데이터베이스에 추가
+				if (!words.isEmpty()) {
+					wordRepository.saveAll(words);
 				}
 			}
 		} catch (Exception e) {
-			log.error("Failed to fetch word from API: {}", e.getMessage(), e);
+			log.error("Failed to fetch words from Korean API: {}", e.getMessage(), e);
 		}
 
 		return words;
-	}
-
-	// CDATA 섹션을 포함한 텍스트 컨텐츠를 추출하는 헬퍼 메소드
-	private String getTextContent(Element element, String tagName) {
-		NodeList nodeList = element.getElementsByTagName(tagName);
-		if (nodeList.getLength() > 0) {
-			return nodeList.item(0).getTextContent().trim();
-		}
-		return "";
-	}
-
-	// Element에서 직접 텍스트 컨텐츠를 추출하는 오버로드된 메소드
-	private String getTextContent(Node node, String tagName) {
-		if (node instanceof Element) {
-			return getTextContent((Element) node, tagName);
-		}
-		return "";
 	}
 
 }
