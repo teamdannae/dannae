@@ -25,3 +25,8 @@ openai:
   api:
     key: '${OPENAI_API_KEY}'
   model: '${OPENAI_API_MODEL}'
+
+korean:
+  api:
+    url: '${KOREAN_API_URL}'
+    key: '${KOREAN_API_KEY}'

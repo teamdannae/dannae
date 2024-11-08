@@ -40,19 +40,11 @@ public class Word {
 	private Long gameCount;
 
 	/**
-	 * 단어와 뜻만 지닌 data를 넣을 용도의 생성자
-	 */
-	@Builder
-	public Word(String word, String meaning) {
-		this(word, meaning, null, null, null);
-	}
-
-	/**
 	 * 초성게임에서 사용하는 data를 넣을 용도의 생성자
 	 */
 	@Builder
 	public Word(String word, String meaning, String initial) {
-		this(word, meaning, null, initial, 0L);
+		this(word, meaning, 4, initial, 1L);
 	}
 
 	public Word(String word, String meaning, Integer difficulty, String initial, Long gameCount) {
