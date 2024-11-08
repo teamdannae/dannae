@@ -19,7 +19,8 @@ interface message {
     | "status_update"
     | "game_start_ready"
     | "game_start"
-    | "error";
+    | "error"
+    | "answer";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
   nickname?: string;
@@ -38,6 +39,7 @@ interface message {
     token: string;
   }[];
   room?: room;
+  word?: string;
 }
 
 interface chat {

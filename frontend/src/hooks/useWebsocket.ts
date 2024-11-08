@@ -11,13 +11,14 @@ function useWebSocket(url: string, onMessage: (data: message) => void) {
   useEffect(() => {
     if (!url) return;
 
+    // 기존 소켓 있으면 연결 취소해야하는데,
     const connectWebSocket = () => {
-      if (
-        socketRef.current &&
-        socketRef.current.readyState === WebSocket.OPEN
-      ) {
-        return;
-      }
+      // if (
+      //   socketRef.current &&
+      //   socketRef.current.readyState === WebSocket.OPEN
+      // ) {
+      //   return;
+      // }
 
       socketRef.current = new WebSocket(url);
 
