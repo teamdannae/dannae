@@ -10,7 +10,8 @@ import com.ssafy.dannae.domain.room.entity.RoomStatus;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-	List<Room> findByReleaseAndStatus(Boolean release, RoomStatus Status);
+
+	List<Room> findByReleaseAndStatusOrderByIdDesc(Boolean release, RoomStatus status);
 
 	boolean existsById(Long id);
 

@@ -32,7 +32,7 @@ class RoomQueryServiceImpl implements RoomQueryService {
 	@Override
 	public List<RoomDto> readReleasedRooms() {
 
-		List<Room> roomList = roomRepository.findByReleaseAndStatus(true, RoomStatus.READY);
+		List<Room> roomList = roomRepository.findByReleaseAndStatusOrderByIdDesc(true, RoomStatus.READY);
 
 		return roomList.stream()
 			.map(room -> RoomDto.builder()
