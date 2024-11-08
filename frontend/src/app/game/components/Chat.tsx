@@ -16,6 +16,7 @@ export default function Chat({
   handleSend,
 }: chatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [gameStart] = useState(true);
   const [countdown, setCountdown] = useState(5);
   const [showPopup, setShowPopup] = useState(true);
 
@@ -53,7 +54,7 @@ export default function Chat({
             </p>
           ))}
           <div ref={messagesEndRef} />
-          {showPopup && (
+          {gameStart && showPopup && (
             <div className={styles.popup}>
               <h3>{countdown > 0 ? `${countdown}` : "게임 시작!"}</h3>
             </div>
