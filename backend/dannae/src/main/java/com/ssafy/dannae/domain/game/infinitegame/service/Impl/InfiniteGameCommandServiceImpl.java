@@ -6,18 +6,24 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.dannae.domain.game.entity.Word;
 import com.ssafy.dannae.domain.game.infinitegame.entity.InfiniteGame;
 import com.ssafy.dannae.domain.game.infinitegame.repository.InfiniteGameRepository;
@@ -259,77 +265,98 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		try {
 			String requestUrl = apiUrl + "?key=" + apiKey
 				+ "&q=" + URLEncoder.encode(word, "UTF-8")
-				+ "&req_type=json"
+				+ "&req_type=xml"
 				+ "&start=1"
-				+ "&num=100"
+				+ "&num=10"
 				+ "&advanced=n";
+
+			log.info("Searching for word: {}", word);
 
 			HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
 			connection.setRequestMethod("GET");
 
-			if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-				InputStream responseStream = connection.getInputStream();
-				String response = new BufferedReader(new InputStreamReader(responseStream))
-					.lines().collect(Collectors.joining("\n"));
+			int responseCode = connection.getResponseCode();
+			log.info("API Response Code: {}", responseCode);
 
-				// 디버깅을 위한 응답 출력
-				log.debug("API Response: {}", response);
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
 
-				ObjectMapper objectMapper = new ObjectMapper();
-				JsonNode root = objectMapper.readTree(response);
-				JsonNode channel = root.path("channel");
-				int total = channel.path("total").asInt(0);
+				// 입력 스트림에서 XML 문서 파싱
+				try (InputStream is = connection.getInputStream()) {
+					Document doc = builder.parse(is);
 
-				if (total > 0) {
-					JsonNode items = channel.path("item");
-					if (items.isArray()) {
-						for (JsonNode item : items) {
-							String wordText = item.path("word").asText().trim();
-							String meaning = item.path("sense").path("definition").asText().trim();
-							String pos = item.path("pos").asText().trim(); // 품사 정보
+					// total 값 확인
+					NodeList totalNodes = doc.getElementsByTagName("total");
+					if (totalNodes.getLength() > 0) {
+						int total = Integer.parseInt(totalNodes.item(0).getTextContent().trim());
+						log.info("Found {} results", total);
 
-							// 초성 추출
-							String initial = "";
-							for (char c : wordText.toCharArray()) {
-								int initialIndex = extractInitialIndex(c);
-								if (initialIndex != -1) {
-									initial += CHO_SUNG[initialIndex];
+						if (total > 0) {
+							// item 태그들 가져오기
+							NodeList items = doc.getElementsByTagName("item");
+
+							for (int i = 0; i < items.getLength(); i++) {
+								Element item = (Element) items.item(i);
+
+								// word와 definition 추출
+								String wordText = getTextContent(item, "word");
+								String meaning = getTextContent(item.getElementsByTagName("sense").item(0), "definition");
+								String pos = getTextContent(item, "pos");  // 품사 정보
+
+								log.info("Processing word: {}, meaning: {}, pos: {}", wordText, meaning, pos);
+
+								// 초성 추출
+								String initial = "";
+								for (char c : wordText.toCharArray()) {
+									int initialIndex = extractInitialIndex(c);
+									if (initialIndex != -1) {
+										initial += CHO_SUNG[initialIndex];
+									}
 								}
+
+								Word newWord = Word.builder()
+									.word(wordText)
+									.meaning(meaning)
+									.initial(initial)
+									.build();
+
+								words.add(newWord);
+								log.info("Added word: {}", newWord);
 							}
-
-							Word newWord = Word.builder()
-								.word(wordText)
-								.meaning(meaning)
-								.initial(initial)
-								.build();
-
-							words.add(newWord);
-
-							// 디버깅을 위한 로그
-							log.debug("Found word: {}, meaning: {}, initial: {}", wordText, meaning, initial);
 						}
 					}
 				}
-
-				responseStream.close();
 			} else {
-				// API 오류 응답 시 로깅
-				log.error("API returned error code: {}", connection.getResponseCode());
-				InputStream errorStream = connection.getErrorStream();
-				if (errorStream != null) {
-					String errorResponse = new BufferedReader(new InputStreamReader(errorStream))
-						.lines().collect(Collectors.joining("\n"));
+				// 에러 응답 처리
+				try (BufferedReader errorReader = new BufferedReader(
+					new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+					String errorResponse = errorReader.lines().collect(Collectors.joining("\n"));
 					log.error("API error response: {}", errorResponse);
-					errorStream.close();
 				}
 			}
-			connection.disconnect();
-
 		} catch (Exception e) {
-			log.error("Failed to fetch words from Korean API: {}", e.getMessage(), e);
+			log.error("Failed to fetch word from API: {}", e.getMessage(), e);
 		}
 
 		return words;
+	}
+
+	// CDATA 섹션을 포함한 텍스트 컨텐츠를 추출하는 헬퍼 메소드
+	private String getTextContent(Element element, String tagName) {
+		NodeList nodeList = element.getElementsByTagName(tagName);
+		if (nodeList.getLength() > 0) {
+			return nodeList.item(0).getTextContent().trim();
+		}
+		return "";
+	}
+
+	// Element에서 직접 텍스트 컨텐츠를 추출하는 오버로드된 메소드
+	private String getTextContent(Node node, String tagName) {
+		if (node instanceof Element) {
+			return getTextContent((Element) node, tagName);
+		}
+		return "";
 	}
 
 }
