@@ -281,12 +281,19 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				String response = new BufferedReader(new InputStreamReader(responseStream))
 					.lines().collect(Collectors.joining("\n"));
 
+				// 응답 내용 출력 (디버깅용)
+				System.out.println("Response: " + response);
+
 				// XML 파싱
 				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = factory.newDocumentBuilder();
 				Document document = builder.parse(new InputSource(new StringReader(response)));
 
 				NodeList itemList = document.getElementsByTagName("item");
+
+				if (itemList.getLength() == 0) {
+					System.out.println("검색결과가 없습니다: " + word);
+				}
 
 				for (int i = 0; i < itemList.getLength(); i++) {
 					Node item = itemList.item(i);
@@ -323,9 +330,6 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				if (!words.isEmpty()) {
 					wordRepository.saveAll(words);
 				}
-				else{
-					System.out.println("검색결과가 없습니다");
-				}
 			} else {
 				System.out.println("API 요청 실패. 응답 코드: " + connection.getResponseCode());
 			}
@@ -335,5 +339,6 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 
 		return words;
 	}
+
 
 }
