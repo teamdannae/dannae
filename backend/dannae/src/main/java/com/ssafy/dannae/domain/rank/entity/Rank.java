@@ -34,7 +34,7 @@ public class Rank {
     @Column(name = "score", nullable = false)
     private Long score;
 
-    @Column(name = "image")
+    @Column(name = "image",  nullable = false)
     private Integer image;
 
     @Builder

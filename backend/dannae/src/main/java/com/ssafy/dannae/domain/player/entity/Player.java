@@ -34,7 +34,7 @@ public class Player {
     @Column(name = "nickname", length = 24, nullable = false)
     private String nickname;
 
-    @Column(name = "image")
+    @Column(name = "image", nullable = false)
     private Integer image;
 
     @Builder
