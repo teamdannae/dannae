@@ -5,6 +5,7 @@ export async function GET() {
     // 외부 API 호출
     // 이후에 헤더에 토큰 넣어줘야 함
     const response = await fetch("https://dannae.kr/api/v1/rooms/list", {
+      // const response = await fetch("http://70.12.247.93:8080/api/v1/rooms/list", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

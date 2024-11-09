@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
 
     // 방 생성 요청
     const response = await fetch("https://dannae.kr/api/v1/rooms", {
+      // const response = await fetch("http://70.12.247.93:8080/api/v1/rooms", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
