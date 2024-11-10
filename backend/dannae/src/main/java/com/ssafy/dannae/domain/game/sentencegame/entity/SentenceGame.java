@@ -1,15 +1,11 @@
 package com.ssafy.dannae.domain.game.sentencegame.entity;
 
-import com.ssafy.dannae.domain.game.entity.Word;
-import jakarta.persistence.*;
+
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter

@@ -11,7 +11,8 @@ public record SentenceGameRes(
 	Set<String> activeWords,
 	Set<String> inactiveWords,
 	List<Integer> playerCorrects,
-	List<Long> playerScore,
+	List<Integer> playerNowScores,
+	List<Long> playerTotalScores,
 	List<String> playerSentences
 ) {
 }

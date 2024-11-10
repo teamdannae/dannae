@@ -5,6 +5,8 @@ import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGam
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceGameDto;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 public interface SentenceGameCommandService {
 
@@ -22,6 +24,6 @@ public interface SentenceGameCommandService {
 	 */
 	SentenceGameRes playGame(SentenceGameReq sentenceGameReq);
 
-
+	void updateWordCount(Set<String> wordSet);
 
 }

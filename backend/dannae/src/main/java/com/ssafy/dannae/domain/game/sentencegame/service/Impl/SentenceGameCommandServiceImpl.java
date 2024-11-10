@@ -1,6 +1,7 @@
 package com.ssafy.dannae.domain.game.sentencegame.service.Impl;
 
 import com.ssafy.dannae.domain.game.entity.Word;
+import com.ssafy.dannae.domain.game.exception.NoWordException;
 import com.ssafy.dannae.domain.game.repository.WordRepository;
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
@@ -10,6 +11,7 @@ import com.ssafy.dannae.domain.game.sentencegame.repository.SentenceGameReposito
 import com.ssafy.dannae.domain.game.sentencegame.service.SentenceGameCommandService;
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceGameDto;
 import com.ssafy.dannae.domain.player.entity.Player;
+import com.ssafy.dannae.domain.player.exception.NoPlayerException;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.global.openai.service.OpenAIService;
@@ -33,7 +35,14 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 	private final WordRepository wordRepository;
 	private final PlayerRepository playerRepository;
 	private final OpenAIService openAIService;
-
+	private static final int[] scores = {
+			0, 10, 20, 30, 40, 60,
+			80, 100, 130, 160, 200,
+			250, 300, 350, 400, 450,
+			500, 550, 600, 650, 700,
+			750, 800, 850, 900, 950,
+			1000, 1050, 1100, 1150, 1200
+	};
 
 
 	/**
@@ -44,7 +53,6 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 	@Override
 	public SentenceGameDto createInitial(SentenceGameDto sentenceGameDto) {
 
-		List<Word> initial = wordRepository.findRandomWords();
 		SentenceGame sentenceGame = sentenceGameFactory.createSentenceGame(
 				sentenceGameDto.roomId());
 		sentenceGameRepository.save(sentenceGame);
@@ -74,31 +82,40 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 		WordResultDto resultDto = openAIService.wordResult(sentenceDto);
 
 		List<Integer> playerCorrects = new ArrayList<>();
-		List<Long> playerScores = new ArrayList<>();
+		List<Integer> playerNowScores = new ArrayList<>();
+		List<Long> playerTotalScores = new ArrayList<>();
 		boolean isEnd = false;
+		int playerNum = sentenceGameReq.players().size();
 		// 아무도 단어를 쓰지 못했을 때
 		if(resultDto.usedWords().isEmpty()){
-			for(int i=0; i<4; i++){
-				playerCorrects.add(resultDto.correctNum().get(i));
-				playerScores.add(playerRepository.findById(
+			for(int i=0; i<playerNum; i++){
+				Player player = playerRepository.findById(
 						sentenceGameReq.players().get(i)
-				).get().getScore());
+				).orElseThrow(()-> new NoPlayerException("유저를 찾을 수 없습니다"));
+				playerTotalScores.add(player.getScore());
+				player.resetScore();
 			}
-			sentenceGameRepository.deleteById(sentenceGameReq.roomId());
-			return SentenceGameRes.builder().isEnd(true)
+			updateWordCount(sentenceGame.getInactiveWords());
+			SentenceGameRes res = SentenceGameRes.builder().isEnd(true)
 					.inactiveWords(sentenceGame.getInactiveWords())
 					.playerCorrects(playerCorrects)
-					.playerScore(playerScores)
+					.playerNowScores(playerNowScores)
+					.playerTotalScores(playerTotalScores)
 					.playerSentences(sentenceGameReq.sentences())
 					.build();
+			sentenceGameRepository.deleteById(sentenceGameReq.roomId());
+			return res;
 		}
 
-		for(int i=0; i<4; i++){
-			Player player = playerRepository.findById(sentenceGameReq.players().get(i)).get();
+		for(int i=0; i<playerNum; i++){
+			Player player = playerRepository.findById(
+					sentenceGameReq.players().get(i)
+			).orElseThrow(()-> new NoPlayerException("유저를 찾을 수 없습니다"));
 			int correctCnt = resultDto.correctNum().get(i);
-			player.updateScore(correctCnt);
+			player.updateScore(scores[correctCnt]);
 			playerCorrects.add(correctCnt);
-			playerScores.add(player.getScore());
+			playerNowScores.add(scores[correctCnt]);
+			playerTotalScores.add(player.getScore());
 		}
 
 		Set<String> activeWords = sentenceGame.getActiveWords();
@@ -111,16 +128,32 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 		// 단어를 모두 소진했을 때
 		if(activeWords.isEmpty()){
 			isEnd = true;
-			sentenceGameRepository.deleteById(sentenceGameReq.roomId());
 		}
 
-		return SentenceGameRes.builder().isEnd(isEnd)
+		SentenceGameRes res = SentenceGameRes.builder().isEnd(isEnd)
 				.playerSentences(sentenceGameReq.sentences())
-				.playerScore(playerScores)
+				.playerNowScores(playerNowScores)
+				.playerTotalScores(playerTotalScores)
 				.playerCorrects(playerCorrects)
 				.activeWords(activeWords)
 				.inactiveWords(inactiveWords)
 				.build();
+
+		if(isEnd){
+			updateWordCount(inactiveWords);
+			sentenceGameRepository.deleteById(sentenceGameReq.roomId());
+		}
+
+		return res;
+	}
+
+	@Override
+	public void updateWordCount(Set<String> wordSet) {
+		for(String string: wordSet){
+			Word word = wordRepository.findByWord(string)
+					.orElseThrow(()-> new NoWordException(string+ " 단어가 없습니다"));
+			word.updateGameCount();
+		}
 	}
 
 }
