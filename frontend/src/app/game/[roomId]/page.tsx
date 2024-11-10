@@ -196,17 +196,27 @@ export default function WaitingRoom() {
       if (data.status === "ready") {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.playerId === data.playerId
-              ? { ...user, isReady: true }
-              : { ...user, isReady: false }
+            user.playerId === data.playerId ? { ...user, isReady: true } : user
           )
         );
       } else {
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
+        setUsers((prevUsers) => {
+          const updatedUsers = prevUsers.map((user) =>
             user.playerId === data.playerId ? { ...user, isReady: false } : user
-          )
-        );
+          );
+          const player = updatedUsers.find(
+            (user) => user.playerId === data.playerId
+          );
+          setMessages((prev) => [
+            ...prev,
+            `${
+              player?.nickname || "Unknown"
+            }님이 아직 준비가 덜 되었나 봅니다.`,
+          ]);
+
+          return updatedUsers;
+        });
+        setAreAllPlayersReady(false);
       }
     } else if (data.type === "game_start_ready") {
       console.log("시작할 준비 완료");
