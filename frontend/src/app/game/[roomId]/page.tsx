@@ -6,6 +6,7 @@ import { Header, GameInfo, PlayerList, Chat } from "../components";
 import { useParams } from "next/navigation";
 import styles from "./page.module.scss";
 import Infinite from "../components/Infinite";
+import { Toast } from "@/app/components";
 
 export default function WaitingRoom() {
   // const router = useRouter();
@@ -16,7 +17,7 @@ export default function WaitingRoom() {
   const [users, setUsers] = useState<player[]>([
     {
       playerId: "",
-      image: 1,
+      image: 0,
       nickname: "",
       isReady: false,
       isEmpty: true,
@@ -24,7 +25,7 @@ export default function WaitingRoom() {
     },
     {
       playerId: "",
-      image: 1,
+      image: 0,
       nickname: "",
       isReady: false,
       isEmpty: true,
@@ -32,7 +33,7 @@ export default function WaitingRoom() {
     },
     {
       playerId: "",
-      image: 1,
+      image: 0,
       nickname: "",
       isReady: false,
       isEmpty: true,
@@ -40,7 +41,7 @@ export default function WaitingRoom() {
     },
     {
       playerId: "",
-      image: 1,
+      image: 0,
       nickname: "",
       isReady: false,
       isEmpty: true,
@@ -61,6 +62,8 @@ export default function WaitingRoom() {
   const [yourPlayerId, setYourPlayerId] = useState("");
   const [isStart, setIsStart] = useState(false);
   const [wordList, setWordList] = useState<string[]>([]);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -86,6 +89,16 @@ export default function WaitingRoom() {
     // : `ws://70.12.247.93:8080/ws/sentencegame?roomId=${roomId}&token=${tokenData.token}`;
 
     setUrl(gameWebSocketUrl);
+  };
+
+  const startGame = () => {
+    setToastMessage("게임을 시작합니다!");
+    setShowToast(true);
+
+    setTimeout(() => {
+      setShowToast(false);
+      handleStart();
+    }, 1000);
   };
 
   useEffect(() => {
@@ -222,7 +235,7 @@ export default function WaitingRoom() {
       console.log("시작할 준비 완료");
       setAreAllPlayersReady(true);
     } else if (data.type === "game_start" && data.room) {
-      handleStart();
+      startGame();
     } else if (data.type === "answer" && data.word) {
       setWordList((prevWordList) => [...prevWordList, data.word as string]);
     }
@@ -293,6 +306,7 @@ export default function WaitingRoom() {
       aria-labelledby="game-waiting-room"
       className={styles.container}
     >
+      {showToast && <Toast message={toastMessage} />}
       {isStart ? (
         <Infinite wordList={wordList} />
       ) : (
