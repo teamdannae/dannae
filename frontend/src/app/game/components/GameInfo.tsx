@@ -22,7 +22,7 @@ export default function GameInfo({
   const [currentIndex, setCurrentIndex] = useState(
     mode === "단어의 방" ? 1 : 0
   );
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [canStart, setCanStart] = useState(false);
   const infoContent = [
@@ -58,25 +58,16 @@ export default function GameInfo({
       });
     } else {
       try {
-        const tokenResponse = await fetch("/api/next/profile/get-token");
-        if (!tokenResponse.ok) throw new Error("Failed to load token");
-
-        const tokenData = await tokenResponse.json();
-        const token = tokenData.token;
-
-        const response = await fetch(
-          `https://dannae.kr/api/v1/players/${
-            // `http://70.12.247.93:8080/api/v1/players/${
-            isReady ? "nonready" : "ready"
-          }/${roomId}`,
-          {
-            method: "PATCH",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            // credentials: "include",
-          }
-        );
+        const response = await fetch(`/api/next/game/set-ready`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            isReady,
+            roomId,
+          }),
+        });
 
         if (!response.ok) {
           console.error("Error:", response.status, response.statusText);
@@ -123,34 +114,34 @@ export default function GameInfo({
     );
   };
 
-  const handleFlip = (newIndex: number) => {
-    setIsFlipped(true);
-    setTimeout(() => {
-      setCurrentIndex(newIndex);
-      setIsFlipped(false);
-    }, 300);
-  };
+  // const handleFlip = (newIndex: number) => {
+  //   setIsFlipped(true);
+  //   setTimeout(() => {
+  //     setCurrentIndex(newIndex);
+  //     setIsFlipped(false);
+  //   }, 300);
+  // };
 
-  const handleLeftClick = () => {
-    const newIndex =
-      currentIndex > 0 ? currentIndex - 1 : infoContent.length - 1;
-    handleFlip(newIndex);
-  };
+  // const handleLeftClick = () => {
+  //   const newIndex =
+  //     currentIndex > 0 ? currentIndex - 1 : infoContent.length - 1;
+  //   handleFlip(newIndex);
+  // };
 
-  const handleRightClick = () => {
-    const newIndex =
-      currentIndex < infoContent.length - 1 ? currentIndex + 1 : 0;
-    handleFlip(newIndex);
-  };
+  // const handleRightClick = () => {
+  //   const newIndex =
+  //     currentIndex < infoContent.length - 1 ? currentIndex + 1 : 0;
+  //   handleFlip(newIndex);
+  // };
 
   const currentContent = infoContent[currentIndex];
 
   return (
     <div className={styles.infoContainer}>
-      <button
+      {/* <button
         className={`${styles.buttonReset} ${styles.leftButton}`}
         onClick={handleLeftClick}
-      />
+      /> */}
       <div className={`${styles.infoMain} ${isFlipped ? styles.flip : ""}`}>
         <div className={styles.infoMainContent}>
           <h4>{currentContent.title}</h4>
@@ -189,10 +180,10 @@ export default function GameInfo({
           />
         </div>
       </div>
-      <button
+      {/* <button
         className={`${styles.buttonReset} ${styles.rightButton}`}
         onClick={handleRightClick}
-      />
+      /> */}
     </div>
   );
 }
