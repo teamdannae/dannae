@@ -253,3 +253,33 @@
 .inputContainer > :last-child {
   flex: 1;
 }
+
+.cardInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  height: 60%;
+}
+
+.cardInnerImage {
+  border-radius: 36px;
+}
+
+@media (max-width: 1024px) {
+  .cardInnerImage {
+    display: none;
+  }
+}
+
+.cardInnerInfo {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: end;
+  margin-right: 4px;
+  h5 {
+    font-size: vars.$font-size-p1;
+  }
+}

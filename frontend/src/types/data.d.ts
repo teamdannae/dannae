@@ -64,4 +64,5 @@ interface gameroom {
   playerCount: number;
   creator: number;
   isEmpty?: boolean;
+  creatorNickname?: string;
 }

@@ -231,7 +231,7 @@ const Lobby = () => {
                         width={24}
                         height={24}
                       />
-                      <p>김범수</p>
+                      <p>{game.creatorNickname}</p>
                     </div>
                   </div>
                   <p className={styles.playerCount}>{game.playerCount} / 4</p>
