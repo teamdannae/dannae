@@ -6,6 +6,7 @@ interface room {
   release: boolean;
   code: string;
   creator?: number;
+  creatorNickname?: string;
   isPublic?: boolean;
   playerCount: number;
 }
