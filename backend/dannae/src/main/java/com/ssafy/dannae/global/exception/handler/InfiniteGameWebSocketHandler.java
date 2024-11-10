@@ -186,7 +186,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 15, TimeUnit.SECONDS);
+        }, 10, TimeUnit.SECONDS);
     }
 
 
