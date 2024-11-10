@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "게임 대기방",
-  description:
-    "게임을 시작하기 전 소통하고 게임 플레이 방법을 확인할 수 있습니다.",
+  title: "게임 방",
+  description: "단어의 방, 무한 초성 지옥 게임을 플레이하는 페이지입니다.",
 };
 
 export default function roomLayout({
