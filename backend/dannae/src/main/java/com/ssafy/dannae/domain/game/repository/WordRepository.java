@@ -17,5 +17,4 @@ public interface WordRepository extends JpaRepository<Word, Long> {
 
 	Optional<Word> findByWord(String word);
 
-	Word findByword(String word);
 }

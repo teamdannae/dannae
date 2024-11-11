@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.dannae.domain.game.entity.Word;
+import com.ssafy.dannae.domain.game.exception.NoWordException;
 import com.ssafy.dannae.domain.game.repository.WordRepository;
 import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.exception.NoPlayerException;
@@ -204,7 +205,8 @@ class OpenAIServiceImpl implements OpenAIService {
 					if (!words.equals("null") && !words.isEmpty()) {
 						String[] wordArray = words.split(", ");
 						for (String word : wordArray) {
-							Word wordData = wordRepository.findByword(word);
+							Word wordData = wordRepository.findByWord(word)
+								.orElseThrow(() -> new NoWordException("Word not found : " + word));
 							int difficulty = wordData.getDifficulty();
 							nowPlayer.updateScore(difficulty);
 							count += difficulty;
