@@ -214,11 +214,19 @@
 }
 
 .popup {
-  position: absolute;
-  top: 50%;
+  position: fixed;
+  bottom: 11.9%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, 0);
   z-index: 10;
+  width: 71%;
+  height: 160px;
+  background-color: vars.$white-color;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: vars.$border;
 }
 
 .messagesContainer {
@@ -231,6 +239,26 @@
   background-color: vars.$white-color;
   position: relative;
   z-index: 1;
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: white;
+    border-radius: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 8px;
+    border: 3px solid white;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
 }
 
 .message {
@@ -259,7 +287,7 @@
   align-items: center;
   gap: 8px;
   width: max-content;
-  height: 60%;
+  height: 65%;
 }
 
 .cardInnerImage {
@@ -337,4 +365,49 @@
   display: flex;
   width: 98%;
   gap: 10px;
+}
+
+.word {
+  display: flex;
+  width: 90px;
+  height: 68px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+
+  &.difficulty-1 {
+    background-color: vars.$word-common-color;
+  }
+
+  &.difficulty-2 {
+    background-color: vars.$word-rare-color;
+  }
+
+  &.difficulty-3 {
+    background-color: vars.$word-epic-color;
+  }
+
+  &.difficulty-4 {
+    background-color: vars.$word-unique-color;
+  }
+
+  &.fail {
+    background-color: vars.$red-color;
+  }
+}
+
+.sentenceContainer {
+  min-height: 320px;
+  width: 80%;
+  background-color: vars.$grey-color;
+  margin: 8px 0;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.score {
+  background-color: vars.$primary-color;
+  width: fit-content;
+  border-radius: 4px;
+  align-self: flex-end;
 }
