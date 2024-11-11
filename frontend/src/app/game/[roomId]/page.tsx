@@ -85,7 +85,8 @@ export default function WaitingRoom() {
   const [consonant, setConsonant] = useState<string>("");
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-  const [roundReset, setRoundReset] = useState(false);
+  const [roundReset, setRoundReset] = useState(true);
+  const [isSend, setIsSend] = useState(false);
   const [isInfiniteTurnStart, setIsInfiniteTurnStart] = useState(false);
   const [isConsonantVisible, setIsConsonantVisible] = useState(true);
 
@@ -318,6 +319,7 @@ export default function WaitingRoom() {
       }
     } else if (data.type === "round_end") {
       setRoundReset(true);
+      setIsSend(false);
       setWordList((prevWordList) =>
         prevWordList.map((word) =>
           data.userWords.includes(word.word) ? { ...word, used: true } : word
@@ -343,6 +345,8 @@ export default function WaitingRoom() {
             : player;
         })
       );
+    } else if (data.type === "game_end") {
+      setRoundReset(true);
     }
 
     if (data.creatorId) {
@@ -359,6 +363,7 @@ export default function WaitingRoom() {
       if (data.round) {
         setPopupMessage(data.message || "");
         setShowPopup(true);
+        setTimeout(() => setShowPopup(false), 1000);
       } else {
         const newMessage =
           data.type === "chat"
@@ -392,6 +397,7 @@ export default function WaitingRoom() {
     };
     sendMessage(temp);
     setNewMessage("");
+    setIsSend(true);
   };
 
   // 초성 지옥 답변 제출
@@ -471,6 +477,7 @@ export default function WaitingRoom() {
           showPopup={showPopup}
           setShowPopup={setShowPopup}
           popupMessage={popupMessage}
+          isSend={isSend}
         />
       </section>
     </main>

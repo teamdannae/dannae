@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Input, Button } from "../../components";
 import styles from "./components.module.scss";
 
@@ -10,6 +10,7 @@ interface chatProps {
   showPopup: boolean;
   setShowPopup: (show: boolean) => void;
   popupMessage: string;
+  isSend: boolean;
 }
 
 export default function Chat({
@@ -18,12 +19,12 @@ export default function Chat({
   setNewMessage,
   handleSend,
   showPopup,
-  setShowPopup,
+  //setShowPopup,
   popupMessage,
+  isSend,
 }: chatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [gameStart] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  //const [countdown, setCountdown] = useState(3);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -35,22 +36,28 @@ export default function Chat({
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (showPopup) {
-      setCountdown(3);
-      const countdownTimer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev === 1) {
-            clearInterval(countdownTimer);
-            setShowPopup(false);
-          }
-          return prev - 1;
-        });
-      }, 1000);
+  // useEffect(() => {
+  //   if (showPopup) {
+  //     let timer: NodeJS.Timeout;
+  //     const showPopupTimer = setTimeout(() => {
+  //       setCountdown(3);
+  //       timer = setInterval(() => {
+  //         setCountdown((prev) => {
+  //           if (prev === 1) {
+  //             clearInterval(timer);
+  //             setShowPopup(false);
+  //           }
+  //           return prev - 1;
+  //         });
+  //       }, 1000);
+  //     }, 2000);
 
-      return () => clearInterval(countdownTimer);
-    }
-  }, [showPopup, setShowPopup]);
+  //     return () => {
+  //       clearTimeout(showPopupTimer);
+  //       clearInterval(timer);
+  //     };
+  //   }
+  // }, [showPopup, setShowPopup]);
 
   return (
     <>
@@ -62,9 +69,9 @@ export default function Chat({
             </p>
           ))}
           <div ref={messagesEndRef} />
-          {gameStart && showPopup && (
+          {showPopup && (
             <div className={styles.popup}>
-              <h3>{countdown > 0 ? `${countdown}` : `${popupMessage}`}</h3>
+              <h3>{popupMessage}</h3>
             </div>
           )}
         </div>
@@ -74,11 +81,13 @@ export default function Chat({
             onChangeEvent={(e) => setNewMessage(e.target.value)}
             onEnterKey={handleSend}
             placeholder="메시지를 입력하세요..."
+            disabled={isSend}
           />
           <Button
             onClickEvent={handleSend}
-            buttonText="전송하기"
+            buttonText={isSend ? "제출 완료" : "제출 하기"}
             buttonColor="black"
+            disabled={isSend}
           />
         </div>
       </div>
