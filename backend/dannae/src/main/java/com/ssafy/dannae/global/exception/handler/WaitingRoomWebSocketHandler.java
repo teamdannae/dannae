@@ -18,6 +18,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -396,4 +397,17 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"게임 시작 권한이 없습니다.\"}"));
         }
     }
+
+    public List<String> getWaitingRoomPlayers(Long roomId) {
+        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+        List<String> playerIds = new ArrayList<>();
+        if (sessions != null) {
+            for (WebSocketSession session : sessions) {
+                String playerId = getPlayerIdFromSession(session);
+                playerIds.add(playerId);
+            }
+        }
+        return playerIds;
+    }
+
 }
