@@ -427,6 +427,7 @@ export default function WaitingRoom() {
             wordList={wordList}
             consonants={consonant}
             isConsonantVisible={isConsonantVisible}
+            isGameStart={isInfiniteTurnStart}
           />
         ) : (
           <Sentence wordList={wordList} />
