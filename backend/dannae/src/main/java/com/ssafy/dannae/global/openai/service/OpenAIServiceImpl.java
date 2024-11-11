@@ -176,6 +176,7 @@ class OpenAIServiceImpl implements OpenAIService {
 		List<Integer> usedWordCount = new ArrayList<>();
 		Set<String> usedSentence = new HashSet<>();
 		List<Integer> playerScore = new ArrayList<>();
+		List<Long> playerTotalScore = new ArrayList<>();
 		for(int i = 0; i < playerList.size(); i++){
 			Long playerId = playerList.get(i);
 			Player nowPlayer = playerRepository.findById(playerId)
@@ -186,7 +187,9 @@ class OpenAIServiceImpl implements OpenAIService {
 				+ "유효한 문장이라면 주어진 단어들 중 문장에서 적절하게 사용된 단어들의 수와 단어들을 반환해주세요.\n"
 				+ "적절하게 사용된 단어가 없다면 0과 null 반환해주세요.\n"
 				+ "단어 목록: \"" + wordList.toString()  + "\"\n"
-				+ "과정 설명하지 말고 단어들의 수와 단어 반환만 해주세요.\n";
+				+ "답변 형식: 사용된 단어 수, [\"단어1\", \"단어2\", ...] \n"
+				+ "예시 답변: 2, [\"사과\", \"배\"]\n"
+				+ "과정 설명 없이 답변 형식에 맞게 단어 수와 단어 목록만 제공해주세요.\n";
 			PromptDto sentencePrompt = PromptDto.builder()
 				.messages(List.of(Map.of("role", "user", "content", wordQuestion)))
 				.temperature((0.8f))
@@ -209,11 +212,12 @@ class OpenAIServiceImpl implements OpenAIService {
 								.orElseThrow(() -> new NoWordException("Word not found : " + word));
 							int difficulty = wordData.getDifficulty();
 							nowPlayer.updateScore(difficulty);
-							count += difficulty;
+							scoreCount += difficulty;
 							usedSentence.add(word.trim());
 						}
 					}
 					playerScore.add(scoreCount);
+					playerTotalScore.add(nowPlayer.getScore());
 				} catch (Exception e) {
 					throw new OpenAIResponseProcessingException("Failed to process sentence result: " + sentenceResult, e);
 				}
@@ -222,6 +226,7 @@ class OpenAIServiceImpl implements OpenAIService {
 		return WordResultDto.builder()
 			.correctNum(usedWordCount)
 			.playerScore(playerScore)
+			.playerTotalScore(playerTotalScore)
 			.usedWords(usedSentence)
 			.build();
 	}
