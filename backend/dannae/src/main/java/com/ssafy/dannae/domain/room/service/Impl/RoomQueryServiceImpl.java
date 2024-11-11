@@ -73,6 +73,15 @@ class RoomQueryServiceImpl implements RoomQueryService {
 	}
 
 	@Override
+	public Long readUnreleasedRoom(String code) {
+		List<Room> lists = roomRepository.findByCode(code);
+		if(lists.isEmpty()) {
+			throw new NoRoomException("코드가 잘못 되었습니다.");
+		}
+		return lists.get(0).getId();
+	}
+
+	@Override
 	public boolean existsById(Long roomId) {
 		return roomRepository.existsById(roomId);
 	}

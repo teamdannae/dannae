@@ -4,14 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ssafy.dannae.domain.room.controller.request.RoomCreateReq;
 import com.ssafy.dannae.domain.room.controller.request.RoomReq;
@@ -66,6 +59,14 @@ public class RoomController {
 				.build());
 
 		return ResponseEntity.ok(BaseResponse.ofSuccess());
+
+	}
+
+	@GetMapping("/check-code")
+	public ResponseEntity<BaseResponse<Long>> checkRoomCode(@RequestParam() String code,
+															@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+		jwtTokenDecoder.getPlayerId(token);
+		return ResponseEntity.ok(BaseResponse.ofSuccess(roomQueryService.readUnreleasedRoom(code)));
 
 	}
 
