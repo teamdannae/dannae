@@ -1,6 +1,5 @@
 import WordCard from "@/app/components/Word";
 import styles from "./components.module.scss";
-import { useState } from "react";
 
 interface InfiniteProps {
   wordList: InfiniteWord[];
