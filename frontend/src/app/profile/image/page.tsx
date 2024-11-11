@@ -8,41 +8,44 @@ import { useRouter } from "next/navigation";
 
 const ProfileImage = () => {
   const router = useRouter();
-
   const [selectedImage, setSelectedImage] = useState(-1);
+  const [isFinish, setIsFinish] = useState(false);
 
-  const selectImage = (index: number) => {
+  const selectImage = async (index: number) => {
     setSelectedImage(index);
-  };
-
-  const confirmImage = async () => {
     try {
-      const response = await fetch("/api/next/profile/set-image", {
+      await fetch("/api/next/profile/set-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ image: selectedImage + 1 }),
       });
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
-      if (response.ok) {
-        const createPlayerResponse = await fetch(
-          "/api/next/profile/create-player",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (createPlayerResponse.ok) {
-          router.push("/lobby");
-        } else {
-          console.error("클라이언트에서 실패", createPlayerResponse);
+  const confirmProfile = async () => {
+    try {
+      const createPlayerResponse = await fetch(
+        "/api/next/profile/create-player",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
+      );
+
+      if (createPlayerResponse.ok) {
+        setIsFinish(true);
+
+        setTimeout(() => {
+          router.push("/lobby");
+        }, 500);
       } else {
-        console.error("Failed to set image");
+        console.error("클라이언트에서 실패", createPlayerResponse);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -50,7 +53,9 @@ const ProfileImage = () => {
   };
 
   return (
-    <section className={styles.imageContainer}>
+    <section
+      className={`${styles.imageContainer} ${isFinish ? styles.isDone : ""}`}
+    >
       <header className={styles.headerContainer}>
         <div className={styles.headerText}>
           <h2>사진을 정해주세요</h2>
@@ -58,8 +63,8 @@ const ProfileImage = () => {
         </div>
         <div className={styles.buttonContainer}>
           <Button
-            buttonText="완료"
-            onClickEvent={confirmImage}
+            buttonText="게임 하러 가기"
+            onClickEvent={confirmProfile}
             buttonColor="black"
             disabled={selectedImage === -1}
           />
