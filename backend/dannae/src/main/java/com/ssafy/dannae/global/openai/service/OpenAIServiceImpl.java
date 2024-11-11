@@ -208,9 +208,9 @@ class OpenAIServiceImpl implements OpenAIService {
 					if (!words.equals("null") && !words.isEmpty()) {
 						String[] wordArray = words.split(", ");
 						for (String word : wordArray) {
-							Word wordData = wordRepository.findByWord(word)
+							Word usedWord = wordRepository.findFirstByWord(word)
 								.orElseThrow(() -> new NoWordException("Word not found : " + word));
-							int difficulty = wordData.getDifficulty();
+							int difficulty = usedWord.getDifficulty();
 							nowPlayer.updateScore(difficulty);
 							scoreCount += difficulty;
 							usedSentence.add(word.trim());
