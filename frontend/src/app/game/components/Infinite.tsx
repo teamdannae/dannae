@@ -1,4 +1,6 @@
+import WordCard from "@/app/components/Word";
 import styles from "./components.module.scss";
+import { useState } from "react";
 
 interface InfiniteProps {
   wordList: InfiniteWord[];
@@ -17,16 +19,21 @@ const Infinite = ({ wordList, consonants }: InfiniteProps) => {
       </div>
       <div className={styles.wordContainer}>
         {wordList.map((word) => (
-          <div
+          <WordCard
             key={word.word}
-            className={`${styles.word} ${
-              word.correct
-                ? styles[`difficulty-${word.difficulty}`]
-                : styles.fail
-            }`}
-          >
-            <h5>{word.word}</h5>
-          </div>
+            word={word.word}
+            tier={
+              word.difficulty === 1
+                ? "common"
+                : word.difficulty === 2
+                ? "rare"
+                : word.difficulty === 3
+                ? "epic"
+                : "unique"
+            }
+            wrong={!word.correct}
+            viewMeaning={word.correct}
+          />
         ))}
       </div>
     </div>
