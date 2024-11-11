@@ -4,23 +4,26 @@ import Image from "next/image";
 import styles from "./page.module.scss";
 import { useState } from "react";
 import { Button } from "@/app/components";
-import { useRouter } from "next/navigation";
 
 const ProfileImage = () => {
-  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(-1);
   const [isFinish, setIsFinish] = useState(false);
 
   const selectImage = async (index: number) => {
-    setSelectedImage(index);
     try {
-      await fetch("/api/next/profile/set-image", {
+      const response = await fetch("/api/next/profile/set-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ image: selectedImage + 1 }),
+        body: JSON.stringify({ image: index + 1 }),
       });
+
+      if (response.ok) {
+        setSelectedImage(index);
+      } else {
+        console.error("이미지 설정 실패");
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -41,9 +44,9 @@ const ProfileImage = () => {
       if (createPlayerResponse.ok) {
         setIsFinish(true);
 
-        setTimeout(() => {
-          router.push("/lobby");
-        }, 500);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        window.location.replace("/lobby");
       } else {
         console.error("클라이언트에서 실패", createPlayerResponse);
       }
