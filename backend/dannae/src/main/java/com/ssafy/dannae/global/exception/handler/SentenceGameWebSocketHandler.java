@@ -168,7 +168,10 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             });
             roundPlayerStatus.put(roomId, playerStatus);
 
-            // 5. 첫 라운드일 경우 단어 30개 제공
+            // 5. playerMessages 초기화
+            playerMessages.put(roomId, new ConcurrentHashMap<>());  // 메시지 저장소 초기화
+
+            // 6. 첫 라운드일 경우 단어 30개 제공
             if (currentRound == 1) {
                 try {
                     SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
@@ -217,7 +220,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
-            // 6. 라운드 제한시간 설정
+            // 7. 라운드 제한시간 설정
             CompletableFuture.runAsync(() -> {
                 try {
                     Thread.sleep(roundTimeLimit * 1000);
@@ -345,6 +348,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                         e.printStackTrace();
                     }
                 }
+                sentences.add("");
             }
         }
 
