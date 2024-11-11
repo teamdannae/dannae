@@ -79,7 +79,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
     }
     private void startGame(Long roomId) {
-        broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"게임이 시작됩니다.\"}");
+        broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"5초 후에 게임이 시작됩니다.\"}");
         scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
     }
 
@@ -170,33 +170,35 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         SentenceGameRes res = sentenceGameCommandService.playGame(sentenceGameReq);
 
         // 각 플레이어의 정보를 JSON으로 변환하여 포함
-        StringBuilder playerDtosJson = new StringBuilder("[");
+        StringBuilder playersJson = new StringBuilder("[");
         for (SentencePlayerDto playerDto : res.playerDtos()) {
-            playerDtosJson.append(String.format(
-                    "{\"playerId\": %d, \"playerCorrects\": %d, \"playerNowScore\": %d, \"playerTotalScore\": %d, \"playerSentence\": \"%s\"},",
+            // 각 플레이어의 PlayerDto에서 닉네임 가져오기
+            PlayerDto playerDetails = playerQueryService.findPlayerById(playerDto.playerId());
+            playersJson.append(String.format(
+                    "{\"playerId\": %d, \"nickname\": \"%s\", \"playerCorrects\": %d, \"playerNowScore\": %d, \"playerTotalScore\": %d, \"playerSentence\": \"%s\"},",
                     playerDto.playerId(),
+                    playerDetails.nickname(),
                     playerDto.playerCorrects(),
                     playerDto.playerNowScore(),
                     playerDto.playerTotalScore(),
                     playerDto.playerSentence()
             ));
         }
-        if (playerDtosJson.charAt(playerDtosJson.length() - 1) == ',') {
-            playerDtosJson.deleteCharAt(playerDtosJson.length() - 1); // 마지막 쉼표 제거
+        if (playersJson.charAt(playersJson.length() - 1) == ',') {
+            playersJson.deleteCharAt(playersJson.length() - 1); // 마지막 쉼표 제거
         }
-        playerDtosJson.append("]");
+        playersJson.append("]");
 
         // 채점 결과 JSON으로 변환하여 전송
         String scoreMessage = String.format(
                 "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
-                        "\"isEnd\": %s, \"userWords\": %s, \"playerDtos\": %s}",
+                        "\"isEnd\": %s, \"userWords\": %s, \"players\": %s}",
                 res.isEnd(),
                 res.userWords(),
-                playerDtosJson
+                playersJson
         );
 
         broadcastToRoom(roomId, scoreMessage);
-
 
         // 다음 라운드 또는 게임 종료 처리
         if (res.isEnd()) {
@@ -205,6 +207,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
         }
     }
+
+
 
     public void startNewRound(Long roomId) {
         // 라운드 시작 시 currentRound 증가
