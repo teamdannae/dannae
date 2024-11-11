@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -54,11 +55,18 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 	private static final boolean[][] invalidCombinations = new boolean[19][19];
 
 	static {
-		int[] doubleConsonantIndexes = {1, 4, 8, 10, 13};
+		HashSet<Integer> doubleConsonants = new HashSet<>();
+		doubleConsonants.add(1);
+		doubleConsonants.add(4);
+		doubleConsonants.add(8);
+		doubleConsonants.add(10);
+		doubleConsonants.add(13);
 
-		for (int i : doubleConsonantIndexes) {
-			for (int j : doubleConsonantIndexes) {
-				invalidCombinations[i][j] = true;
+		for(int i = 0; i < 19; i++) {
+			for(int j = 0; j < 19; j++) {
+				if(doubleConsonants.contains(j) || doubleConsonants.contains(i)) {
+					invalidCombinations[i][j] = true;
+				}
 			}
 		}
 	}
