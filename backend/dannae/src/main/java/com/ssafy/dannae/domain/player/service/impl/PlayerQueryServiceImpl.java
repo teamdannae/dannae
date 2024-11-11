@@ -1,16 +1,20 @@
 package com.ssafy.dannae.domain.player.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.ssafy.dannae.domain.player.entity.Player;
-import com.ssafy.dannae.domain.player.entity.PlayerAuthorization;
-import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.exception.NoPlayerException;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -50,4 +54,19 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                 .image(player.getImage())
                 .build();
     }
+
+    @Override
+    public List<Player> readPlayerTotalScore(PlayerIdListDto playerIdListDto){
+        List<Player> playerList = new ArrayList<>();
+        List<Long> playerIdList = playerIdListDto.playerIdList();
+        for(Long playerId : playerIdList){
+            Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new NoPlayerException("No player find by Id."+ playerId));
+            playerList.add(player);
+        }
+        playerList.sort((p1, p2) -> Long.compare(p2.getScore(), p1.getScore()));
+
+        return playerList;
+    }
+
 }
