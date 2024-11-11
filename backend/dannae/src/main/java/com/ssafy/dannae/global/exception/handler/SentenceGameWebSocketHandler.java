@@ -18,16 +18,14 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 @Component
 public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
     private final Map<Long, List<WebSocketSession>> gameRoomSessions = new ConcurrentHashMap<>();
+    private final Map<Long, ScheduledExecutorService> roomSchedulers = new ConcurrentHashMap<>(); // 각 방별로 스케줄러 관리
     private final WaitingRoomWebSocketHandler waitingRoomHandler;
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
@@ -40,8 +38,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
     private int currentRound;
     private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
-
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public SentenceGameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService) {
         this.waitingRoomHandler = waitingRoomHandler;
@@ -69,17 +65,21 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         sessions.add(session);
         sessionTokenMap.put(session, token);
 
-        playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing); // 관련 메시지 생략...
+        playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
         session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"status\": \"playing\"}"));
         currentRound = 0;
+
+        // 방별로 스케줄러를 생성하여 저장
+        roomSchedulers.computeIfAbsent(roomId, k -> Executors.newScheduledThreadPool(1));
         if (areAllPlayersInGameRoom(roomId)) {
             startGame(roomId);
         }
-
     }
+
     private void startGame(Long roomId) {
         broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"5초 후에 게임이 시작됩니다.\"}");
+        ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
         scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
     }
 
@@ -95,6 +95,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             sessions.remove(session);
             if (sessions.isEmpty()) {
                 gameRoomSessions.remove(roomId);
+                ScheduledExecutorService scheduler = roomSchedulers.remove(roomId);
+                if (scheduler != null) scheduler.shutdownNow();
             } else {
                 broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s}", nickname, playerId, nickname));
             }
@@ -122,20 +124,18 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
         playerMessages.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>());
         String nickname =playerQueryService.findPlayerById(Long.parseLong(playerId)).nickname();
-        // JSON 파싱
+
         JSONObject jsonMessage = new JSONObject(payload);
         String messageContent = jsonMessage.getString("message");
 
-        // 플레이어가 이미 메시지를 보냈는지 확인
         if (playerStatus != null && playerStatus.get(playerId)) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 메시지를 보냈습니다.\"}"));
             return;
         }
 
         playerStatus.put(playerId, true);
-        playerMessages.get(roomId).put(playerId, messageContent);  // 순수 메시지 내용만 저장
+        playerMessages.get(roomId).put(playerId, messageContent);
 
-        // 클라이언트로 보낼 채팅 메시지 JSON 생성
         JSONObject chatMessage = new JSONObject();
         chatMessage.put("type", "chat");
         chatMessage.put("event", "message");
@@ -145,7 +145,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         session.sendMessage(new TextMessage(chatMessage.toString()));
 
-        // 모든 플레이어가 메시지를 보냈는지 확인 후 라운드 종료
         if (checkIfAllPlayersSentMessages(roomId)) {
             endRound(roomId);
         }
@@ -162,11 +161,9 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         for (String playerId : sortedPlayerIds) {
             playerIds.add(Long.parseLong(playerId));
-            // 플레이어가 메시지를 보냈다면 해당 메시지를 추가하고, 그렇지 않다면 빈 문자열을 추가
             sentences.add(messages.getOrDefault(playerId, ""));
         }
 
-        // 제한 시간 내 메시지를 입력하지 않은 플레이어에게 개인 알림 메시지 전송
         for (String playerId : playerStatus.keySet()) {
             if (!playerStatus.get(playerId)) {
                 WebSocketSession session = getSessionByPlayerId(roomId, playerId);
@@ -183,15 +180,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             }
         }
 
-
-        // SentenceGameReq 생성 및 채점 요청
         SentenceGameReq sentenceGameReq = new SentenceGameReq(roomId, playerIds, sentences);
         SentenceGameRes res = sentenceGameCommandService.playGame(sentenceGameReq);
 
-        // 각 플레이어의 정보를 JSON으로 변환하여 포함
         StringBuilder playersJson = new StringBuilder("[");
         for (SentencePlayerDto playerDto : res.playerDtos()) {
-            // 각 플레이어의 PlayerDto에서 닉네임 가져오기
             PlayerDto playerDetails = playerQueryService.findPlayerById(playerDto.playerId());
             playersJson.append(String.format(
                     "{\"playerId\": %d, \"nickname\": \"%s\", \"playerCorrects\": %d, \"playerNowScore\": %d, \"playerTotalScore\": %d, \"playerSentence\": \"%s\"},",
@@ -204,7 +197,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             ));
         }
         if (playersJson.charAt(playersJson.length() - 1) == ',') {
-            playersJson.deleteCharAt(playersJson.length() - 1); // 마지막 쉼표 제거
+            playersJson.deleteCharAt(playersJson.length() - 1);
         }
         playersJson.append("]");
 
@@ -218,18 +211,15 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         broadcastToRoom(roomId, scoreMessage);
 
-        // 다음 라운드 또는 게임 종료 처리
         if (res.isEnd()) {
             broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
         } else {
+            ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
             scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
         }
     }
 
-
-
     public void startNewRound(Long roomId) {
-        // 라운드 시작 시 currentRound 증가
         currentRound++;
 
         Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
@@ -238,7 +228,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         if (sessions != null) {
             sessions.forEach(session -> {
                 String playerId = getPlayerIdFromSession(session);
-                playerStatus.put(playerId, false); // 각 플레이어의 메시지 전송 상태 초기화
+                playerStatus.put(playerId, false);
             });
         }
 
@@ -246,13 +236,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         SentenceGameDto gameWithWords = null;
         if (currentRound == 1) {
-            // 1라운드일 경우에만 단어셋 가져오기
             SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
                     .roomId(roomId)
                     .build();
             gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
 
-            // 1라운드 시작 메시지와 단어셋 브로드캐스트
             broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
                     "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\", " +
                     "\"words\": " + gameWithWords.activeWords() + "}");
@@ -261,7 +249,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                     "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\"}");
         }
 
-        // 타이머 시작
+        ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
         scheduler.schedule(() -> {
             if (!checkIfAllPlayersSentMessages(roomId)) {
                 endRound(roomId);
@@ -274,7 +262,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
 
-    // 모든 플레이어가 메시지를 보냈는지 확인
     private boolean checkIfAllPlayersSentMessages(Long roomId) {
         Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
         return playerStatus != null && playerStatus.values().stream().allMatch(sent -> sent);
@@ -285,20 +272,20 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         if (sessions != null) {
             for (WebSocketSession session : sessions) {
                 try {
-                    session.sendMessage(new TextMessage(message)); // 메시지를 각 세션에 전송
+                    session.sendMessage(new TextMessage(message));
                 } catch (IOException e) {
                     System.err.println("Failed to send message to session " + session.getId() + ": " + e.getMessage());
                 }
             }
         } else {
-            System.out.println("No active sessions found for roomId " + roomId); // 방이 존재하지 않는 경우 로그 출력
+            System.out.println("No active sessions found for roomId " + roomId);
         }
     }
+
     private boolean areAllPlayersInGameRoom(Long roomId) {
         List<String> waitingRoomPlayerIds = waitingRoomHandler.getWaitingRoomPlayers(roomId);
         List<WebSocketSession> gameRoomSessions = this.gameRoomSessions.get(roomId);
 
-        // 모든 대기실 사용자가 게임 방에 입장했는지 확인
         return gameRoomSessions != null &&
                 waitingRoomPlayerIds.size() == gameRoomSessions.size() &&
                 gameRoomSessions.stream()
