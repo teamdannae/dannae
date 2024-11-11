@@ -11,14 +11,14 @@ import java.util.Set;
 public interface SentenceGameCommandService {
 
 	/**
-	 * 게임에 사용할 초성을 생성하고, 게임에 사용할 객체를 생성해주는 서비스.
+	 * 랜덤 단어셋을 만들어 방 번호와 함께 반환해주는 메서드
 	 * @param sentenceGameDto
 	 * @return
 	 */
 	SentenceGameDto createInitial(SentenceGameDto sentenceGameDto);
 
 	/**
-	 * 입력된 단어를 확인하고 올바른 단어인지 확인하는 서비스.
+	 * 입력된 문장을 확인하고 점수와 사용한 단어를 반환하는 메서드
 	 * @param sentenceGameReq
 	 * @return
 	 */
