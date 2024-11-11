@@ -245,8 +245,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 System.out.println("Evaluating answer. Result: correct=" + result.correct() + ", word=" + result.word() + ", reason=" + (result.correct() ? "정답입니다!" : "틀린 답변입니다."));
 
                 String resultMessage = String.format(
-                    "{\"type\": \"answer_result\", \"correct\": %b, \"word\": \"%s\", \"reason\": \"%s\"}",
-                    result.correct(), result.word(), result.correct() ? "정답입니다!" : result.meaning().get(0));
+                    "{\"type\": \"answer_result\", \"correct\": %b, \"word\": \"%s\", \"reason\": \"%s\", \"difficulty\": %d}",
+                    result.correct(), result.word(), result.correct() ? "정답입니다!" : result.meaning().get(0), result.difficulty());
 
                 broadcastToRoom(roomId, resultMessage);
 
