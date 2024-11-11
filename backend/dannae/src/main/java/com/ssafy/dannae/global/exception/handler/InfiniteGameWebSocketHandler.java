@@ -263,7 +263,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                     }, 2, TimeUnit.SECONDS);
                 } else {
                     String failureMessage = String.format(
-                        "{\"type\": \"failure\", \"message\": \"%s님 오답입니다.\"}", nickname
+                        "{\"type\": \"failure\", \"message\": \"%s님 %s\"}", nickname, result.meaning().get(0)
                     );
                     broadcastToRoom(roomId, failureMessage);
 
