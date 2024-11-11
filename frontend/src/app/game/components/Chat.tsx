@@ -7,6 +7,9 @@ interface chatProps {
   newMessage: string;
   setNewMessage: (e: string) => void;
   handleSend: () => void;
+  showPopup: boolean;
+  setShowPopup: (show: boolean) => void;
+  popupMessage: string;
 }
 
 export default function Chat({
@@ -14,11 +17,13 @@ export default function Chat({
   newMessage,
   setNewMessage,
   handleSend,
+  showPopup,
+  setShowPopup,
+  popupMessage,
 }: chatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [gameStart] = useState(false);
-  const [countdown, setCountdown] = useState(5);
-  const [showPopup, setShowPopup] = useState(true);
+  const [countdown, setCountdown] = useState(3);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -31,18 +36,21 @@ export default function Chat({
   }, [messages]);
 
   useEffect(() => {
-    if (countdown > 0) {
+    if (showPopup) {
+      setCountdown(3);
       const countdownTimer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
+        setCountdown((prev) => {
+          if (prev === 1) {
+            clearInterval(countdownTimer);
+            setShowPopup(false);
+          }
+          return prev - 1;
+        });
       }, 1000);
+
       return () => clearInterval(countdownTimer);
-    } else {
-      const startTimer = setTimeout(() => {
-        setShowPopup(false);
-      }, 1000);
-      return () => clearTimeout(startTimer);
     }
-  }, [countdown]);
+  }, [showPopup, setShowPopup]);
 
   return (
     <>
@@ -56,7 +64,7 @@ export default function Chat({
           <div ref={messagesEndRef} />
           {gameStart && showPopup && (
             <div className={styles.popup}>
-              <h3>{countdown > 0 ? `${countdown}` : "게임 시작!"}</h3>
+              <h3>{countdown > 0 ? `${countdown}` : `${popupMessage}`}</h3>
             </div>
           )}
         </div>

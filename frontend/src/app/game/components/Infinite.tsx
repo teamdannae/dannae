@@ -2,7 +2,7 @@ import WordCard from "@/app/components/Word";
 import styles from "./components.module.scss";
 
 interface InfiniteProps {
-  wordList: InfiniteWord[];
+  wordList: word[];
   consonants: string;
 }
 
