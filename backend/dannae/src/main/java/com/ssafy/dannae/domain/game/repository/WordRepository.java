@@ -19,7 +19,7 @@ public interface WordRepository extends JpaRepository<Word, Long> {
 
 	Optional<List<Word>> findByWord(String word);
 
-	@Query("SELECT w FROM Word w WHERE w.word = :word ORDER BY w.id ASC")
+	@Query(value = "SELECT w FROM Word w WHERE w.word = :word ORDER BY w.id ASC LIMIT 1", nativeQuery = true)
 	Optional<Word> findFirstByWord(@Param("word") String word);
 
 }
