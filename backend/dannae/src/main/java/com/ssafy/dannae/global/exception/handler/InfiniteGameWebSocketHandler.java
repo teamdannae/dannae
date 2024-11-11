@@ -314,6 +314,13 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         try {
             Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
+
+            if (roomTurnOrder == null || roomTurnOrder.isEmpty()) {
+                System.out.println("Room " + roomId + "의 턴 순서가 없거나 비어있음 - 게임 종료 처리");
+                endGame(roomId);
+                return;
+            }
+
             System.out.println("moveToNextTurn 시작 시 turnOrder: " + roomTurnOrder.stream()
                 .map(s -> sessionPlayerIdMap.get(s))
                 .collect(Collectors.joining(" -> ")));
