@@ -43,13 +43,11 @@ interface message {
   }[];
   room?: room;
   word?: string;
-  words?: {
-    word: string;
-    difficulty: number;
-  }[];
+  difficulty?: number;
+  reason?: string;
+  correct?: boolean;
+  words?: word[];
   initial?: string;
-  // 무한 초성 지옥 정답 유무 데이터
-  data?: InfiniteWord;
   round?: string;
   userWords: string[];
   playerDtos: SentencePlayer[];
@@ -86,7 +84,7 @@ interface gameroom {
 interface word {
   correct?: boolean;
   used?: boolean;
-  difficulty: number;
+  difficulty: number | null;
   reason?: string;
   word: string;
 }

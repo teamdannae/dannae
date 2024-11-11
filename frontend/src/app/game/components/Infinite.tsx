@@ -4,12 +4,13 @@ import styles from "./components.module.scss";
 interface InfiniteProps {
   wordList: word[];
   consonants: string;
+  isConsonantVisible: boolean;
 }
 
 const Infinite = ({ wordList, consonants }: InfiniteProps) => {
   return (
     <div className={styles.infiniteGameContainer}>
-      <div className={styles.consonantContainer}>
+      <div className={`${styles.consonantContainer} ${styles.isVisible}`}>
         {Array.from(consonants).map((consonant, index) => (
           <div key={index} className={styles.consonant}>
             <h1>{consonant}</h1>
