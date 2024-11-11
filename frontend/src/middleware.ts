@@ -10,17 +10,17 @@ export function middleware(request: NextRequest) {
   // 쿠키에서 nickname과 image 값을 가져옴
   const nickname = request.cookies.get("nickname")?.value;
   const image = request.cookies.get("image")?.value;
-  const playerId = request.cookies.get("playerId")?.value;
-  const token = request.cookies.get("token")?.value;
+  // const playerId = request.cookies.get("playerId")?.value;
+  // const token = request.cookies.get("token")?.value;
 
   console.log("지금 확인");
   console.log(nickname);
   console.log(image);
-  console.log(playerId);
-  console.log(token);
+  // console.log(playerId);
+  // console.log(token);
 
   // nickname이나 image가 없으면 리다이렉트
-  if (!nickname || !image || !playerId || !token) {
+  if (!nickname || !image) {
     console.log("잘못된 쿠키");
     return NextResponse.redirect(new URL("/profile/nickname", request.url));
   }

@@ -20,7 +20,9 @@ interface message {
     | "game_start_ready"
     | "game_start"
     | "error"
-    | "answer";
+    | "answer_result"
+    | "infiniteGameStart"
+    | "turn_info";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
   nickname?: string;
@@ -36,10 +38,12 @@ interface message {
     nickname: string;
     image: number;
     authorization: "creator" | "player";
-    token: string;
   }[];
   room?: room;
   word?: string;
+  initial?: string;
+  // 무한 초성 지옥 정답 유무 데이터
+  data?: InfiniteWord;
 }
 
 interface chat {
@@ -55,6 +59,7 @@ interface player {
   isHost: boolean;
   isReady: boolean;
   isEmpty: boolean;
+  isTurn: boolean;
 }
 
 interface gameroom {
@@ -65,4 +70,11 @@ interface gameroom {
   creator: number;
   isEmpty?: boolean;
   creatorNickname?: string;
+}
+
+interface InfiniteWord {
+  correct: boolean;
+  difficulty: number;
+  reason: string;
+  word: string;
 }
