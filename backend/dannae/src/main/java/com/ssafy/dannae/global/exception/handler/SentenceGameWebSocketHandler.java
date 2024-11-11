@@ -1,5 +1,9 @@
 package com.ssafy.dannae.global.exception.handler;
 
+import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
+import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
+import com.ssafy.dannae.domain.game.sentencegame.service.SentenceGameCommandService;
+import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceGameDto;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -12,6 +16,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -24,19 +30,23 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
     private final PlayerQueryService playerQueryService;
+    private final SentenceGameCommandService sentenceGameCommandService;
+
     private final int roundTimeLimit = 20;
     private final int roundWaitTime = 5;
     private final Map<Long, Map<String, Boolean>> roundPlayerStatus = new ConcurrentHashMap<>();
     private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
-    private int currentRound = 1;
+    private int currentRound = 0;
+    private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    public SentenceGameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService) {
+    public SentenceGameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService) {
         this.waitingRoomHandler = waitingRoomHandler;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService=playerCommandService;
         this.playerQueryService= playerQueryService;
+        this.sentenceGameCommandService = sentenceGameCommandService;
     }
 
     @Override
@@ -73,31 +83,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }, 0, TimeUnit.SECONDS);
     }
 
-
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        Long roomId = getRoomIdFromSession(session);
-        String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
-        PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
-
-        String payload = message.getPayload();
-        Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
-
-        // 플레이어가 이미 메시지를 보냈다면 무시
-        if (playerStatus != null && playerStatus.get(playerId)) {
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 메시지를 보냈습니다.\"}"));
-            return;
-        }
-
-        playerStatus.put(playerId, true);
-        String chatMessage = String.format("{\"type\": \"chat\", \"event\": \"message\", \"playerId\": \"%s\", \"message\": \"%s\"}", playerId, payload);
-        // 자기 자신에게만 메시지 전송
-        session.sendMessage(new TextMessage(chatMessage));
-        if (checkIfAllPlayersSentMessages(roomId)) {
-            endRound(roomId);
-        }
-    }
-
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
         Long roomId = getRoomIdFromSession(session);
@@ -129,7 +114,79 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         return null;
     }
 
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
+        Long roomId = getRoomIdFromSession(session);
+        String playerId = jwtTokenProvider.getPlayerIdFromToken(getTokenFromSession(session));
+        String payload = message.getPayload();
+        Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
+        playerMessages.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>());
+
+        if (playerStatus != null && playerStatus.get(playerId)) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 메시지를 보냈습니다.\"}"));
+            return;
+        }
+
+        playerStatus.put(playerId, true);
+        playerMessages.get(roomId).put(playerId, payload);  // 메시지 저장
+
+        String chatMessage = String.format("{\"type\": \"chat\", \"event\": \"message\", \"playerId\": \"%s\", \"message\": \"%s\"}", playerId, payload);
+        session.sendMessage(new TextMessage(chatMessage));  // 플레이어에게 메시지 전송
+
+        if (checkIfAllPlayersSentMessages(roomId)) {
+            endRound(roomId); // 모든 플레이어가 메시지를 보냈을 때 라운드 종료
+        }
+    }
+
+    private void endRound(Long roomId) {
+        Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
+        Map<String, String> messages = playerMessages.get(roomId);
+        List<Long> playerIds = new ArrayList<>();
+        List<String> sentences = new ArrayList<>();
+
+        // 플레이어 ID 정렬하여 순서 고정
+        List<String> sortedPlayerIds = new ArrayList<>(playerStatus.keySet());
+        Collections.sort(sortedPlayerIds);  // 정렬하여 순서 고정
+
+        for (String playerId : sortedPlayerIds) {
+            playerIds.add(Long.parseLong(playerId));
+            // 플레이어가 메시지를 보냈다면 해당 메시지를 추가하고, 그렇지 않다면 빈 문자열을 추가
+            sentences.add(messages.getOrDefault(playerId, ""));
+        }
+
+        // SentenceGameReq 생성 및 채점 요청
+        SentenceGameReq sentenceGameReq = new SentenceGameReq(roomId, playerIds, sentences);
+        SentenceGameRes res = sentenceGameCommandService.playGame(sentenceGameReq);
+
+        // 채점 결과 JSON으로 변환하여 전송
+        String scoreMessage = String.format(
+                "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
+                        "\"isEnd\": %s, \"playerSentences\": %s, \"playerNowScores\": %s, " +
+                        "\"playerTotalScores\": %s, \"playerCorrects\": %s, " +
+                        "\"activeWords\": %s, \"inactiveWords\": %s}",
+                res.isEnd(),
+                res.playerSentences(),
+                res.playerNowScores(),
+                res.playerTotalScores(),
+                res.playerCorrects(),
+                res.activeWords(),
+                res.inactiveWords()
+        );
+
+        broadcastToRoom(roomId, scoreMessage);
+
+        // 다음 라운드 또는 게임 종료 처리
+        if (res.isEnd()) {
+            broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
+        } else {
+            scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
+        }
+    }
+
     public void startNewRound(Long roomId) {
+        // 라운드 시작 시 currentRound 증가
+        currentRound++;
+
         Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
 
@@ -142,20 +199,30 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         roundPlayerStatus.put(roomId, playerStatus);
 
+        SentenceGameDto gameWithWords = null;
+        if (currentRound == 1) {
+            // 1라운드일 경우에만 단어셋 가져오기
+            SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
+                    .roomId(roomId)
+                    .build();
+            gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
+
+            // 1라운드 시작 메시지와 단어셋 브로드캐스트
+            broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
+                    "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\", " +
+                    "\"words\": " + gameWithWords.activeWords() + "}");
+        } else {
+            // 이후 라운드 시작 메시지만 브로드캐스트
+            broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
+                    "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\"}");
+        }
+
         // 타이머 시작
         scheduler.schedule(() -> {
             if (!checkIfAllPlayersSentMessages(roomId)) {
                 endRound(roomId); // 시간 초과로 라운드 종료
             }
         }, roundTimeLimit, TimeUnit.SECONDS);
-
-        broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", \"message\": \"새로운 라운드가 시작되었습니다!\"}");
-    }
-
-
-    private void endRound(Long roomId) {
-        // 여기서 채점로직 넣을 예정
-        broadcastToRoom(roomId, "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\"}");
     }
 
     private String getPlayerIdFromSession(WebSocketSession session) {
