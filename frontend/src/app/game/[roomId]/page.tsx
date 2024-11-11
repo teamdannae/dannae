@@ -2,11 +2,17 @@
 
 import { useWebSocket } from "@/hooks";
 import { useState, useEffect, useCallback } from "react";
-import { Header, GameInfo, PlayerList, Chat } from "../components";
+import {
+  Header,
+  GameInfo,
+  PlayerList,
+  Chat,
+  Infinite,
+  Sentence,
+} from "../components";
 import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.scss";
-import Infinite from "../components/Infinite";
-import { Toast } from "@/app/components";
+import { Progress, Toast } from "@/app/components";
 
 export default function WaitingRoom() {
   const router = useRouter();
@@ -23,6 +29,8 @@ export default function WaitingRoom() {
       isEmpty: true,
       isHost: false,
       isTurn: false,
+      nowScore: 0,
+      totalScore: 0,
     },
     {
       playerId: "",
@@ -32,6 +40,8 @@ export default function WaitingRoom() {
       isEmpty: true,
       isHost: false,
       isTurn: false,
+      nowScore: 0,
+      totalScore: 0,
     },
     {
       playerId: "",
@@ -41,6 +51,8 @@ export default function WaitingRoom() {
       isEmpty: true,
       isHost: false,
       isTurn: false,
+      nowScore: 0,
+      totalScore: 0,
     },
     {
       playerId: "",
@@ -50,12 +62,14 @@ export default function WaitingRoom() {
       isEmpty: true,
       isHost: false,
       isTurn: false,
+      nowScore: 0,
+      totalScore: 0,
     },
   ]);
   const [roomInfo, setRoomInfo] = useState<room>({
     roomId: 0,
     title: "",
-    mode: "무한 초성 지옥",
+    mode: "단어의 방",
     release: false,
     code: "",
     creator: 0,
@@ -65,10 +79,13 @@ export default function WaitingRoom() {
   const [areAllPlayersReady, setAreAllPlayersReady] = useState(false);
   const [yourPlayerId, setYourPlayerId] = useState("");
   const [isStart, setIsStart] = useState(false);
-  const [wordList, setWordList] = useState<InfiniteWord[]>([]);
+  const [wordList, setWordList] = useState<word[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [consonant, setConsonant] = useState<string>("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [roundReset, setRoundReset] = useState(false);
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -81,18 +98,17 @@ export default function WaitingRoom() {
     setIsStart(true);
 
     const tokenResponse = await fetch("/api/next/profile/get-token");
+    const roomResponse = await fetch(`/api/next/rooms/${roomId}`);
     const tokenData = await tokenResponse.json();
+    const roomData = await roomResponse.json();
 
     console.log("게임 소켓 연결");
 
-    const gameWebSocketUrl =
-      // 로컬 웹소켓 말고 서버 웹소켓으로 변경해야 함
-      roomInfo.mode === "무한 초성 지옥"
-        ? `wss://dannae.kr/ws//infinitegame?roomId=${roomId}&token=${tokenData.token}`
-        : `wss://dannae.kr/ws//sentencegame?roomId=${roomId}&token=${tokenData.token}`;
-    // `ws://70.12.247.93:8080/ws/infinitegame?roomId=${roomId}&token=${tokenData.token}`
-    // : `ws://70.12.247.93:8080/ws/sentencegame?roomId=${roomId}&token=${tokenData.token}`;
+    const gameWebSocketUrl = `wss://dannae.kr/ws//${
+      roomData.data.mode === "무한 초성 지옥" ? "infinite" : "sentence"
+    }game?roomId=${roomId}&token=${tokenData.token}`;
 
+    console.log(gameWebSocketUrl);
     setUrl(gameWebSocketUrl);
   };
 
@@ -123,6 +139,7 @@ export default function WaitingRoom() {
 
         // 상태 업데이트
         setRoomInfo(roomData.data);
+        console.log(roomData);
         setYourPlayerId(playerIdData.playerId);
 
         // 토큰을 받은 후에 웹소켓 URL 설정
@@ -159,6 +176,8 @@ export default function WaitingRoom() {
                 isEmpty: false,
                 isHost: data.event === "creator",
                 isTurn: false,
+                nowScore: 0,
+                totalScore: 0,
               };
               break;
             }
@@ -182,12 +201,14 @@ export default function WaitingRoom() {
           user.playerId === data.playerId
             ? {
                 playerId: "",
-                image: 1,
+                image: 0,
                 nickname: "",
                 isReady: false,
                 isEmpty: true,
                 isHost: false,
                 isTurn: false,
+                nowScore: 0,
+                totalScore: 0,
               }
             : user
         )
@@ -206,6 +227,8 @@ export default function WaitingRoom() {
                 isEmpty: false,
                 isHost: data.creatorId === player.playerId,
                 isTurn: false,
+                nowScore: 0,
+                totalScore: 0,
               };
               break;
             }
@@ -245,10 +268,7 @@ export default function WaitingRoom() {
     } else if (data.type === "game_start" && data.room) {
       startGame();
     } else if (data.type === "answer_result" && data.data) {
-      setWordList((prevWordList) => [
-        ...prevWordList,
-        data.data as InfiniteWord,
-      ]);
+      setWordList((prevWordList) => [...prevWordList, data.data as word]);
       // 무한 초성 지옥 게임 시작하면 초성 설정
     } else if (data.type === "infiniteGameStart" && data.initial) {
       setConsonant(data.initial);
@@ -264,6 +284,46 @@ export default function WaitingRoom() {
             : { ...user, isTurn: false }
         )
       );
+    } else if (data.type === "round_start") {
+      setRoundReset(false);
+      if (data.words) {
+        const formattedWords = data.words.map(
+          (wordObj: { word: string; difficulty: number }) => ({
+            word: wordObj.word,
+            difficulty: wordObj.difficulty,
+            used: false,
+          })
+        );
+
+        setWordList((prev) => [...prev, ...formattedWords]);
+      }
+    } else if (data.type === "round_end") {
+      setRoundReset(true);
+      setWordList((prevWordList) =>
+        prevWordList.map((word) =>
+          data.userWords.includes(word.word) ? { ...word, used: true } : word
+        )
+      );
+      const playerMessages = data.playerDtos.map((player) => {
+        const playerMessage = `${player.nickname}: ${player.playerSentence}`;
+        return playerMessage;
+      });
+
+      setMessages((prevMessages) => [...prevMessages, ...playerMessages]);
+      setUsers((prevUsers) =>
+        prevUsers.map((player) => {
+          const updatedPlayer = data.playerDtos.find(
+            (p) => p.playerId === +player.playerId
+          );
+          return updatedPlayer
+            ? {
+                ...player,
+                currentScore: updatedPlayer.playerNowScore,
+                totalScore: updatedPlayer.playerTotalScore,
+              }
+            : player;
+        })
+      );
     }
 
     if (data.creatorId) {
@@ -277,23 +337,27 @@ export default function WaitingRoom() {
     }
 
     if (data.message) {
-      const newMessage =
-        data.type === "chat"
-          ? `${data.nickname}: ${data.message}`
-          : data.message;
-      setMessages((prev) => [...prev, newMessage]);
+      if (data.round) {
+        setPopupMessage(data.message || "");
+        setShowPopup(true);
+      } else {
+        const newMessage =
+          data.type === "chat"
+            ? `${data.nickname}: ${data.message}`
+            : data.message;
+        setMessages((prev) => [...prev, newMessage]);
+      }
     }
     console.log(data);
   }, []);
 
-  // const { isConnected, sendMessage } = useWebSocket(url, handleMessage);
   const { sendMessage } = useWebSocket(url, handleMessage);
 
   // 대기방에서 채팅 보낼때
   const handleSend = () => {
     const temp = {
       type: "chat",
-      playerId: "",
+      playerId: yourPlayerId,
       message: newMessage,
     };
     sendMessage(temp);
@@ -303,9 +367,8 @@ export default function WaitingRoom() {
   // 문장의 방 답변 제출
   const handleSentenceSend = () => {
     const temp = {
-      type: "answer",
+      type: "chat",
       playerId: yourPlayerId,
-      roomId: roomInfo.roomId,
       message: newMessage,
     };
     sendMessage(temp);
@@ -334,7 +397,11 @@ export default function WaitingRoom() {
     >
       {showToast && <Toast message={toastMessage} />}
       {isStart ? (
-        <Infinite wordList={wordList} consonants={consonant} />
+        roomInfo.mode === "무한 초성 지옥" ? (
+          <Infinite wordList={wordList} consonants={consonant} />
+        ) : (
+          <Sentence wordList={wordList} />
+        )
       ) : (
         <>
           <Header roomInfo={roomInfo} />
@@ -348,6 +415,14 @@ export default function WaitingRoom() {
             />
           </section>
         </>
+      )}
+      {isStart && (
+        <div className={styles.progressContainer}>
+          <Progress
+            duration={roomInfo.mode === "무한 초성 지옥" ? 10 : 20}
+            reset={roundReset}
+          />
+        </div>
       )}
       <section aria-labelledby="player-list" className={styles.section}>
         <PlayerList users={users} />
@@ -364,6 +439,9 @@ export default function WaitingRoom() {
                 : handleInfiniteSend
               : handleSend
           }
+          showPopup={showPopup}
+          setShowPopup={setShowPopup}
+          popupMessage={popupMessage}
         />
       </section>
     </main>
