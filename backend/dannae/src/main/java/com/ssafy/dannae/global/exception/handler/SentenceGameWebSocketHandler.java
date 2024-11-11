@@ -121,7 +121,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String payload = message.getPayload();
         Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
         playerMessages.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>());
-
+        String nickname =playerQueryService.findPlayerById(Long.parseLong(playerId)).nickname();
         // JSON 파싱
         JSONObject jsonMessage = new JSONObject(payload);
         String messageContent = jsonMessage.getString("message");
@@ -140,7 +140,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         chatMessage.put("type", "chat");
         chatMessage.put("event", "message");
         chatMessage.put("playerId", playerId);
-        chatMessage.put("message", messageContent);  // 순수 텍스트 메시지만 포함
+        chatMessage.put("nickname",nickname);
+        chatMessage.put("message", messageContent);
 
         session.sendMessage(new TextMessage(chatMessage.toString()));
 
@@ -164,6 +165,24 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             // 플레이어가 메시지를 보냈다면 해당 메시지를 추가하고, 그렇지 않다면 빈 문자열을 추가
             sentences.add(messages.getOrDefault(playerId, ""));
         }
+
+        // 제한 시간 내 메시지를 입력하지 않은 플레이어에게 개인 알림 메시지 전송
+        for (String playerId : playerStatus.keySet()) {
+            if (!playerStatus.get(playerId)) {
+                WebSocketSession session = getSessionByPlayerId(roomId, playerId);
+                if (session != null && session.isOpen()) {
+                    String timeoutMessage = String.format(
+                            "{\"type\": \"notification\", \"message\": \"제한 시간 내 문장을 입력하지 못했습니다.\"}"
+                    );
+                    try {
+                        session.sendMessage(new TextMessage(timeoutMessage));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
 
         // SentenceGameReq 생성 및 채점 요청
         SentenceGameReq sentenceGameReq = new SentenceGameReq(roomId, playerIds, sentences);
@@ -189,7 +208,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
         playersJson.append("]");
 
-        // 채점 결과 JSON으로 변환하여 전송
         String scoreMessage = String.format(
                 "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
                         "\"isEnd\": %s, \"userWords\": %s, \"players\": %s}",
@@ -239,7 +257,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                     "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\", " +
                     "\"words\": " + gameWithWords.activeWords() + "}");
         } else {
-            // 이후 라운드 시작 메시지만 브로드캐스트
             broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
                     "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\"}");
         }
@@ -247,7 +264,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         // 타이머 시작
         scheduler.schedule(() -> {
             if (!checkIfAllPlayersSentMessages(roomId)) {
-                endRound(roomId); // 시간 초과로 라운드 종료
+                endRound(roomId);
             }
         }, roundTimeLimit, TimeUnit.SECONDS);
     }
@@ -287,5 +304,17 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 gameRoomSessions.stream()
                         .map(this::getPlayerIdFromSession)
                         .allMatch(waitingRoomPlayerIds::contains);
+    }
+
+    private WebSocketSession getSessionByPlayerId(Long roomId, String playerId) {
+        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+        if (sessions != null) {
+            for (WebSocketSession session : sessions) {
+                if (playerId.equals(getPlayerIdFromSession(session))) {
+                    return session;
+                }
+            }
+        }
+        return null;
     }
 }
