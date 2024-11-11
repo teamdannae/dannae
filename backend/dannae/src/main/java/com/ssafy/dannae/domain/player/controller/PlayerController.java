@@ -1,18 +1,31 @@
 package com.ssafy.dannae.domain.player.controller;
 
-import com.ssafy.dannae.domain.room.exception.NoRoomException;
-import com.ssafy.dannae.domain.room.service.RoomQueryService;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.ssafy.dannae.domain.player.controller.request.PlayerIdReq;
 import com.ssafy.dannae.domain.player.controller.request.PlayerReq;
 import com.ssafy.dannae.domain.player.controller.response.PlayerRes;
+import com.ssafy.dannae.domain.player.controller.response.PlayerScoreRes;
+import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.exception.TokenException;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+import com.ssafy.dannae.domain.room.exception.NoRoomException;
+import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.exception.handler.WaitingRoomWebSocketHandler;
 import com.ssafy.dannae.global.template.response.BaseResponse;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
@@ -91,4 +104,32 @@ public class PlayerController {
 
         return ResponseEntity.ok(BaseResponse.ofSuccess(playerRes));
     }
+
+    @PostMapping("/result")
+    public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestBody PlayerIdReq playerIdReq) {
+
+        PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+            .playerIdList(playerIdReq.playerIdList())
+            .build();
+
+        List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto);
+        List<Long> scoreList = new ArrayList<>();
+        List<String> nicknameList = new ArrayList<>();
+        for(Player player : playerList) {
+            scoreList.add(player.getScore());
+            nicknameList.add(player.getNickname());
+        }
+
+        PlayerScoreRes res = PlayerScoreRes.builder()
+            .scoreList(scoreList)
+            .nicknameList(nicknameList)
+            .build();
+
+        for(Player player : playerList) {
+            player.resetScore();
+        }
+
+        return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+    }
+
 }
