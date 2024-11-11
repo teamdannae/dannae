@@ -1,10 +1,12 @@
 package com.ssafy.dannae.global.exception.handler;
 
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
+import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
 import com.ssafy.dannae.domain.game.sentencegame.service.SentenceGameCommandService;
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceGameDto;
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentencePlayerDto;
+import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceWordDto;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -150,54 +152,50 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            // 3. 현재 라운드 증가 전 로깅
-            System.out.println("Current round before increment: " + currentRound);
+            // 3. 현재 라운드 증가
             currentRound++;
-            System.out.println("Current round after increment: " + currentRound);
 
-            // 4. playerStatus 초기화 로깅
+            // 4. 플레이어 상태 초기화
             Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
-            System.out.println("Initializing player status for room " + roomId);
-
             sessions.forEach(session -> {
                 String playerId = getPlayerIdFromSession(session);
                 if (playerId != null) {
                     playerStatus.put(playerId, false);
-                    System.out.println("Added player " + playerId + " to status map");
-                } else {
-                    System.err.println("Warning: Could not get playerId from session");
                 }
             });
-
             roundPlayerStatus.put(roomId, playerStatus);
-            System.out.println("Player status map size: " + playerStatus.size());
 
-            // 5. 첫 라운드 특별 처리
+            // 5. 첫 라운드일 경우 단어 30개 제공
             if (currentRound == 1) {
                 try {
-                    System.out.println("Starting first round for room " + roomId);
                     SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
                             .roomId(roomId)
                             .build();
 
-                    System.out.println("Creating initial game state");
-                    SentenceGameDto gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
+                    // 단어 생성 서비스 호출
+                    SentenceGameCreateRes gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
 
-                    if (gameWithWords == null) {
-                        throw new IllegalStateException("Game initialization returned null");
+                    // JSON 변환 및 브로드캐스트
+                    List<SentenceWordDto> words = gameWithWords.words();
+                    StringBuilder wordsJson = new StringBuilder("[");
+                    for (SentenceWordDto word : words) {
+                        wordsJson.append(String.format(
+                                "{\"word\": \"%s\", \"difficulty\": %d},",
+                                word.word(),
+                                word.difficulty()
+                        ));
                     }
-
-                    if (gameWithWords.activeWords() == null) {
-                        throw new IllegalStateException("No active words available");
+                    if (wordsJson.charAt(wordsJson.length() - 1) == ',') {
+                        wordsJson.deleteCharAt(wordsJson.length() - 1); // 마지막 쉼표 제거
                     }
+                    wordsJson.append("]");
 
                     String roundStartMessage = String.format(
                             "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\", \"words\": %s}",
                             currentRound,
                             currentRound,
-                            gameWithWords.activeWords()
+                            wordsJson.toString()
                     );
-                    System.out.println("Sending first round message: " + roundStartMessage);
                     broadcastToRoom(roomId, roundStartMessage);
 
                 } catch (Exception e) {
@@ -207,23 +205,20 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                     return;
                 }
             } else {
+                // 첫 라운드가 아닌 경우 단순 라운드 시작 메시지 전송
                 String roundStartMessage = String.format(
                         "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\"}",
                         currentRound,
                         currentRound
                 );
-                System.out.println("Sending normal round message: " + roundStartMessage);
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
             // 6. 라운드 제한시간 설정
             CompletableFuture.runAsync(() -> {
                 try {
-                    System.out.println("Starting round timer for room " + roomId + ": " + roundTimeLimit + " seconds");
                     Thread.sleep(roundTimeLimit * 1000);
-                    System.out.println("Checking if all players sent messages for room " + roomId);
                     if (!checkIfAllPlayersSentMessages(roomId)) {
-                        System.out.println("Not all players sent messages, ending round for room " + roomId);
                         endRound(roomId);
                     }
                 } catch (InterruptedException e) {
