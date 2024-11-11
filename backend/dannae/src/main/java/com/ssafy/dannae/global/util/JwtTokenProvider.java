@@ -1,18 +1,20 @@
 package com.ssafy.dannae.global.util;
 
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
     private final String secretKey;
-    private final long tokenValidity = 30 * 60 * 1000L; // 30분 (밀리초 단위)
+    private final long tokenValidity = 60 * 60 * 1000L; // 30분 (밀리초 단위)
 
     public JwtTokenProvider(@Value("${jwt.secret-key}") String secretKey) {
         this.secretKey = secretKey;
