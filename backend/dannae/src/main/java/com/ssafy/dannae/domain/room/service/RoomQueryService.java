@@ -16,4 +16,6 @@ public interface RoomQueryService {
 	RoomDetailDto readDetail(Long roomId);
 
 	Optional<Room> findById(Long roomId);
+
+	Long readUnreleasedRoom(String code);
 }
