@@ -48,7 +48,7 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 	/**
 	 * 랜덤 단어셋을 만들어 방 번호와 함께 반환해주는 메서드
 	 * @param sentenceGameDto
-	 * @return
+	 * @return sentenceGameRes
 	 */
 	@Override
 	public SentenceGameDto createInitial(SentenceGameDto sentenceGameDto) {
@@ -65,7 +65,7 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 	}
 
 	/**
-	 * 단어가 의미가 맞고, db에 존재하는지 확인하기 위한 서비스
+	 * 입력된 문장을 확인하고 점수와 사용한 단어를 반환하는 메서드
 	 * @param sentenceGameReq
 	 * @return sentenceGameRes
 	 */
@@ -147,6 +147,9 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 		return res;
 	}
 
+	/**
+	 * 게임 종료시 사용된 단어의 사용 횟수를 업데이트하는 메서드
+	 */
 	@Override
 	public void updateWordCount(Set<String> wordSet) {
 		for(String string: wordSet){
