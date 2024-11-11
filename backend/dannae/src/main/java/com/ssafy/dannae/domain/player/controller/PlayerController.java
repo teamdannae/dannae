@@ -1,6 +1,5 @@
 package com.ssafy.dannae.domain.player.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
@@ -113,16 +112,9 @@ public class PlayerController {
             .build();
 
         List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto);
-        List<Long> scoreList = new ArrayList<>();
-        List<String> nicknameList = new ArrayList<>();
-        for(Player player : playerList) {
-            scoreList.add(player.getScore());
-            nicknameList.add(player.getNickname());
-        }
 
         PlayerScoreRes res = PlayerScoreRes.builder()
-            .scoreList(scoreList)
-            .nicknameList(nicknameList)
+            .playerList(playerList)
             .build();
 
         for(Player player : playerList) {
