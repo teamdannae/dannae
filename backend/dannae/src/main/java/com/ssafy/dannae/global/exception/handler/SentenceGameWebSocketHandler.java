@@ -133,58 +133,124 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    // startNewRound 메서드도 비슷하게 수정
     public void startNewRound(Long roomId) {
         try {
-            currentRound++;
-
-            Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
-            List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-
-            if (sessions != null) {
-                sessions.forEach(session -> {
-                    String playerId = getPlayerIdFromSession(session);
-                    playerStatus.put(playerId, false);
-                });
+            // 1. roomId 체크
+            if (roomId == null) {
+                System.err.println("Error: roomId is null");
+                broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"방 ID가 유효하지 않습니다.\"}");
+                return;
             }
+
+            // 2. 세션 체크
+            List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+            if (sessions == null || sessions.isEmpty()) {
+                System.err.println("Error: No active sessions found for room " + roomId);
+                broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"활성화된 세션이 없습니다.\"}");
+                return;
+            }
+
+            // 3. 현재 라운드 증가 전 로깅
+            System.out.println("Current round before increment: " + currentRound);
+            currentRound++;
+            System.out.println("Current round after increment: " + currentRound);
+
+            // 4. playerStatus 초기화 로깅
+            Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
+            System.out.println("Initializing player status for room " + roomId);
+
+            sessions.forEach(session -> {
+                String playerId = getPlayerIdFromSession(session);
+                if (playerId != null) {
+                    playerStatus.put(playerId, false);
+                    System.out.println("Added player " + playerId + " to status map");
+                } else {
+                    System.err.println("Warning: Could not get playerId from session");
+                }
+            });
 
             roundPlayerStatus.put(roomId, playerStatus);
+            System.out.println("Player status map size: " + playerStatus.size());
 
+            // 5. 첫 라운드 특별 처리
             if (currentRound == 1) {
-                SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
-                        .roomId(roomId)
-                        .build();
-                SentenceGameDto gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
+                try {
+                    System.out.println("Starting first round for room " + roomId);
+                    SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
+                            .roomId(roomId)
+                            .build();
 
-                broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
-                        "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\", " +
-                        "\"words\": " + gameWithWords.activeWords() + "}");
+                    System.out.println("Creating initial game state");
+                    SentenceGameDto gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
+
+                    if (gameWithWords == null) {
+                        throw new IllegalStateException("Game initialization returned null");
+                    }
+
+                    if (gameWithWords.activeWords() == null) {
+                        throw new IllegalStateException("No active words available");
+                    }
+
+                    String roundStartMessage = String.format(
+                            "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\", \"words\": %s}",
+                            currentRound,
+                            currentRound,
+                            gameWithWords.activeWords()
+                    );
+                    System.out.println("Sending first round message: " + roundStartMessage);
+                    broadcastToRoom(roomId, roundStartMessage);
+
+                } catch (Exception e) {
+                    System.err.println("Error during first round initialization: " + e.getMessage());
+                    e.printStackTrace();
+                    broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"첫 라운드 초기화 중 오류: " + e.getMessage() + "\"}");
+                    return;
+                }
             } else {
-                broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
-                        "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\"}");
+                String roundStartMessage = String.format(
+                        "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\"}",
+                        currentRound,
+                        currentRound
+                );
+                System.out.println("Sending normal round message: " + roundStartMessage);
+                broadcastToRoom(roomId, roundStartMessage);
             }
 
-            // CompletableFuture를 사용하여 라운드 제한시간 설정
+            // 6. 라운드 제한시간 설정
             CompletableFuture.runAsync(() -> {
                 try {
+                    System.out.println("Starting round timer for room " + roomId + ": " + roundTimeLimit + " seconds");
                     Thread.sleep(roundTimeLimit * 1000);
+                    System.out.println("Checking if all players sent messages for room " + roomId);
                     if (!checkIfAllPlayersSentMessages(roomId)) {
+                        System.out.println("Not all players sent messages, ending round for room " + roomId);
                         endRound(roomId);
                     }
                 } catch (InterruptedException e) {
-                    System.err.println("Round timeout task interrupted: " + e.getMessage());
+                    System.err.println("Round timer interrupted for room " + roomId + ": " + e.getMessage());
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
-                    System.err.println("Error during round timeout: " + e.getMessage());
+                    System.err.println("Error during round timeout for room " + roomId + ": " + e.getMessage());
                     e.printStackTrace();
                 }
-            }, globalScheduler);
+            });
 
         } catch (Exception e) {
-            System.err.println("Failed to start new round for room " + roomId + ": " + e.getMessage());
+            System.err.println("Critical error in startNewRound for room " + roomId);
             e.printStackTrace();
-            broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"새 라운드를 시작할 수 없습니다.\"}");
+            String errorDetail = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
+            broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"새 라운드 시작 오류: " + errorDetail + "\"}");
         }
+    }
+
+    // 추가 디버깅 메서드
+    private void logGameState(Long roomId) {
+        System.out.println("=== Game State Debug ===");
+        System.out.println("Room ID: " + roomId);
+        System.out.println("Current Round: " + currentRound);
+        System.out.println("Active Sessions: " + (gameRoomSessions.get(roomId) != null ? gameRoomSessions.get(roomId).size() : 0));
+        System.out.println("Player Status: " + (roundPlayerStatus.get(roomId) != null ? roundPlayerStatus.get(roomId).toString() : "null"));
+        System.out.println("=====================");
     }
 
     @Override
@@ -307,7 +373,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
         String scoreMessage = String.format(
                 "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
-                        "\"isEnd\": %s, \"userWords\": %s, \"players\": %s}",
+                        "\"isEnd\": %s, \"userWords\": %s, \"playerDtos\": %s}",
                 res.isEnd(),
                 res.userWords(),
                 playersJson
