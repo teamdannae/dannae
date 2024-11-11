@@ -200,11 +200,10 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         } else {
             String answer = submittedAnswer.getAnswer();
             Long playerId = submittedAnswer.getPlayerId();
-            String initial = gameConsonantsMap.get(roomId); // 초성을 가져옴
-            Long gameId = gameIdsMap.get(roomId); // 게임 ID 가져옴
+            String initial = gameConsonantsMap.get(roomId);
+            Long gameId = gameIdsMap.get(roomId);
 
             if (gameId == null || playerId == null) {
-                // 예외 발생 시 또는 ID가 null일 때 에러 메시지 출력 후 종료
                 System.out.println("Error: gameId 또는 playerId가 null입니다.");
                 return;
             }
@@ -212,10 +211,10 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             try {
                 InfiniteGameDto answerDto = InfiniteGameDto.builder()
                     .roomId(roomId)
-                    .gameId(gameId) // gameId 추가
+                    .gameId(gameId)
                     .word(answer)
                     .playerId(playerId)
-                    .initial(initial) // 초성을 포함
+                    .initial(initial)
                     .build();
 
                 InfiniteGameDto result = infiniteGameCommandService.updateWord(answerDto);
@@ -230,32 +229,32 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
                 String nickname = playerNicknames.get(playerId.toString());
 
-                scheduler.schedule(() -> {
-                    if (result.correct()) {
-                        String successMessage = String.format(
-                            "{\"type\": \"success\", \"message\": \"%s님 정답입니다!\"}", nickname
-                        );
-						try {
-							broadcastToRoom(roomId, successMessage);
-						} catch (IOException e) {
-							throw new RuntimeException(e);
-						}
-						moveToNextTurn(roomId);
-                    } else {
-                        String failureMessage = String.format(
-                            "%s님 오답입니다.", nickname
-                        );
+                // 바로 정답 또는 오답 메시지를 표시한 후, 2초간 대기 후에 턴을 넘김
+                if (result.correct()) {
+                    String successMessage = String.format(
+                        "{\"type\": \"success\", \"message\": \"%s님 정답입니다!\"}", nickname
+                    );
+                    broadcastToRoom(roomId, successMessage);
 
-                        handlePlayerElimination(currentSession, roomId, failureMessage);
+                    scheduler.schedule(() -> moveToNextTurn(roomId), 2, TimeUnit.SECONDS);
+                } else {
+                    String failureMessage = String.format(
+                        "{\"type\": \"failure\", \"message\": \"%s님 오답입니다.\"}", nickname
+                    );
+                    broadcastToRoom(roomId, failureMessage);
+
+                    scheduler.schedule(() -> {
+                        handlePlayerElimination(currentSession, roomId, "오답입니다!");
                         moveToNextTurn(roomId);
-                    }
-                }, 2, TimeUnit.SECONDS);
+                    }, 2, TimeUnit.SECONDS);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         submittedAnswers.remove(roomId);
     }
+
 
 
     private void handlePlayerElimination(WebSocketSession session, Long roomId, String reason) {
