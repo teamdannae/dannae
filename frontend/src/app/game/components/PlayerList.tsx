@@ -12,7 +12,11 @@ export default function PlayerList({ users }: playerProps) {
     <div className={styles.playerContainer}>
       {users.map((user, index) => (
         <div key={index}>
-          <Card isEmpty={user.isEmpty} isReady={user.isReady}>
+          <Card
+            isEmpty={user.isEmpty}
+            isReady={user.isReady}
+            isSelected={user.isTurn}
+          >
             <div className={styles.cardInner}>
               {!user.isEmpty && (
                 <Image
