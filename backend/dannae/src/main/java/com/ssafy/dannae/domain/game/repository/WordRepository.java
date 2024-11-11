@@ -8,8 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.ssafy.dannae.domain.game.entity.Word;
 
-import io.lettuce.core.dynamic.annotation.Param;
-
 public interface WordRepository extends JpaRepository<Word, Long> {
 
 	Optional<List<Word>> findAllByInitialAndWord(String initial, String word);
@@ -19,7 +17,6 @@ public interface WordRepository extends JpaRepository<Word, Long> {
 
 	Optional<List<Word>> findByWord(String word);
 
-	@Query(value = "SELECT w FROM Word w WHERE w.word = :word ORDER BY w.word_id ASC LIMIT 1", nativeQuery = true)
-	Optional<Word> findFirstByWord(@Param("word") String word);
+	Optional<Word> findFirstByWord(String word);
 
 }
