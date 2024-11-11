@@ -10,6 +10,7 @@ import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
+import jakarta.annotation.PreDestroy;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -47,6 +48,15 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         this.sentenceGameCommandService = sentenceGameCommandService;
     }
 
+    private final ScheduledExecutorService globalScheduler = Executors.newScheduledThreadPool(
+            1,
+            r -> {
+                Thread thread = new Thread(r);
+                thread.setDaemon(false); // 데몬 쓰레드가 아닌 일반 쓰레드로 설정
+                return thread;
+            }
+    );
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Long roomId = getRoomIdFromSession(session);
@@ -78,9 +88,103 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void startGame(Long roomId) {
-        broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"5초 후에 게임이 시작됩니다.\"}");
-        ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
-        scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
+        try {
+            broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"5초 후에 게임이 시작됩니다.\"}");
+
+            // CompletableFuture를 사용하여 비동기 작업 추적
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Thread.sleep(roundWaitTime * 1000);
+                    startNewRound(roomId);
+                } catch (InterruptedException e) {
+                    System.err.println("Game start delayed task interrupted: " + e.getMessage());
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    System.err.println("Error during game start: " + e.getMessage());
+                    e.printStackTrace();
+                    // 에러 발생 시 클라이언트에게 알림
+                    broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"게임 시작 중 오류가 발생했습니다.\"}");
+                }
+            }, globalScheduler);
+
+        } catch (Exception e) {
+            System.err.println("Failed to start game for room " + roomId + ": " + e.getMessage());
+            e.printStackTrace();
+            broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"게임을 시작할 수 없습니다.\"}");
+        }
+    }
+
+    @PreDestroy
+    public void destroy() {
+        try {
+            // 모든 게임룸의 스케줄러 종료
+            for (Map.Entry<Long, ScheduledExecutorService> entry : roomSchedulers.entrySet()) {
+                ScheduledExecutorService scheduler = entry.getValue();
+                scheduler.shutdownNow();
+            }
+
+            // 글로벌 스케줄러 종료
+            globalScheduler.shutdown();
+            if (!globalScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                globalScheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // startNewRound 메서드도 비슷하게 수정
+    public void startNewRound(Long roomId) {
+        try {
+            currentRound++;
+
+            Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
+            List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+
+            if (sessions != null) {
+                sessions.forEach(session -> {
+                    String playerId = getPlayerIdFromSession(session);
+                    playerStatus.put(playerId, false);
+                });
+            }
+
+            roundPlayerStatus.put(roomId, playerStatus);
+
+            if (currentRound == 1) {
+                SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
+                        .roomId(roomId)
+                        .build();
+                SentenceGameDto gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
+
+                broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
+                        "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\", " +
+                        "\"words\": " + gameWithWords.activeWords() + "}");
+            } else {
+                broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
+                        "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\"}");
+            }
+
+            // CompletableFuture를 사용하여 라운드 제한시간 설정
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Thread.sleep(roundTimeLimit * 1000);
+                    if (!checkIfAllPlayersSentMessages(roomId)) {
+                        endRound(roomId);
+                    }
+                } catch (InterruptedException e) {
+                    System.err.println("Round timeout task interrupted: " + e.getMessage());
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    System.err.println("Error during round timeout: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }, globalScheduler);
+
+        } catch (Exception e) {
+            System.err.println("Failed to start new round for room " + roomId + ": " + e.getMessage());
+            e.printStackTrace();
+            broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"새 라운드를 시작할 수 없습니다.\"}");
+        }
     }
 
     @Override
@@ -219,43 +323,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    public void startNewRound(Long roomId) {
-        currentRound++;
 
-        Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
-        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-
-        if (sessions != null) {
-            sessions.forEach(session -> {
-                String playerId = getPlayerIdFromSession(session);
-                playerStatus.put(playerId, false);
-            });
-        }
-
-        roundPlayerStatus.put(roomId, playerStatus);
-
-        SentenceGameDto gameWithWords = null;
-        if (currentRound == 1) {
-            SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
-                    .roomId(roomId)
-                    .build();
-            gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
-
-            broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
-                    "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\", " +
-                    "\"words\": " + gameWithWords.activeWords() + "}");
-        } else {
-            broadcastToRoom(roomId, "{\"type\": \"round_start\", \"round\": \"" + currentRound + "\", " +
-                    "\"message\": \"" + currentRound + "라운드가 시작되었습니다!\"}");
-        }
-
-        ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
-        scheduler.schedule(() -> {
-            if (!checkIfAllPlayersSentMessages(roomId)) {
-                endRound(roomId);
-            }
-        }, roundTimeLimit, TimeUnit.SECONDS);
-    }
 
     private String getPlayerIdFromSession(WebSocketSession session) {
         String token = sessionTokenMap.get(session);
