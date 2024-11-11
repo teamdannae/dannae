@@ -22,7 +22,9 @@ interface message {
     | "error"
     | "answer_result"
     | "infiniteGameStart"
-    | "turn_info";
+    | "turn_info"
+    | "round_start"
+    | "round_end";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
   nickname?: string;
@@ -41,9 +43,16 @@ interface message {
   }[];
   room?: room;
   word?: string;
+  words?: {
+    word: string;
+    difficulty: number;
+  }[];
   initial?: string;
   // 무한 초성 지옥 정답 유무 데이터
   data?: InfiniteWord;
+  round?: string;
+  userWords: string[];
+  playerDtos: SentencePlayer[];
 }
 
 interface chat {
@@ -60,6 +69,8 @@ interface player {
   isReady: boolean;
   isEmpty: boolean;
   isTurn: boolean;
+  nowScore: number;
+  totalScore: number;
 }
 
 interface gameroom {
@@ -72,9 +83,19 @@ interface gameroom {
   creatorNickname?: string;
 }
 
-interface InfiniteWord {
-  correct: boolean;
+interface word {
+  correct?: boolean;
+  used?: boolean;
   difficulty: number;
-  reason: string;
+  reason?: string;
   word: string;
+}
+
+interface SentencePlayer {
+  playerId: number;
+  nickname: string;
+  playerCorrects: number;
+  playerNowScore: number;
+  playerTotalScore: number;
+  playerSentence: string;
 }
