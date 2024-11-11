@@ -1,54 +1,82 @@
 @use "../../../styles/variables.scss" as vars;
 
 .imageContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 40px;
+  transition: transform 0.5s ease;
 
-
+  &.isDone {
+    animation: slide-out-right 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
+  }
 }
 
 .headerContainer {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .headerText {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  white-space: nowrap;
 
-    p {
-        text-wrap: pretty;
-    }
+  p {
+    text-wrap: pretty;
+  }
 }
 
 .buttonContainer {
-    width: 162px;
-    height: 68px;
+  width: 210px;
+  height: 68px;
 }
 
 .imageGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); 
-    row-gap: 40px;
-    column-gap: 100px;
-
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  row-gap: 40px;
+  column-gap: 100px;
 }
 
 .profileImage {
-    border-radius: 20px;
+  border-radius: 20px;
+  transition: transform 0.3s ease;
 
-    &:hover {
-        outline: 4px solid vars.$dark-color;
-    }
+  &:hover {
+    transform: scale(1.2);
+  }
 
-    &.selected {
-        outline: 4px solid vars.$primary-color; 
+  &.selected {
+    outline: 4px solid vars.$dark-color;
+  }
+}
 
-    }
+@-webkit-keyframes slide-out-right {
+  0% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    -webkit-transform: translateX(1000px);
+    transform: translateX(1000px);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-out-right {
+  0% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    -webkit-transform: translateX(1000px);
+    transform: translateX(1000px);
+    opacity: 0;
+  }
 }
