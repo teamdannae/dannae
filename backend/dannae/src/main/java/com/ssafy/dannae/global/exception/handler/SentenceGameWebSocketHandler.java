@@ -67,8 +67,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
 
-        if (!jwtTokenProvider.validateToken(token) || !waitingRoomHandler.isPlayerInWaitingRoom(roomId, playerId)) {
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이거나 대기실에 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
+        if (!jwtTokenProvider.validateToken(token) ) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이어서, 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
