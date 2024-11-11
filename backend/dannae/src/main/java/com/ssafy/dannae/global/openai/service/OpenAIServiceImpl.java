@@ -19,6 +19,11 @@ import org.springframework.web.client.RestClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.dannae.domain.game.entity.Word;
+import com.ssafy.dannae.domain.game.repository.WordRepository;
+import com.ssafy.dannae.domain.player.entity.Player;
+import com.ssafy.dannae.domain.player.exception.NoPlayerException;
+import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.global.openai.exception.OpenAIAuthenticationException;
 import com.ssafy.dannae.global.openai.exception.OpenAIRequestProcessingException;
 import com.ssafy.dannae.global.openai.exception.OpenAIResponseProcessingException;
@@ -38,6 +43,8 @@ class OpenAIServiceImpl implements OpenAIService {
 
 	private final ObjectMapper objectMapper;
 	private final RestClient restClient;
+	private final WordRepository wordRepository;
+	private final PlayerRepository playerRepository;
 
 	@Value("${openai.model}")
 	private String model;
@@ -167,7 +174,11 @@ class OpenAIServiceImpl implements OpenAIService {
 		List<String> sentenceList = sentenceDto.sentences();
 		List<Integer> usedWordCount = new ArrayList<>();
 		Set<String> usedSentence = new HashSet<>();
+		List<Integer> playerScore = new ArrayList<>();
 		for(int i = 0; i < playerList.size(); i++){
+			Long playerId = playerList.get(i);
+			Player nowPlayer = playerRepository.findById(playerId)
+				.orElseThrow(() -> new NoPlayerException("Player not found with ID: " + playerId));
 			String playerSentence = sentenceList.get(i);
 			String wordQuestion = "다음 문장이 유효한 문장인지 판단해서 아니라면 0과 null 반환해주세요.\n"
 				+ "문장: \"" + playerSentence + "\"\n"
@@ -187,14 +198,20 @@ class OpenAIServiceImpl implements OpenAIService {
 				try {
 					String[] parts = sentenceResult.split(", ", 2);
 					int count = Integer.parseInt(parts[0].trim()); // 단어 수
+					int scoreCount = 0; // 단어 점수
 					usedWordCount.add(count);
 					String words = parts[1].replaceAll("[\\[\\]\"]", "").trim(); // 대괄호와 따옴표 제거
 					if (!words.equals("null") && !words.isEmpty()) {
 						String[] wordArray = words.split(", ");
 						for (String word : wordArray) {
+							Word wordData = wordRepository.findByword(word);
+							int difficulty = wordData.getDifficulty();
+							nowPlayer.updateScore(difficulty);
+							count += difficulty;
 							usedSentence.add(word.trim());
 						}
 					}
+					playerScore.add(scoreCount);
 				} catch (Exception e) {
 					throw new OpenAIResponseProcessingException("Failed to process sentence result: " + sentenceResult, e);
 				}
@@ -202,6 +219,7 @@ class OpenAIServiceImpl implements OpenAIService {
 		}
 		return WordResultDto.builder()
 			.correctNum(usedWordCount)
+			.playerScore(playerScore)
 			.usedWords(usedSentence)
 			.build();
 	}

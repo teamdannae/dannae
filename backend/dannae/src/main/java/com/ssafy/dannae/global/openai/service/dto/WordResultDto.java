@@ -8,6 +8,7 @@ import lombok.Builder;
 @Builder
 public record WordResultDto(
 	List<Integer> correctNum,
+	List<Integer> playerScore,
 	Set<String> usedWords
 ) {
 }
