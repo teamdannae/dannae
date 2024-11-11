@@ -323,6 +323,7 @@
   background-color: vars.$grey-color;
   border-radius: 45px;
   margin-bottom: 8px;
+  padding: 20px;
 }
 
 .consonantContainer {
@@ -332,8 +333,11 @@
   justify-content: center;
   align-items: center;
 
-  &.isVisible .consonant {
-    animation: roll-out-right 0.6s ease-in 5s both;
+  &.isVisible {
+    animation: roll-out-right 0.6s ease-in 4.5s both;
+  }
+
+  &.isStart {
     display: none;
   }
 }
@@ -365,35 +369,6 @@
   display: flex;
   width: 98%;
   gap: 10px;
-}
-
-.word {
-  display: flex;
-  width: 90px;
-  height: 68px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 15px;
-
-  &.difficulty-1 {
-    background-color: vars.$word-common-color;
-  }
-
-  &.difficulty-2 {
-    background-color: vars.$word-rare-color;
-  }
-
-  &.difficulty-3 {
-    background-color: vars.$word-epic-color;
-  }
-
-  &.difficulty-4 {
-    background-color: vars.$word-unique-color;
-  }
-
-  &.fail {
-    background-color: vars.$red-color;
-  }
 }
 
 .sentenceContainer {

@@ -5,12 +5,22 @@ interface InfiniteProps {
   wordList: word[];
   consonants: string;
   isConsonantVisible: boolean;
+  isGameStart: boolean;
 }
 
-const Infinite = ({ wordList, consonants }: InfiniteProps) => {
+const Infinite = ({
+  wordList,
+  consonants,
+  isConsonantVisible,
+  isGameStart,
+}: InfiniteProps) => {
   return (
     <div className={styles.infiniteGameContainer}>
-      <div className={`${styles.consonantContainer} ${styles.isVisible}`}>
+      <div
+        className={`${styles.consonantContainer} ${
+          isConsonantVisible ? "" : styles.isVisible
+        } ${isGameStart ? styles.isStart : ""}`}
+      >
         {Array.from(consonants).map((consonant, index) => (
           <div key={index} className={styles.consonant}>
             <h1>{consonant}</h1>
