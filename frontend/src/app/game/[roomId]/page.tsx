@@ -86,6 +86,8 @@ export default function WaitingRoom() {
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [roundReset, setRoundReset] = useState(false);
+  const [isInfiniteTurnStart, setIsInfiniteTurnStart] = useState(false);
+  const [isConsonantVisible, setIsConsonantVisible] = useState(true);
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -267,16 +269,33 @@ export default function WaitingRoom() {
       setAreAllPlayersReady(true);
     } else if (data.type === "game_start" && data.room) {
       startGame();
-    } else if (data.type === "answer_result" && data.data) {
-      setWordList((prevWordList) => [...prevWordList, data.data as word]);
+    } else if (
+      data.type === "answer_result" &&
+      data.word &&
+      data.difficulty &&
+      data.reason &&
+      data.correct
+    ) {
+      setRoundReset(true);
+      const wordData: word = {
+        word: data.word,
+        difficulty: data.difficulty,
+        reason: data.reason,
+        correct: data.correct,
+      };
+      console.log(wordData);
+      setWordList((prevWordList) => [...prevWordList, wordData]);
       // 무한 초성 지옥 게임 시작하면 초성 설정
     } else if (data.type === "infiniteGameStart" && data.initial) {
       setConsonant(data.initial);
+      setIsConsonantVisible(false);
       // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
     } else if (data.type === "error") {
       router.replace("/profile/nickname");
       // 플레이어 턴 제시
     } else if (data.type === "turn_info" && data.playerId) {
+      setIsInfiniteTurnStart(true);
+      setRoundReset(false);
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
           user.playerId === data.playerId
@@ -288,7 +307,7 @@ export default function WaitingRoom() {
       setRoundReset(false);
       if (data.words) {
         const formattedWords = data.words.map(
-          (wordObj: { word: string; difficulty: number }) => ({
+          (wordObj: { word: string; difficulty: number | null }) => ({
             word: wordObj.word,
             difficulty: wordObj.difficulty,
             used: false,
@@ -398,7 +417,11 @@ export default function WaitingRoom() {
       {showToast && <Toast message={toastMessage} />}
       {isStart ? (
         roomInfo.mode === "무한 초성 지옥" ? (
-          <Infinite wordList={wordList} consonants={consonant} />
+          <Infinite
+            wordList={wordList}
+            consonants={consonant}
+            isConsonantVisible={isConsonantVisible}
+          />
         ) : (
           <Sentence wordList={wordList} />
         )
@@ -419,7 +442,13 @@ export default function WaitingRoom() {
       {isStart && (
         <div className={styles.progressContainer}>
           <Progress
-            duration={roomInfo.mode === "무한 초성 지옥" ? 10 : 20}
+            duration={
+              roomInfo.mode === "무한 초성 지옥"
+                ? isInfiniteTurnStart
+                  ? 10
+                  : 5
+                : 20
+            }
             reset={roundReset}
           />
         </div>
