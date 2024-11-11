@@ -34,9 +34,9 @@ public class SentenceGameController {
 	}
 
 	/**
-	 * 단어가 제시된 초성에 맞는 사전에 존재하는 단어인지 확인하는 method
-	 * @param req : 단어
-	 * @return 단어, 단어 뜻, 난이도
+	 * 문장이 제시된 단어를 사용했는지 확인하는 method
+	 * @param req : 단어, 문장, 방 번호
+	 * @return 사용된 단어, 점수
 	 */
 	@PatchMapping("/{room-id}")
 	public ResponseEntity<BaseResponse<?>> updateWord(@PathVariable("room-id") Long roomId, @RequestBody SentenceGameReq req){
