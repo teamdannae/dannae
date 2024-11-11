@@ -87,7 +87,6 @@ export default function WaitingRoom() {
   const [popupMessage, setPopupMessage] = useState("");
   const [roundReset, setRoundReset] = useState(true);
   const [isSend, setIsSend] = useState(false);
-  const [roundReset, setRoundReset] = useState(false);
   const [isInfiniteTurnStart, setIsInfiniteTurnStart] = useState(false);
   const [isConsonantVisible, setIsConsonantVisible] = useState(true);
 
