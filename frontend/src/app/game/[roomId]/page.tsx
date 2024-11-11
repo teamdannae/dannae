@@ -3,13 +3,13 @@
 import { useWebSocket } from "@/hooks";
 import { useState, useEffect, useCallback } from "react";
 import { Header, GameInfo, PlayerList, Chat } from "../components";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.scss";
 import Infinite from "../components/Infinite";
 import { Toast } from "@/app/components";
 
 export default function WaitingRoom() {
-  // const router = useRouter();
+  const router = useRouter();
   const { roomId } = useParams();
   const [url, setUrl] = useState<string>("");
   const [messages, setMessages] = useState<string[]>([]);
@@ -22,6 +22,7 @@ export default function WaitingRoom() {
       isReady: false,
       isEmpty: true,
       isHost: false,
+      isTurn: false,
     },
     {
       playerId: "",
@@ -30,6 +31,7 @@ export default function WaitingRoom() {
       isReady: false,
       isEmpty: true,
       isHost: false,
+      isTurn: false,
     },
     {
       playerId: "",
@@ -38,6 +40,7 @@ export default function WaitingRoom() {
       isReady: false,
       isEmpty: true,
       isHost: false,
+      isTurn: false,
     },
     {
       playerId: "",
@@ -46,6 +49,7 @@ export default function WaitingRoom() {
       isReady: false,
       isEmpty: true,
       isHost: false,
+      isTurn: false,
     },
   ]);
   const [roomInfo, setRoomInfo] = useState<room>({
@@ -61,9 +65,10 @@ export default function WaitingRoom() {
   const [areAllPlayersReady, setAreAllPlayersReady] = useState(false);
   const [yourPlayerId, setYourPlayerId] = useState("");
   const [isStart, setIsStart] = useState(false);
-  const [wordList, setWordList] = useState<string[]>([]);
+  const [wordList, setWordList] = useState<InfiniteWord[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [consonant, setConsonant] = useState<string>("");
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -153,6 +158,7 @@ export default function WaitingRoom() {
                 isReady: false,
                 isEmpty: false,
                 isHost: data.event === "creator",
+                isTurn: false,
               };
               break;
             }
@@ -181,6 +187,7 @@ export default function WaitingRoom() {
                 isReady: false,
                 isEmpty: true,
                 isHost: false,
+                isTurn: false,
               }
             : user
         )
@@ -198,6 +205,7 @@ export default function WaitingRoom() {
                 isReady: false,
                 isEmpty: false,
                 isHost: data.creatorId === player.playerId,
+                isTurn: false,
               };
               break;
             }
@@ -236,8 +244,26 @@ export default function WaitingRoom() {
       setAreAllPlayersReady(true);
     } else if (data.type === "game_start" && data.room) {
       startGame();
-    } else if (data.type === "answer" && data.word) {
-      setWordList((prevWordList) => [...prevWordList, data.word as string]);
+    } else if (data.type === "answer_result" && data.data) {
+      setWordList((prevWordList) => [
+        ...prevWordList,
+        data.data as InfiniteWord,
+      ]);
+      // 무한 초성 지옥 게임 시작하면 초성 설정
+    } else if (data.type === "infiniteGameStart" && data.initial) {
+      setConsonant(data.initial);
+      // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
+    } else if (data.type === "error") {
+      router.replace("/profile/nickname");
+      // 플레이어 턴 제시
+    } else if (data.type === "turn_info" && data.playerId) {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.playerId === data.playerId
+            ? { ...user, isTurn: true }
+            : { ...user, isTurn: false }
+        )
+      );
     }
 
     if (data.creatorId) {
@@ -292,7 +318,7 @@ export default function WaitingRoom() {
       type: "answer",
       playerId: yourPlayerId,
       roomId: roomInfo.roomId,
-      word: newMessage,
+      answer: newMessage,
     };
     sendMessage(temp);
     setNewMessage("");
@@ -308,7 +334,7 @@ export default function WaitingRoom() {
     >
       {showToast && <Toast message={toastMessage} />}
       {isStart ? (
-        <Infinite wordList={wordList} />
+        <Infinite wordList={wordList} consonants={consonant} />
       ) : (
         <>
           <Header roomInfo={roomInfo} />
