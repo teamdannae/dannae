@@ -3,6 +3,7 @@ package com.ssafy.dannae.domain.game.sentencegame.controller;
 
 import com.ssafy.dannae.domain.game.infinitegame.service.dto.InfiniteGameDto;
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
+import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
 import com.ssafy.dannae.domain.game.sentencegame.service.SentenceGameCommandService;
 import com.ssafy.dannae.domain.game.sentencegame.service.SentenceGameQueryService;
@@ -29,7 +30,7 @@ public class SentenceGameController {
 	public ResponseEntity<BaseResponse<?>> createInitial(@PathVariable("room-id") Long roomId) {
 
         SentenceGameDto sentenceGameDto = SentenceGameDto.builder().roomId(roomId).build();
-        SentenceGameDto res = sentenceGameCommandService.createInitial(sentenceGameDto);
+        SentenceGameCreateRes res = sentenceGameCommandService.createInitial(sentenceGameDto);
 		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
 	}
 

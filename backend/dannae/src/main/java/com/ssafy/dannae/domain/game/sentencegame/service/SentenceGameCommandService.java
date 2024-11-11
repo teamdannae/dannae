@@ -3,7 +3,7 @@ package com.ssafy.dannae.domain.game.sentencegame.service;
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceGameDto;
-import org.springframework.stereotype.Service;
+import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 
 import java.util.Set;
 
@@ -15,7 +15,7 @@ public interface SentenceGameCommandService {
 	 * @param sentenceGameDto
 	 * @return
 	 */
-	SentenceGameDto createInitial(SentenceGameDto sentenceGameDto);
+	SentenceGameCreateRes createInitial(SentenceGameDto sentenceGameDto);
 
 	/**
 	 * 입력된 문장을 확인하고 점수와 사용한 단어를 반환하는 메서드
