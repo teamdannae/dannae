@@ -39,6 +39,7 @@ const Input: React.FC<InputProps> = ({
           onKeyUp={handleKeyUp}
           placeholder={placeholder}
           disabled={disabled}
+          spellCheck={false}
           className={`${styles.inputValue} ${
             isValid ? "" : styles.invalidInputValue
           }`}
