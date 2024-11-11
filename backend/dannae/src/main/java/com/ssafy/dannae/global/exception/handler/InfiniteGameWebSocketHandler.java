@@ -43,8 +43,10 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, Queue<WebSocketSession>> turnOrder = new ConcurrentHashMap<>();
     private final Map<WebSocketSession, String> sessionPlayerIdMap = new ConcurrentHashMap<>();
     private final Map<Long, Set<String>> usedWords = new ConcurrentHashMap<>();
-    private final Map<Long, SubmittedAnswer> submittedAnswers = new ConcurrentHashMap<>(); // SubmittedAnswer 필드 추가
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final Map<Long, List<SubmittedAnswer>> submittedAnswers = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(
+        Runtime.getRuntime().availableProcessors()
+    );
     private final Map<Long, String> gameConsonantsMap = new ConcurrentHashMap<>();
     private final Map<Long, Integer> initialPlayerCount = new ConcurrentHashMap<>();
     private final Map<Long, Long> gameIdsMap = new ConcurrentHashMap<>();
@@ -52,7 +54,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
 
     private final InfiniteGameCommandService infiniteGameCommandService;
-    private final WaitingRoomWebSocketHandler waitingRoomHandler;
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
     private final PlayerQueryService playerQueryService;
@@ -187,7 +188,12 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
     private void processAnswer(WebSocketSession session, Long roomId, Long playerId, String answer) {
         System.out.println("Processing answer for playerId: " + playerId + " with answer: " + answer); // 디버깅 로그 추가
-        submittedAnswers.put(roomId, new SubmittedAnswer(playerId, answer, session));
+        // 방의 답변 리스트 가져오기 (없으면 새로 생성)
+        List<SubmittedAnswer> answers = submittedAnswers.computeIfAbsent(roomId,
+            k -> new CopyOnWriteArrayList<>());
+
+        // 새로운 답변 추가
+        answers.add(new SubmittedAnswer(playerId, answer, session));
     }
 
     private void handleTurnTimeoutOrCheckAnswer(Long roomId) throws IOException {
@@ -195,11 +201,13 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             return; // 턴이 이미 진행 중이 아님
         }
 
-        SubmittedAnswer submittedAnswer = submittedAnswers.get(roomId);
+        List<SubmittedAnswer> answers = submittedAnswers.get(roomId);
         Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
         WebSocketSession currentSession = roomTurnOrder.peek();
 
-        boolean isTimeout = submittedAnswer == null || submittedAnswer.getSession() != currentSession;
+        boolean isTimeout = answers == null || answers.isEmpty() ||
+            answers.stream()
+                .noneMatch(answer -> answer.getSession() == currentSession);
 
         if (isTimeout) {
             broadcastToRoom(roomId, "{\"type\": \"timeout\", \"message\": \"턴 종료!\"}");
@@ -208,8 +216,13 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 moveToNextTurn(roomId);
             }, 2, TimeUnit.SECONDS);
         } else {
-            String answer = submittedAnswer.getAnswer();
-            Long playerId = submittedAnswer.getPlayerId();
+            SubmittedAnswer lastAnswer = answers.stream()
+                .filter(answer -> answer.getSession() == currentSession)
+                .reduce((first, second) -> second)
+                .get();
+
+            String answer = lastAnswer.getAnswer();
+            Long playerId = lastAnswer.getPlayerId();
             String initial = gameConsonantsMap.get(roomId);
             Long gameId = gameIdsMap.get(roomId);
 
