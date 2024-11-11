@@ -19,6 +19,11 @@ spring:
   websocket:
     time-limit: 300000
     send-timeout: 300000
+  data:
+    redis:
+      host: '${SPRING_DATA_REDIS_HOST}'
+      port: '${SPRING_DATA_REDIS_PORT}'
+      password: '${SPRING_DATA_REDIS_PASSWORD}'
 server:
   port: 8080
 jwt:
