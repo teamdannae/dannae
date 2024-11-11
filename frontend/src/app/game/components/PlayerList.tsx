@@ -53,7 +53,11 @@ export default function PlayerList({ users }: playerProps) {
 
               <div className={styles.cardInnerInfo}>
                 <p>{user.isHost ? "방장" : "\u00A0"}</p>
-                {user.totalScore > 0 && <h5>{user.totalScore}</h5>}
+                {user.totalScore > 0 && (
+                  <h5 className={styles.score}>
+                    {user.totalScore.toLocaleString()}점
+                  </h5>
+                )}
                 <h5>{user.nickname}</h5>
               </div>
             </div>

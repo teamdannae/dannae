@@ -22,6 +22,7 @@ const Sentence = ({ wordList }: SentenceProps) => {
               : "unique"
           }
           viewMeaning={word.used}
+          style={{ padding: "12px 36px" }}
         />
       ))}
     </div>

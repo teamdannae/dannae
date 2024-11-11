@@ -24,7 +24,8 @@ interface message {
     | "infiniteGameStart"
     | "turn_info"
     | "round_start"
-    | "round_end";
+    | "round_end"
+    | "game_end";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
   nickname?: string;

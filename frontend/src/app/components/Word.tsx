@@ -8,6 +8,7 @@ interface WordCardProps {
   viewMeaning?: boolean;
   disabled?: boolean;
   wrong?: boolean;
+  style?: React.CSSProperties;
 }
 
 export default function WordCard({
@@ -16,6 +17,7 @@ export default function WordCard({
   viewMeaning = false,
   disabled,
   wrong,
+  style,
 }: WordCardProps) {
   let className = `${styles.wordCard} ${styles[tier]}`;
 
@@ -33,7 +35,9 @@ export default function WordCard({
     <Tooltip.Provider>
       <Tooltip.Root delayDuration={100}>
         <Tooltip.Trigger asChild>
-          <div className={className}>{word}</div>
+          <div className={className} style={style}>
+            {word}
+          </div>
         </Tooltip.Trigger>
         {viewMeaning && (
           <Tooltip.Content
