@@ -54,6 +54,9 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 	};
 	private static final boolean[][] invalidCombinations = new boolean[19][19];
 
+	/**
+	 * 사용하지 않을 초성들을 제거하는 용도.
+	 */
 	static {
 		HashSet<Integer> doubleConsonants = new HashSet<>();
 		doubleConsonants.add(1);
@@ -65,6 +68,9 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		for(int i = 0; i < 19; i++) {
 			for(int j = 0; j < 19; j++) {
 				if(doubleConsonants.contains(j) || doubleConsonants.contains(i)) {
+					invalidCombinations[i][j] = true;
+				}
+				if(i==5) {
 					invalidCombinations[i][j] = true;
 				}
 			}
