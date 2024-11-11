@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Input, Radio } from "../../components";
 import styles from "./page.module.scss";
 import { nicknamePattern } from "@/utils/regex";
@@ -37,11 +37,19 @@ const ProfileNickname = () => {
     }
   };
 
+  useEffect(() => {
+    if (namingMode === 0) {
+      getRandomNickname();
+    } else {
+      setNickname("");
+    }
+  }, [namingMode]);
+
   const changeMode = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMode = Number(e.target.value);
     setNamingMode(newMode);
 
-    if (newMode === 1) {
+    if (newMode === 0) {
       getRandomNickname();
     }
   };
@@ -88,7 +96,7 @@ const ProfileNickname = () => {
         </header>
         <Radio
           selectedIndex={namingMode}
-          values={["직접 설정", "임의 설정"]}
+          values={["임의 설정", "직접 설정"]}
           onChangeEvent={changeMode}
         />
         <div className={styles.inputContainer}>
