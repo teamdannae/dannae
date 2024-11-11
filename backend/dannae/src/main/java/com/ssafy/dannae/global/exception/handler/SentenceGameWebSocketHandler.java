@@ -11,6 +11,8 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.room.exception.NoRoomException;
+import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import jakarta.annotation.PreDestroy;
 import org.json.JSONObject;
@@ -29,12 +31,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
     private final Map<Long, List<WebSocketSession>> gameRoomSessions = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledExecutorService> roomSchedulers = new ConcurrentHashMap<>(); // 각 방별로 스케줄러 관리
-    private final WaitingRoomWebSocketHandler waitingRoomHandler;
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
     private final PlayerQueryService playerQueryService;
     private final SentenceGameCommandService sentenceGameCommandService;
-
+    private final RoomQueryService roomQueryService;
     private final int roundTimeLimit = 20;
     private final int roundWaitTime = 5;
     private final Map<Long, Map<String, Boolean>> roundPlayerStatus = new ConcurrentHashMap<>();
@@ -42,8 +43,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private int currentRound;
     private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
 
-    public SentenceGameWebSocketHandler(WaitingRoomWebSocketHandler waitingRoomHandler, JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService) {
-        this.waitingRoomHandler = waitingRoomHandler;
+    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
+        this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService=playerCommandService;
         this.playerQueryService= playerQueryService;
@@ -83,7 +84,9 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         currentRound = 0;
 
         // 방별로 스케줄러를 생성하여 저장
+        System.out.println("시작 ");
         roomSchedulers.computeIfAbsent(roomId, k -> Executors.newScheduledThreadPool(1));
+        System.out.println("됨");
         if (areAllPlayersInGameRoom(roomId)) {
             startGame(roomId);
         }
@@ -411,15 +414,13 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private boolean areAllPlayersInGameRoom(Long roomId) {
-        List<String> waitingRoomPlayerIds = waitingRoomHandler.getWaitingRoomPlayers(roomId);
-        List<WebSocketSession> gameRoomSessions = this.gameRoomSessions.get(roomId);
 
-        return gameRoomSessions != null &&
-                waitingRoomPlayerIds.size() == gameRoomSessions.size() &&
-                gameRoomSessions.stream()
-                        .map(this::getPlayerIdFromSession)
-                        .allMatch(waitingRoomPlayerIds::contains);
+    private boolean areAllPlayersInGameRoom(Long roomId) {
+        Long activePlayerCount = roomQueryService.findById(roomId)
+                .orElseThrow(()-> new NoRoomException("no room exception"))
+                .getPlayerCount();
+        int currentSessionCount = gameRoomSessions.get(roomId).size();
+        return currentSessionCount == activePlayerCount;
     }
 
     private WebSocketSession getSessionByPlayerId(Long roomId, String playerId) {
