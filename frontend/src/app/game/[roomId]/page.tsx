@@ -130,6 +130,22 @@ export default function WaitingRoom() {
     }, 1000);
   };
 
+  const returnWaitingRoom = async () => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) => ({
+        ...user,
+        isReady: false,
+      }))
+    );
+    setMessages([]);
+    setIsStart(false);
+    const tokenResponse = await fetch("/api/next/profile/get-token");
+    const tokenData = await tokenResponse.json();
+    const waitingRoomWebSocketUrl = `wss://dannae.kr/ws//waitingroom?roomId=${roomId}&token=${tokenData.token}`;
+
+    setUrl(waitingRoomWebSocketUrl);
+  };
+
   useEffect(() => {
     const initializeRoom = async () => {
       try {
@@ -336,6 +352,7 @@ export default function WaitingRoom() {
       );
     } else if (data.type === "round_start") {
       setRoundReset(false);
+      setIsSend(false);
       if (data.words) {
         const formattedWords = data.words.map(
           (wordObj: { word: string; difficulty: number | null }) => ({
@@ -369,7 +386,7 @@ export default function WaitingRoom() {
           return updatedPlayer
             ? {
                 ...player,
-                currentScore: updatedPlayer.playerNowScore,
+                nowScore: updatedPlayer.playerNowScore,
                 totalScore: updatedPlayer.playerTotalScore,
               }
             : player;
@@ -377,6 +394,23 @@ export default function WaitingRoom() {
       );
     } else if (data.type === "game_end") {
       setRoundReset(true);
+      setUsers((prevUsers) =>
+        prevUsers.map(() => ({
+          playerId: "",
+          image: 0,
+          nickname: "",
+          isReady: false,
+          isEmpty: true,
+          isHost: false,
+          isTurn: false,
+          nowScore: 0,
+          totalScore: 0,
+          isFail: false,
+        }))
+      );
+      setWordList([]);
+      setAreAllPlayersReady(false);
+      returnWaitingRoom();
     } else if (data.type === "elimination" && data.playerId) {
       setUsers((prevUsers) =>
         prevUsers.map((user) =>

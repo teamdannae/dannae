@@ -69,12 +69,12 @@ export default function Chat({
             </p>
           ))}
           <div ref={messagesEndRef} />
-          {showPopup && (
-            <div className={styles.popup}>
-              <h3>{popupMessage}</h3>
-            </div>
-          )}
         </div>
+        {showPopup && (
+          <div className={styles.popup}>
+            <h3>{popupMessage}</h3>
+          </div>
+        )}
         <div className={styles.inputContainer}>
           <Input
             value={newMessage}
