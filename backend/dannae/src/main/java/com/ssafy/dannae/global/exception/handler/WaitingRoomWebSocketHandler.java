@@ -46,7 +46,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Long roomId = getRoomIdFromSession(session);
         String token = getTokenFromSession(session);
-
+        roomCommandService.updateStatus(roomId);
         if (roomId == null || !roomQueryService.existsById(roomId)) {
             throw new NoRoomException("존재하지 않는 방입니다.");
         }
