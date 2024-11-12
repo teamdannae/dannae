@@ -45,6 +45,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, Integer> currentRoundMap = new ConcurrentHashMap<>();  // 방마다 라운드를 관리
     private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
     private final Map<Long, AtomicBoolean> isRoundInProgressMap = new ConcurrentHashMap<>();
+    private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
 
 
     public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
@@ -313,73 +314,89 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void endRound(Long roomId) {
-        Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
-        Map<String, String> messages = playerMessages.get(roomId);
-        List<Long> playerIds = new ArrayList<>();
-        List<String> sentences = new ArrayList<>();
-
-        List<String> sortedPlayerIds = new ArrayList<>(playerStatus.keySet());
-        Collections.sort(sortedPlayerIds);
-
-        for (String playerId : sortedPlayerIds) {
-            playerIds.add(Long.parseLong(playerId));
-            sentences.add(messages.getOrDefault(playerId, ""));
+        isRoundEndInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
+        if (!isRoundEndInProgressMap.get(roomId).compareAndSet(false, true)) {
+            System.out.println("방 " + roomId + "에서 이미 라운드가 종료 진행 중입니다.");
+            return;
         }
 
-        for (String playerId : playerStatus.keySet()) {
-            if (!playerStatus.get(playerId)) {
-                WebSocketSession session = getSessionByPlayerId(roomId, playerId);
-                if (session != null && session.isOpen()) {
-                    String timeoutMessage = String.format(
-                            "{\"type\": \"notification\", \"message\": \"제한 시간 내 문장을 입력하지 못했습니다.\"}"
-                    );
-                    try {
-                        session.sendMessage(new TextMessage(timeoutMessage));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                sentences.add("");
+        try {
+            Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
+            Map<String, String> messages = playerMessages.get(roomId);
+            List<Long> playerIds = new ArrayList<>();
+            List<String> sentences = new ArrayList<>();
+
+            List<String> sortedPlayerIds = new ArrayList<>(playerStatus.keySet());
+            Collections.sort(sortedPlayerIds);
+
+            for (String playerId : sortedPlayerIds) {
+                playerIds.add(Long.parseLong(playerId));
+                sentences.add(messages.getOrDefault(playerId, ""));
             }
+
+            for (String playerId : playerStatus.keySet()) {
+                if (!playerStatus.get(playerId)) {
+                    WebSocketSession session = getSessionByPlayerId(roomId, playerId);
+                    if (session != null && session.isOpen()) {
+                        String timeoutMessage = String.format(
+                                "{\"type\": \"notification\", \"message\": \"제한 시간 내 문장을 입력하지 못했습니다.\"}"
+                        );
+                        try {
+                            session.sendMessage(new TextMessage(timeoutMessage));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    sentences.add("");
+                }
+            }
+
+            SentenceGameReq sentenceGameReq = new SentenceGameReq(roomId, playerIds, sentences);
+            SentenceGameRes res = sentenceGameCommandService.playGame(sentenceGameReq);
+
+            StringBuilder playersJson = new StringBuilder("[");
+            for (SentencePlayerDto playerDto : res.playerDtos()) {
+                PlayerDto playerDetails = playerQueryService.findPlayerById(playerDto.playerId());
+                playersJson.append(String.format(
+                        "{\"playerId\": %d, \"nickname\": \"%s\", \"playerCorrects\": %d, \"playerNowScore\": %d, \"playerTotalScore\": %d, \"playerSentence\": \"%s\"},",
+                        playerDto.playerId(),
+                        playerDetails.nickname(),
+                        playerDto.playerCorrects(),
+                        playerDto.playerNowScore(),
+                        playerDto.playerTotalScore(),
+                        playerDto.playerSentence()
+                ));
+            }
+            if (playersJson.charAt(playersJson.length() - 1) == ',') {
+                playersJson.deleteCharAt(playersJson.length() - 1);
+            }
+            playersJson.append("]");
+            JSONArray userWordsJson = new JSONArray(res.userWords());
+            String scoreMessage = String.format(
+                    "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
+                            "\"isEnd\": %s, \"userWords\": %s, \"playerDtos\": %s}",
+                    res.isEnd(),
+                    userWordsJson.toString(),
+                    playersJson
+            );
+
+            broadcastToRoom(roomId, scoreMessage);
+
+            if (res.isEnd()) {
+                broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
+            } else {
+                ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
+                scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error in endRound for room " + roomId);
+            e.printStackTrace();
+        } finally {
+            // 라운드 종료 후 플래그 초기화
+            isRoundEndInProgressMap.get(roomId).set(false);
         }
 
-        SentenceGameReq sentenceGameReq = new SentenceGameReq(roomId, playerIds, sentences);
-        SentenceGameRes res = sentenceGameCommandService.playGame(sentenceGameReq);
-
-        StringBuilder playersJson = new StringBuilder("[");
-        for (SentencePlayerDto playerDto : res.playerDtos()) {
-            PlayerDto playerDetails = playerQueryService.findPlayerById(playerDto.playerId());
-            playersJson.append(String.format(
-                    "{\"playerId\": %d, \"nickname\": \"%s\", \"playerCorrects\": %d, \"playerNowScore\": %d, \"playerTotalScore\": %d, \"playerSentence\": \"%s\"},",
-                    playerDto.playerId(),
-                    playerDetails.nickname(),
-                    playerDto.playerCorrects(),
-                    playerDto.playerNowScore(),
-                    playerDto.playerTotalScore(),
-                    playerDto.playerSentence()
-            ));
-        }
-        if (playersJson.charAt(playersJson.length() - 1) == ',') {
-            playersJson.deleteCharAt(playersJson.length() - 1);
-        }
-        playersJson.append("]");
-        JSONArray userWordsJson = new JSONArray(res.userWords());
-        String scoreMessage = String.format(
-                "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
-                        "\"isEnd\": %s, \"userWords\": %s, \"playerDtos\": %s}",
-                res.isEnd(),
-                userWordsJson.toString(),
-                playersJson
-        );
-
-        broadcastToRoom(roomId, scoreMessage);
-
-        if (res.isEnd()) {
-            broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
-        } else {
-            ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
-            scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
-        }
     }
 
     private String getPlayerIdFromSession(WebSocketSession session) {
