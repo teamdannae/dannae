@@ -46,13 +46,14 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
     private final Map<Long, AtomicBoolean> isRoundInProgressMap = new ConcurrentHashMap<>();
     private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
+    private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
 
 
     public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
         this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.playerCommandService=playerCommandService;
-        this.playerQueryService= playerQueryService;
+        this.playerCommandService = playerCommandService;
+        this.playerQueryService = playerQueryService;
         this.sentenceGameCommandService = sentenceGameCommandService;
     }
 
@@ -73,7 +74,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
 
-        if (!jwtTokenProvider.validateToken(token) ) {
+        if (!jwtTokenProvider.validateToken(token)) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"event\": \"invalid_token\", \"message\": \"잘못된 토큰이어서, 입장한 사용자만 게임에 참여할 수 있습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
@@ -137,10 +138,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void startNewRound(Long roomId) {
-        // 방별 라운드 진행 여부를 관리하는 플래그가 없는 경우 초기화
         isRoundInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
 
-        // 이미 진행 중인 경우, 새로운 라운드 시작을 막음
         if (!isRoundInProgressMap.get(roomId).compareAndSet(false, true)) {
             System.out.println("방 " + roomId + "에서 이미 라운드가 진행 중입니다.");
             return;
@@ -175,41 +174,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             playerMessages.put(roomId, new ConcurrentHashMap<>());
 
             if (currentRound == 1) {
-                try {
-                    SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
-                            .roomId(roomId)
-                            .build();
-
-                    SentenceGameCreateRes gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
-
-                    List<SentenceWordDto> words = gameWithWords.words();
-                    StringBuilder wordsJson = new StringBuilder("[");
-                    for (SentenceWordDto word : words) {
-                        wordsJson.append(String.format(
-                                "{\"word\": \"%s\", \"difficulty\": %d},",
-                                word.word(),
-                                word.difficulty()
-                        ));
-                    }
-                    if (wordsJson.charAt(wordsJson.length() - 1) == ',') {
-                        wordsJson.deleteCharAt(wordsJson.length() - 1);
-                    }
-                    wordsJson.append("]");
-
-                    String roundStartMessage = String.format(
-                            "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\", \"words\": %s}",
-                            currentRound,
-                            currentRound,
-                            wordsJson.toString()
-                    );
-                    broadcastToRoom(roomId, roundStartMessage);
-
-                } catch (Exception e) {
-                    System.err.println("Error during first round initialization: " + e.getMessage());
-                    e.printStackTrace();
-                    broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"첫 라운드 초기화 중 오류: " + e.getMessage() + "\"}");
-                    return;
-                }
+                initializeFirstRound(roomId, currentRound);
             } else {
                 String roundStartMessage = String.format(
                         "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\"}",
@@ -219,20 +184,12 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
-            CompletableFuture.runAsync(() -> {
-                try {
-                    Thread.sleep(roundTimeLimit * 1000);
-                    if (!checkIfAllPlayersSentMessages(roomId)) {
-                        endRound(roomId);
-                    }
-                } catch (InterruptedException e) {
-                    System.err.println("Round timer interrupted for room " + roomId + ": " + e.getMessage());
-                    Thread.currentThread().interrupt();
-                } catch (Exception e) {
-                    System.err.println("Error during round timeout for room " + roomId + ": " + e.getMessage());
-                    e.printStackTrace();
+            ScheduledFuture<?> timeoutTask = roomSchedulers.get(roomId).schedule(() -> {
+                if (!checkIfAllPlayersSentMessages(roomId)) {
+                    endRound(roomId);
                 }
-            });
+            }, roundTimeLimit, TimeUnit.SECONDS);
+            roundTimeoutTasks.put(roomId, timeoutTask);
 
         } catch (Exception e) {
             System.err.println("Critical error in startNewRound for room " + roomId);
@@ -240,11 +197,46 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             String errorDetail = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
             broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"새 라운드 시작 오류: " + errorDetail + "\"}");
         } finally {
-            // 라운드 종료 시, 플래그를 해제하여 다음 라운드가 시작될 수 있도록 함
             isRoundInProgressMap.get(roomId).set(false);
         }
     }
 
+    private void initializeFirstRound(Long roomId, int currentRound) {
+        try {
+            SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
+                    .roomId(roomId)
+                    .build();
+
+            SentenceGameCreateRes gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
+
+            List<SentenceWordDto> words = gameWithWords.words();
+            StringBuilder wordsJson = new StringBuilder("[");
+            for (SentenceWordDto word : words) {
+                wordsJson.append(String.format(
+                        "{\"word\": \"%s\", \"difficulty\": %d},",
+                        word.word(),
+                        word.difficulty()
+                ));
+            }
+            if (wordsJson.charAt(wordsJson.length() - 1) == ',') {
+                wordsJson.deleteCharAt(wordsJson.length() - 1);
+            }
+            wordsJson.append("]");
+
+            String roundStartMessage = String.format(
+                    "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\", \"words\": %s}",
+                    currentRound,
+                    currentRound,
+                    wordsJson.toString()
+            );
+            broadcastToRoom(roomId, roundStartMessage);
+
+        } catch (Exception e) {
+            System.err.println("Error during first round initialization: " + e.getMessage());
+            e.printStackTrace();
+            broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"첫 라운드 초기화 중 오류: " + e.getMessage() + "\"}");
+        }
+    }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
@@ -334,23 +326,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 sentences.add(messages.getOrDefault(playerId, ""));
             }
 
-            for (String playerId : playerStatus.keySet()) {
-                if (!playerStatus.get(playerId)) {
-                    WebSocketSession session = getSessionByPlayerId(roomId, playerId);
-                    if (session != null && session.isOpen()) {
-                        String timeoutMessage = String.format(
-                                "{\"type\": \"notification\", \"message\": \"제한 시간 내 문장을 입력하지 못했습니다.\"}"
-                        );
-                        try {
-                            session.sendMessage(new TextMessage(timeoutMessage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    sentences.add("");
-                }
-            }
-
             SentenceGameReq sentenceGameReq = new SentenceGameReq(roomId, playerIds, sentences);
             SentenceGameRes res = sentenceGameCommandService.playGame(sentenceGameReq);
 
@@ -393,15 +368,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             System.err.println("Error in endRound for room " + roomId);
             e.printStackTrace();
         } finally {
-            // 라운드 종료 후 플래그 초기화
             isRoundEndInProgressMap.get(roomId).set(false);
         }
-
-    }
-
-    private String getPlayerIdFromSession(WebSocketSession session) {
-        String token = sessionTokenMap.get(session);
-        return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
 
     private boolean checkIfAllPlayersSentMessages(Long roomId) {
@@ -442,5 +410,10 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             }
         }
         return null;
+    }
+
+    private String getPlayerIdFromSession(WebSocketSession session) {
+        String token = sessionTokenMap.get(session);
+        return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
 }
