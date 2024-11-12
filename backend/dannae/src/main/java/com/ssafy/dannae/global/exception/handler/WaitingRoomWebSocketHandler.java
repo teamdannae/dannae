@@ -70,14 +70,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        for (String existingToken : sessionTokenMap.values()) {
-            if (existingToken.equals(token)) {
-                session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 사용 중인 토큰입니다.\"}"));
-                session.close(CloseStatus.POLICY_VIOLATION);
-                return;
-            }
-        }
-
         sessions.add(session);
         sessionTokenMap.put(session, token);
 
@@ -396,18 +388,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         } else {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"게임 시작 권한이 없습니다.\"}"));
         }
-    }
-
-    public List<String> getWaitingRoomPlayers(Long roomId) {
-        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
-        List<String> playerIds = new ArrayList<>();
-        if (sessions != null) {
-            for (WebSocketSession session : sessions) {
-                String playerId = getPlayerIdFromSession(session);
-                playerIds.add(playerId);
-            }
-        }
-        return playerIds;
     }
 
 }

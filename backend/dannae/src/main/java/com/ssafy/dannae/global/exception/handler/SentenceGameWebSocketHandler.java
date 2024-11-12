@@ -40,7 +40,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final int roundWaitTime = 5;
     private final Map<Long, Map<String, Boolean>> roundPlayerStatus = new ConcurrentHashMap<>();
     private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
-    private int currentRound;
+    private final Map<Long, Integer> currentRoundMap = new ConcurrentHashMap<>();  // 방마다 라운드를 관리
     private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
 
     public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
@@ -81,12 +81,9 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
         session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"status\": \"playing\"}"));
-        currentRound = 0;
+        currentRoundMap.put(roomId, 0);  // 방마다 초기 라운드 설정
 
-        // 방별로 스케줄러를 생성하여 저장
-        System.out.println("시작 ");
         roomSchedulers.computeIfAbsent(roomId, k -> Executors.newScheduledThreadPool(1));
-        System.out.println("됨");
         if (areAllPlayersInGameRoom(roomId)) {
             startGame(roomId);
         }
@@ -96,7 +93,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         try {
             broadcastToRoom(roomId, "{\"type\": \"game_start\", \"message\": \"5초 후에 게임이 시작됩니다.\"}");
 
-            // CompletableFuture를 사용하여 비동기 작업 추적
             CompletableFuture.runAsync(() -> {
                 try {
                     Thread.sleep(roundWaitTime * 1000);
@@ -107,7 +103,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 } catch (Exception e) {
                     System.err.println("Error during game start: " + e.getMessage());
                     e.printStackTrace();
-                    // 에러 발생 시 클라이언트에게 알림
                     broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"게임 시작 중 오류가 발생했습니다.\"}");
                 }
             }, globalScheduler);
@@ -122,13 +117,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     @PreDestroy
     public void destroy() {
         try {
-            // 모든 게임룸의 스케줄러 종료
             for (Map.Entry<Long, ScheduledExecutorService> entry : roomSchedulers.entrySet()) {
                 ScheduledExecutorService scheduler = entry.getValue();
                 scheduler.shutdownNow();
             }
 
-            // 글로벌 스케줄러 종료
             globalScheduler.shutdown();
             if (!globalScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
                 globalScheduler.shutdownNow();
@@ -140,14 +133,12 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
     public void startNewRound(Long roomId) {
         try {
-            // 1. roomId 체크
             if (roomId == null) {
                 System.err.println("Error: roomId is null");
                 broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"방 ID가 유효하지 않습니다.\"}");
                 return;
             }
 
-            // 2. 세션 체크
             List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
             if (sessions == null || sessions.isEmpty()) {
                 System.err.println("Error: No active sessions found for room " + roomId);
@@ -155,10 +146,9 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            // 3. 현재 라운드 증가
-            currentRound++;
+            int currentRound = currentRoundMap.getOrDefault(roomId, 0) + 1;
+            currentRoundMap.put(roomId, currentRound);  // 각 방별로 라운드를 업데이트
 
-            // 4. 플레이어 상태 초기화
             Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
             sessions.forEach(session -> {
                 String playerId = getPlayerIdFromSession(session);
@@ -168,20 +158,16 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             });
             roundPlayerStatus.put(roomId, playerStatus);
 
-            // 5. playerMessages 초기화
-            playerMessages.put(roomId, new ConcurrentHashMap<>());  // 메시지 저장소 초기화
+            playerMessages.put(roomId, new ConcurrentHashMap<>());
 
-            // 6. 첫 라운드일 경우 단어 30개 제공
             if (currentRound == 1) {
                 try {
                     SentenceGameDto sentenceGameDto = SentenceGameDto.builder()
                             .roomId(roomId)
                             .build();
 
-                    // 단어 생성 서비스 호출
                     SentenceGameCreateRes gameWithWords = sentenceGameCommandService.createInitial(sentenceGameDto);
 
-                    // JSON 변환 및 브로드캐스트
                     List<SentenceWordDto> words = gameWithWords.words();
                     StringBuilder wordsJson = new StringBuilder("[");
                     for (SentenceWordDto word : words) {
@@ -192,7 +178,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                         ));
                     }
                     if (wordsJson.charAt(wordsJson.length() - 1) == ',') {
-                        wordsJson.deleteCharAt(wordsJson.length() - 1); // 마지막 쉼표 제거
+                        wordsJson.deleteCharAt(wordsJson.length() - 1);
                     }
                     wordsJson.append("]");
 
@@ -211,7 +197,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                     return;
                 }
             } else {
-                // 첫 라운드가 아닌 경우 단순 라운드 시작 메시지 전송
                 String roundStartMessage = String.format(
                         "{\"type\": \"round_start\", \"round\": \"%d\", \"message\": \"%d라운드가 시작되었습니다!\"}",
                         currentRound,
@@ -220,7 +205,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
-            // 7. 라운드 제한시간 설정
             CompletableFuture.runAsync(() -> {
                 try {
                     Thread.sleep(roundTimeLimit * 1000);
@@ -244,8 +228,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    // 추가 디버깅 메서드
     private void logGameState(Long roomId) {
+        int currentRound = currentRoundMap.getOrDefault(roomId, 0);
         System.out.println("=== Game State Debug ===");
         System.out.println("Room ID: " + roomId);
         System.out.println("Current Round: " + currentRound);
@@ -294,7 +278,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String payload = message.getPayload();
         Map<String, Boolean> playerStatus = roundPlayerStatus.get(roomId);
         playerMessages.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>());
-        String nickname =playerQueryService.findPlayerById(Long.parseLong(playerId)).nickname();
+        String nickname = playerQueryService.findPlayerById(Long.parseLong(playerId)).nickname();
 
         JSONObject jsonMessage = new JSONObject(payload);
         String messageContent = jsonMessage.getString("message");
@@ -311,7 +295,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         chatMessage.put("type", "chat");
         chatMessage.put("event", "message");
         chatMessage.put("playerId", playerId);
-        chatMessage.put("nickname",nickname);
+        chatMessage.put("nickname", nickname);
         chatMessage.put("message", messageContent);
 
         session.sendMessage(new TextMessage(chatMessage.toString()));
@@ -391,8 +375,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-
-
     private String getPlayerIdFromSession(WebSocketSession session) {
         String token = sessionTokenMap.get(session);
         return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
@@ -418,10 +400,9 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-
     private boolean areAllPlayersInGameRoom(Long roomId) {
         Long activePlayerCount = roomQueryService.findById(roomId)
-                .orElseThrow(()-> new NoRoomException("no room exception"))
+                .orElseThrow(() -> new NoRoomException("no room exception"))
                 .getPlayerCount();
         int currentSessionCount = gameRoomSessions.get(roomId).size();
         return currentSessionCount == activePlayerCount;
