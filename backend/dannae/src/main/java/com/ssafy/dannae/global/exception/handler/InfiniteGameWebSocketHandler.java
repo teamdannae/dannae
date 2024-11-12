@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(
         Runtime.getRuntime().availableProcessors()
     );
+    private final Map<Long, ScheduledFuture<?>> turnTimeoutTasks = new ConcurrentHashMap<>();
+
     private final Map<Long, String> gameConsonantsMap = new ConcurrentHashMap<>();
     private final Map<Long, Integer> initialPlayerCount = new ConcurrentHashMap<>();
     private final Map<Long, Long> gameIdsMap = new ConcurrentHashMap<>();
@@ -145,12 +148,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         }, 5, TimeUnit.SECONDS);
     }
 
+    // startTurn 메서드 수정: 스케줄러 저장 및 턴 제한 시간 스케줄러 추가
     private void startTurn(Long roomId, InfiniteGameDto initialDto) throws IOException {
         Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
-
-        System.out.println("startTurn 시작 시 turnOrder: " + roomTurnOrder.stream()
-            .map(s -> sessionPlayerIdMap.get(s))
-            .collect(Collectors.joining(" -> ")));
 
         if (roomTurnOrder == null || roomTurnOrder.isEmpty()) {
             endGame(roomId);
@@ -167,33 +167,44 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 nickname, currentPlayerId);
             broadcastToRoom(roomId, turnInfoMessage);
 
-            try {
-                String personalTurnMessage = "{\"type\": \"turn_start\", \"message\": \"당신의 차례입니다. 10초 안에 정답을 입력해주세요!\"}";
-                currentSession.sendMessage(new TextMessage(personalTurnMessage));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            String personalTurnMessage = "{\"type\": \"turn_start\", \"message\": \"당신의 차례입니다. 10초 안에 정답을 입력해주세요!\"}";
+            currentSession.sendMessage(new TextMessage(personalTurnMessage));
 
-            turnInProgress.put(roomId, true); // 턴이 진행 중임을 표시
+            turnInProgress.put(roomId, true);
 
-            scheduler.schedule(() -> {
+            // 제한 시간 스케줄러 설정 및 저장
+            ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
                 try {
                     handleTurnTimeoutOrCheckAnswer(roomId);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }, 10, TimeUnit.SECONDS);
+
+            turnTimeoutTasks.put(roomId, timeoutTask); // 스케줄러 저장
         }
     }
 
+    // processAnswer 메서드 수정: 답변 제출 시 스케줄러 취소
     private void processAnswer(WebSocketSession session, Long roomId, Long playerId, String answer) {
-        System.out.println("Processing answer for playerId: " + playerId + " with answer: " + answer); // 디버깅 로그 추가
-        // 방의 답변 리스트 가져오기 (없으면 새로 생성)
-        List<SubmittedAnswer> answers = submittedAnswers.computeIfAbsent(roomId,
-            k -> new CopyOnWriteArrayList<>());
+        System.out.println("Processing answer for playerId: " + playerId + " with answer: " + answer);
 
-        // 새로운 답변 추가
+        // 사용자가 답을 제출했으므로 제한 시간 스케줄러 취소
+        ScheduledFuture<?> timeoutTask = turnTimeoutTasks.get(roomId);
+        if (timeoutTask != null && !timeoutTask.isDone()) {
+            timeoutTask.cancel(false);
+        }
+
+        // 방의 답변 리스트 가져오기 (없으면 새로 생성)
+        List<SubmittedAnswer> answers = submittedAnswers.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         answers.add(new SubmittedAnswer(playerId, answer, session));
+
+        // 이후 정답 판정 로직 수행 (예: handleTurnTimeoutOrCheckAnswer 로 호출하여 다음 턴으로 이동)
+        try {
+            handleTurnTimeoutOrCheckAnswer(roomId);  // 즉시 정답 판정 및 다음 턴으로 이동
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleTurnTimeoutOrCheckAnswer(Long roomId) throws IOException {
