@@ -64,13 +64,14 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		doubleConsonants.add(8);
 		doubleConsonants.add(10);
 		doubleConsonants.add(13);
+		doubleConsonants.add(15);
 
 		for(int i = 0; i < 19; i++) {
 			for(int j = 0; j < 19; j++) {
 				if(doubleConsonants.contains(j) || doubleConsonants.contains(i)) {
 					invalidCombinations[i][j] = true;
 				}
-				if(i == 5 || i == 15 || j == 15) {
+				if(i == 5) {
 					invalidCombinations[i][j] = true;
 				}
 			}
@@ -157,6 +158,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 			}
 
 			wordRepository.saveAll(words);
+
 		} else {
 			words = optionalWords.get();
 		}
