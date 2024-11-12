@@ -205,6 +205,8 @@ class OpenAIServiceImpl implements OpenAIService {
 			String sentenceResult = prompt(sentencePrompt);
 
 			if (sentenceResult == null || sentenceResult.isEmpty() || sentenceResult.contains("null")) {
+				playerTotalScore.add(nowPlayer.getScore());
+				playerScore.add(0);
 				usedWordCount.add(0);
 			} else {
 				try {
