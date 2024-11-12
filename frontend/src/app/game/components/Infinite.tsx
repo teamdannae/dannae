@@ -18,7 +18,7 @@ const Infinite = ({
     <div className={styles.infiniteGameContainer}>
       <div
         className={`${styles.consonantContainer} ${
-          isConsonantVisible ? "" : styles.isVisible
+          isConsonantVisible ? "" : styles.isHidden
         } ${isGameStart ? styles.isStart : ""}`}
       >
         {Array.from(consonants).map((consonant, index) => (
