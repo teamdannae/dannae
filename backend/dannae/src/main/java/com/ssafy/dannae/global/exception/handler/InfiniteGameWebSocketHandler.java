@@ -32,6 +32,7 @@ import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
+import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 
@@ -62,6 +63,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final PlayerCommandService playerCommandService;
     private final PlayerQueryService playerQueryService;
     private final RoomQueryService roomQueryService;
+    private final RoomCommandService roomCommandService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -388,8 +390,22 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void endGame(Long roomId) throws IOException {
+    private synchronized void endGame(Long roomId) throws IOException {
+        // 이미 게임이 종료되었는지 확인 (맵에서 제거되었는지 체크)
+        if (!gameRoomSessions.containsKey(roomId)) {
+            return;  // 이미 종료된 게임이면 리턴
+        }
+
+        // 게임 종료 메시지 전송
         broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임 종료!\"}");
+
+        try {
+            // room status 변경 (한 번만 실행되도록 보장)
+            roomCommandService.updateStatus(roomId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         gameRoomSessions.remove(roomId);
         turnOrder.remove(roomId);
         usedWords.remove(roomId);
