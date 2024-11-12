@@ -31,6 +31,7 @@ export default function WaitingRoom() {
       isTurn: false,
       nowScore: 0,
       totalScore: 0,
+      isFail: false,
     },
     {
       playerId: "",
@@ -42,6 +43,7 @@ export default function WaitingRoom() {
       isTurn: false,
       nowScore: 0,
       totalScore: 0,
+      isFail: false,
     },
     {
       playerId: "",
@@ -53,6 +55,7 @@ export default function WaitingRoom() {
       isTurn: false,
       nowScore: 0,
       totalScore: 0,
+      isFail: false,
     },
     {
       playerId: "",
@@ -64,6 +67,7 @@ export default function WaitingRoom() {
       isTurn: false,
       nowScore: 0,
       totalScore: 0,
+      isFail: false,
     },
   ]);
   const [roomInfo, setRoomInfo] = useState<room>({
@@ -82,6 +86,7 @@ export default function WaitingRoom() {
   const [wordList, setWordList] = useState<word[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastDuration, setToastDuration] = useState(1000);
   const [consonant, setConsonant] = useState<string>("");
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
@@ -197,6 +202,7 @@ export default function WaitingRoom() {
                 isTurn: false,
                 nowScore: 0,
                 totalScore: 0,
+                isFail: false,
               };
               break;
             }
@@ -228,6 +234,7 @@ export default function WaitingRoom() {
                 isTurn: false,
                 nowScore: 0,
                 totalScore: 0,
+                isFail: false,
               }
             : user
         )
@@ -248,6 +255,7 @@ export default function WaitingRoom() {
                 isTurn: false,
                 nowScore: 0,
                 totalScore: 0,
+                isFail: false,
               };
               break;
             }
@@ -286,26 +294,48 @@ export default function WaitingRoom() {
       setAreAllPlayersReady(true);
     } else if (data.type === "game_start" && data.room) {
       startGame();
-    } else if (
-      data.type === "answer_result" &&
-      data.word &&
-      data.difficulty &&
-      data.reason &&
-      data.correct
-    ) {
-      setRoundReset(true);
+    } else if (data.type === "answer_result" && data.word && data.reason) {
+      setIsSend(true);
       const wordData: word = {
         word: data.word,
-        difficulty: data.difficulty,
+        difficulty: data.difficulty || null,
         reason: data.reason,
         correct: data.correct,
       };
-      console.log(wordData);
       setWordList((prevWordList) => [...prevWordList, wordData]);
+      // 난이도 값이 있다면 점수 계산
+      if (wordData.difficulty) {
+        const scoreToAdd =
+          data.difficulty === 1
+            ? 10
+            : data.difficulty === 2
+            ? 20
+            : data.difficulty === 3
+            ? 40
+            : 60;
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.isTurn
+              ? {
+                  ...user,
+                  nowScore: scoreToAdd,
+                  totalScore: user.totalScore + scoreToAdd,
+                }
+              : user
+          )
+        );
+      }
       // 무한 초성 지옥 게임 시작하면 초성 설정
     } else if (data.type === "infiniteGameStart" && data.initial) {
       setConsonant(data.initial);
+      setIsSend(true);
       setIsConsonantVisible(false);
+      setToastMessage("5초 후에 게임이 시작됩니다!");
+      setShowToast(true);
+      setToastDuration(4500);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 4500);
       // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
     } else if (data.type === "error") {
       router.replace("/profile/nickname");
@@ -380,6 +410,16 @@ export default function WaitingRoom() {
       setWordList([]);
       setAreAllPlayersReady(false);
       returnWaitingRoom();
+    } else if (data.type === "elimination" && data.playerId) {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.playerId === data.playerId ? { ...user, isFail: true } : user
+        )
+      );
+    } else if (data.type === "success") {
+      setRoundReset(true);
+    } else if (data.type === "turn_start") {
+      setIsSend(false);
     }
 
     if (data.creatorId) {
@@ -453,13 +493,14 @@ export default function WaitingRoom() {
       aria-labelledby="game-waiting-room"
       className={styles.container}
     >
-      {showToast && <Toast message={toastMessage} />}
+      {showToast && <Toast message={toastMessage} duration={toastDuration} />}
       {isStart ? (
         roomInfo.mode === "무한 초성 지옥" ? (
           <Infinite
             wordList={wordList}
             consonants={consonant}
             isConsonantVisible={isConsonantVisible}
+            isGameStart={isInfiniteTurnStart}
           />
         ) : (
           <Sentence wordList={wordList} />

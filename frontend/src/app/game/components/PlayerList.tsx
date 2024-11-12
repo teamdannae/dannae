@@ -9,11 +9,18 @@ interface playerProps {
 }
 
 export default function PlayerList({ users }: playerProps) {
+  const [previousTotalScores, setPreviousTotalScores] = useState(
+    users.map((user) => user.totalScore)
+  );
   const [isNewScore, setIsNewScore] = useState(Array(users.length).fill(false));
 
   useEffect(() => {
-    const newScoresArray = users.map((user) => user.nowScore > 0);
-    setIsNewScore(newScoresArray);
+    const newIsNewScore = users.map(
+      (user, index) => user.totalScore !== previousTotalScores[index]
+    );
+    setIsNewScore(newIsNewScore);
+
+    setPreviousTotalScores(users.map((user) => user.totalScore));
 
     const timer = setTimeout(() => {
       setIsNewScore(Array(users.length).fill(false));
@@ -32,6 +39,7 @@ export default function PlayerList({ users }: playerProps) {
             isSelected={user.isTurn}
             isNewScore={isNewScore[index]}
             newScore={user.nowScore}
+            isFail={user.isFail}
           >
             <div className={styles.cardInner}>
               {!user.isEmpty && (

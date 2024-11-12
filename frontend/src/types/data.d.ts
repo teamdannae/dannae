@@ -25,7 +25,10 @@ interface message {
     | "turn_info"
     | "round_start"
     | "round_end"
-    | "game_end";
+    | "game_end"
+    | "elimination"
+    | "success"
+    | "turn_start";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
   nickname?: string;
@@ -70,6 +73,7 @@ interface player {
   isTurn: boolean;
   nowScore: number;
   totalScore: number;
+  isFail: boolean;
 }
 
 interface gameroom {
