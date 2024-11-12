@@ -70,7 +70,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 				if(doubleConsonants.contains(j) || doubleConsonants.contains(i)) {
 					invalidCombinations[i][j] = true;
 				}
-				if(i==5) {
+				if(i == 5 || i == 15 || j == 15) {
 					invalidCombinations[i][j] = true;
 				}
 			}
@@ -320,6 +320,15 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 							if (initialIndex != -1) {
 								initial += CHO_SUNG[initialIndex]; // 초성 추가
 							}
+						}
+
+						if(wordText.charAt(1)=='^') {
+							String[] tempList = wordText.split("^");
+							wordText = tempList[0]+tempList[1];
+						}
+						if (wordText.charAt(1)=='-'){
+							String[] tempList = wordText.split("-");
+							wordText = tempList[0]+tempList[1];
 						}
 
 						// Word 객체 생성 및 리스트에 추가
