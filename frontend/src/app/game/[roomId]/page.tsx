@@ -405,6 +405,7 @@ export default function WaitingRoom() {
           isTurn: false,
           nowScore: 0,
           totalScore: 0,
+          isFail: false,
         }))
       );
       setWordList([]);
