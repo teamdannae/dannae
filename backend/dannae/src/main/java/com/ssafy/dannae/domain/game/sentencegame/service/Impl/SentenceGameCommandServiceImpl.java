@@ -105,7 +105,7 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 				).orElseThrow(()-> new NoPlayerException("유저를 찾을 수 없습니다"));
 				dtos.add(new SentencePlayerDto(player.getId(),
 						0, 0, player.getScore(), ""));
-				player.resetScore();
+//				player.resetScore();
 			}
 			updateWordCount(sentenceGame.getInactiveWords());
 			SentenceGameRes res = SentenceGameRes.builder().isEnd(true)
@@ -149,7 +149,7 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 			updateWordCount(inactiveWords);
 			for(int i=0; i<playerNum; i++){
 				Player player = playerRepository.findById(sentenceGameReq.players().get(i)).get();
-				player.resetScore();
+//				player.resetScore();
 			}
 			sentenceGameRepository.deleteById(sentenceGameReq.roomId());
 		}
