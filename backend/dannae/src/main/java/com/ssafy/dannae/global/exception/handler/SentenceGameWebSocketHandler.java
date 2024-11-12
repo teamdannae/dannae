@@ -36,6 +36,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, ScheduledExecutorService> roomSchedulers = new ConcurrentHashMap<>(); // 각 방별로 스케줄러 관리
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
+    private final RoomCommandService roomCommandService;
     private final PlayerQueryService playerQueryService;
     private final SentenceGameCommandService sentenceGameCommandService;
     private final RoomQueryService roomQueryService;
@@ -49,12 +50,13 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
     private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
 
-    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
+    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService) {
         this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService = playerCommandService;
         this.playerQueryService = playerQueryService;
         this.sentenceGameCommandService = sentenceGameCommandService;
+        this.roomCommandService = roomCommandService;
 
     }
 
@@ -365,6 +367,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, scoreMessage);
 
             if (res.isEnd()) {
+                roomCommandService.updateStatus(roomId);
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
