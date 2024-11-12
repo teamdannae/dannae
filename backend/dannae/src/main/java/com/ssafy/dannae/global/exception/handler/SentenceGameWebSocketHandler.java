@@ -26,6 +26,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
@@ -43,6 +44,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<WebSocketSession, String> sessionTokenMap = new ConcurrentHashMap<>();
     private final Map<Long, Integer> currentRoundMap = new ConcurrentHashMap<>();  // 방마다 라운드를 관리
     private final Map<Long, Map<String, String>> playerMessages = new ConcurrentHashMap<>();  // 플레이어 메시지 저장
+    private final Map<Long, AtomicBoolean> isRoundInProgressMap = new ConcurrentHashMap<>();
+
 
     public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
         this.roomQueryService = roomQueryService;
@@ -82,7 +85,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
         session.sendMessage(new TextMessage("{\"type\": \"enter\", \"event\": \"join_game\", \"message\": \"" + nickname + "님이 게임에 연결되었습니다.\", \"playerId\": \"" + playerId + "\", \"nickname\": \"" + nickname + "\", \"status\": \"playing\"}"));
-        currentRoundMap.put(roomId, 0);  // 방마다 초기 라운드 설정
+        currentRoundMap.put(roomId, 0);
 
         roomSchedulers.computeIfAbsent(roomId, k -> Executors.newScheduledThreadPool(1));
         if (areAllPlayersInGameRoom(roomId)) {
@@ -133,6 +136,15 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void startNewRound(Long roomId) {
+        // 방별 라운드 진행 여부를 관리하는 플래그가 없는 경우 초기화
+        isRoundInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
+
+        // 이미 진행 중인 경우, 새로운 라운드 시작을 막음
+        if (!isRoundInProgressMap.get(roomId).compareAndSet(false, true)) {
+            System.out.println("방 " + roomId + "에서 이미 라운드가 진행 중입니다.");
+            return;
+        }
+
         try {
             if (roomId == null) {
                 System.err.println("Error: roomId is null");
@@ -148,7 +160,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             }
 
             int currentRound = currentRoundMap.getOrDefault(roomId, 0) + 1;
-            currentRoundMap.put(roomId, currentRound);  // 각 방별로 라운드를 업데이트
+            currentRoundMap.put(roomId, currentRound);
 
             Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
             sessions.forEach(session -> {
@@ -226,18 +238,12 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
             String errorDetail = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류";
             broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"새 라운드 시작 오류: " + errorDetail + "\"}");
+        } finally {
+            // 라운드 종료 시, 플래그를 해제하여 다음 라운드가 시작될 수 있도록 함
+            isRoundInProgressMap.get(roomId).set(false);
         }
     }
 
-    private void logGameState(Long roomId) {
-        int currentRound = currentRoundMap.getOrDefault(roomId, 0);
-        System.out.println("=== Game State Debug ===");
-        System.out.println("Room ID: " + roomId);
-        System.out.println("Current Round: " + currentRound);
-        System.out.println("Active Sessions: " + (gameRoomSessions.get(roomId) != null ? gameRoomSessions.get(roomId).size() : 0));
-        System.out.println("Player Status: " + (roundPlayerStatus.get(roomId) != null ? roundPlayerStatus.get(roomId).toString() : "null"));
-        System.out.println("=====================");
-    }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {

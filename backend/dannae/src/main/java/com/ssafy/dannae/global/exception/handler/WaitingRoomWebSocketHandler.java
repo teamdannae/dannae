@@ -271,22 +271,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
 
-    public boolean isPlayerInWaitingRoom(Long roomId, String playerId) {
-        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
-        if (sessions == null) {
-            return false;
-        }
-        return sessions.stream()
-                .anyMatch(session -> {
-                    String token = sessionTokenMap.get(session);
-                    if (token == null || token.isEmpty()) {
-                        return false;
-                    }
-                    String tokenPlayerId = jwtTokenProvider.getPlayerIdFromToken(token);
-                    return playerId.equals(tokenPlayerId);
-                });
-    }
-
     public int getRoomPlayerCount(Long roomId) {
         List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
         return sessions != null ? sessions.size() : 0;
