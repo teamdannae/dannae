@@ -267,10 +267,18 @@
     border: none;
   }
 
+  &:hover {
+    opacity: 0.8;
+  }
+
   &:disabled {
     background-color: vars.$disabled-color;
     border: none;
     cursor: not-allowed;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 
