@@ -173,10 +173,10 @@ class OpenAIServiceImpl implements OpenAIService {
 		Set<String> wordList = sentenceDto.activeWords();
 		List<Long> playerList = sentenceDto.playerIds();
 		List<String> sentenceList = sentenceDto.sentences();
-		List<Integer> usedWordCount = new ArrayList<>();
-		Set<String> usedSentence = new HashSet<>();
-		List<Integer> playerScore = new ArrayList<>();
-		List<Long> playerTotalScore = new ArrayList<>();
+		List<Integer> usedWordCount = new ArrayList<>(); // 각 문장에서 사용된 단어 개수 리스트
+		Set<String> usedSentence = new HashSet<>(); // 모든 플레이어가 사용한 단어 집합
+		List<Integer> playerScore = new ArrayList<>(); // 각 플레이어의 점수 리스트
+		List<Long> playerTotalScore = new ArrayList<>(); // 각 플레이어의 총 점수 리스트
 
 		for (int i = 0; i < playerList.size(); i++) {
 			Long playerId = playerList.get(i);
@@ -190,46 +190,45 @@ class OpenAIServiceImpl implements OpenAIService {
 				+ "적절하게 사용된 단어가 없다면 null 반환해주세요.\n"
 				+ "단어 목록: \"" + wordList.toString() + "\"\n"
 				+ "무조건 단어 목록에 있는 단어만 가져와야합니다. \n"
-				+ "답변 형식: 사용된 단어 수, [\"단어1\", \"단어2\", ...] \n"
-				+ "예시 답변: [\"사과\", \"배\"]\n"
+				+ "답변 형식: [\"단어1\", \"단어2\", ...] \n"
+				+ "형식에 맞게 큰따음표까지 모두 반환해야합니다 \n"
 				+ "과정 설명 없이 답변 형식에 맞게 단어 목록만 제공해주세요.\n";
 
 			PromptDto sentencePrompt = PromptDto.builder()
 				.messages(List.of(Map.of("role", "user", "content", wordQuestion)))
-				.temperature((0.8f))
+				.temperature(0.8f)
 				.max_tokens(1000)
 				.build();
 
 			String sentenceResult = prompt(sentencePrompt);
 
-			if (sentenceResult.startsWith("0") && sentenceResult.contains("null")) {
+			if (sentenceResult == null || sentenceResult.isEmpty() || sentenceResult.contains("null")) {
 				usedWordCount.add(0);
 			} else {
 				try {
-					String[] parts = sentenceResult.split(", ", 2);
+					// 대괄호와 따옴표를 제거하여 단어 리스트만 추출
+					String words = sentenceResult.replaceAll("[\\[\\]\"]", "").trim();
 					int count = 0;
 					int scoreCount = 0;
-
-					String words = parts[1].replaceAll("[\\[\\]\"]", "").trim();
 
 					if (!words.equals("null") && !words.isEmpty()) {
 						String[] wordArray = words.split(", ");
 
 						for (String word : wordArray) {
-							if (wordList.contains(word.trim())) {
+							if (wordList.contains(word.trim())) { // 단어 목록에 포함된 단어인지 확인
 								Word usedWord = wordRepository.findFirstByWord(word)
 									.orElseThrow(() -> new NoWordException("Word not found : " + word));
-								count++;
+								count++; // 사용된 단어 개수 증가
 								int difficulty = usedWord.getDifficulty();
 								nowPlayer.updateScore(difficulty);
 								scoreCount += difficulty;
-								usedSentence.add(word.trim());
+								usedSentence.add(word.trim()); // 사용된 단어 집합에 추가
 							}
 						}
 					}
-					usedWordCount.add(count);
-					playerScore.add(scoreCount);
-					playerTotalScore.add(nowPlayer.getScore());
+					usedWordCount.add(count); // 사용된 단어 개수 추가
+					playerScore.add(scoreCount); // 플레이어 점수 추가
+					playerTotalScore.add(nowPlayer.getScore()); // 플레이어 총 점수 추가
 				} catch (Exception e) {
 					throw new OpenAIResponseProcessingException("Failed to process sentence result: " + sentenceResult, e);
 				}
@@ -242,6 +241,7 @@ class OpenAIServiceImpl implements OpenAIService {
 			.usedWords(usedSentence)
 			.build();
 	}
+
 
 }
 
