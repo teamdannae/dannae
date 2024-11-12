@@ -12,6 +12,7 @@ import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
+import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import jakarta.annotation.PreDestroy;
@@ -35,6 +36,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, ScheduledExecutorService> roomSchedulers = new ConcurrentHashMap<>(); // 각 방별로 스케줄러 관리
     private final JwtTokenProvider jwtTokenProvider;
     private final PlayerCommandService playerCommandService;
+    private final RoomCommandService roomCommandService;
     private final PlayerQueryService playerQueryService;
     private final SentenceGameCommandService sentenceGameCommandService;
     private final RoomQueryService roomQueryService;
@@ -48,13 +50,14 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
     private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
 
-
-    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService) {
+    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService) {
         this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService = playerCommandService;
         this.playerQueryService = playerQueryService;
         this.sentenceGameCommandService = sentenceGameCommandService;
+        this.roomCommandService = roomCommandService;
+
     }
 
     private final ScheduledExecutorService globalScheduler = Executors.newScheduledThreadPool(
@@ -251,7 +254,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-
+        roomCommandService.updateStatus(roomId);
         if (sessions != null) {
             sessions.remove(session);
             if (sessions.isEmpty()) {
