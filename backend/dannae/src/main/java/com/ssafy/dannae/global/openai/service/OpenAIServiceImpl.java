@@ -177,45 +177,57 @@ class OpenAIServiceImpl implements OpenAIService {
 		Set<String> usedSentence = new HashSet<>();
 		List<Integer> playerScore = new ArrayList<>();
 		List<Long> playerTotalScore = new ArrayList<>();
-		for(int i = 0; i < playerList.size(); i++){
+
+		for (int i = 0; i < playerList.size(); i++) {
 			Long playerId = playerList.get(i);
 			Player nowPlayer = playerRepository.findById(playerId)
 				.orElseThrow(() -> new NoPlayerException("Player not found with ID: " + playerId));
 			String playerSentence = sentenceList.get(i);
-			String wordQuestion = "다음 문장이 유효한 문장인지 판단해서 아니라면 0과 null 반환해주세요.\n"
+
+			String wordQuestion = "다음 문장이 유효한 문장인지 판단해서 아니라면 null 반환해주세요.\n"
 				+ "문장: \"" + playerSentence + "\"\n"
-				+ "유효한 문장이라면 주어진 단어들 중 문장에서 적절하게 사용된 단어들의 수와 단어들을 반환해주세요.\n"
-				+ "적절하게 사용된 단어가 없다면 0과 null 반환해주세요.\n"
-				+ "단어 목록: \"" + wordList.toString()  + "\"\n"
+				+ "유효한 문장이라면 주어진 단어들 중 문장에서 적절하게 사용된 단어들을 반환해주세요.\n"
+				+ "적절하게 사용된 단어가 없다면 null 반환해주세요.\n"
+				+ "단어 목록: \"" + wordList.toString() + "\"\n"
+				+ "무조건 단어 목록에 있는 단어만 가져와야합니다. \n"
 				+ "답변 형식: 사용된 단어 수, [\"단어1\", \"단어2\", ...] \n"
-				+ "예시 답변: 2, [\"사과\", \"배\"]\n"
-				+ "과정 설명 없이 답변 형식에 맞게 단어 수와 단어 목록만 제공해주세요.\n";
+				+ "예시 답변: [\"사과\", \"배\"]\n"
+				+ "과정 설명 없이 답변 형식에 맞게 단어 목록만 제공해주세요.\n";
+
 			PromptDto sentencePrompt = PromptDto.builder()
 				.messages(List.of(Map.of("role", "user", "content", wordQuestion)))
 				.temperature((0.8f))
 				.max_tokens(1000)
 				.build();
+
 			String sentenceResult = prompt(sentencePrompt);
+
 			if (sentenceResult.startsWith("0") && sentenceResult.contains("null")) {
 				usedWordCount.add(0);
 			} else {
 				try {
 					String[] parts = sentenceResult.split(", ", 2);
-					int count = Integer.parseInt(parts[0].trim()); // 단어 수
-					int scoreCount = 0; // 단어 점수
-					usedWordCount.add(count);
-					String words = parts[1].replaceAll("[\\[\\]\"]", "").trim(); // 대괄호와 따옴표 제거
+					int count = 0;
+					int scoreCount = 0;
+
+					String words = parts[1].replaceAll("[\\[\\]\"]", "").trim();
+
 					if (!words.equals("null") && !words.isEmpty()) {
 						String[] wordArray = words.split(", ");
+
 						for (String word : wordArray) {
-							Word usedWord = wordRepository.findFirstByWord(word)
-								.orElseThrow(() -> new NoWordException("Word not found : " + word));
-							int difficulty = usedWord.getDifficulty();
-							nowPlayer.updateScore(difficulty);
-							scoreCount += difficulty;
-							usedSentence.add(word.trim());
+							if (wordList.contains(word.trim())) {
+								Word usedWord = wordRepository.findFirstByWord(word)
+									.orElseThrow(() -> new NoWordException("Word not found : " + word));
+								count++;
+								int difficulty = usedWord.getDifficulty();
+								nowPlayer.updateScore(difficulty);
+								scoreCount += difficulty;
+								usedSentence.add(word.trim());
+							}
 						}
 					}
+					usedWordCount.add(count);
 					playerScore.add(scoreCount);
 					playerTotalScore.add(nowPlayer.getScore());
 				} catch (Exception e) {
