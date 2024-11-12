@@ -136,7 +136,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             Thread.currentThread().interrupt();
         }
     }
-
     public void startNewRound(Long roomId) {
         isRoundInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
 
@@ -184,6 +183,13 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
+            // 이전 타이머가 있다면 취소
+            ScheduledFuture<?> previousTask = roundTimeoutTasks.get(roomId);
+            if (previousTask != null && !previousTask.isDone()) {
+                previousTask.cancel(true);
+            }
+
+            // 새로운 타이머 설정
             ScheduledFuture<?> timeoutTask = roomSchedulers.get(roomId).schedule(() -> {
                 if (!checkIfAllPlayersSentMessages(roomId)) {
                     endRound(roomId);
@@ -398,18 +404,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 .getPlayerCount();
         int currentSessionCount = gameRoomSessions.get(roomId).size();
         return currentSessionCount == activePlayerCount;
-    }
-
-    private WebSocketSession getSessionByPlayerId(Long roomId, String playerId) {
-        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-        if (sessions != null) {
-            for (WebSocketSession session : sessions) {
-                if (playerId.equals(getPlayerIdFromSession(session))) {
-                    return session;
-                }
-            }
-        }
-        return null;
     }
 
     private String getPlayerIdFromSession(WebSocketSession session) {
