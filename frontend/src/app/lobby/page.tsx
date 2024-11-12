@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styles from "./page.module.scss";
 import Image from "next/image";
 import { Card } from "../components";
@@ -18,6 +18,7 @@ const Lobby = () => {
   const [selectedGameIndex, setSelectedGameIndex] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [games, setGames] = useState<gameroom[]>([]);
+  const [isThrottled, setIsThrottled] = useState(false);
 
   const router = useRouter();
 
@@ -36,6 +37,8 @@ const Lobby = () => {
   };
 
   const loadGames = async () => {
+    console.log("자동 새로고침");
+
     try {
       const response = await fetch("/api/next/rooms/list");
 
@@ -52,7 +55,20 @@ const Lobby = () => {
 
   useEffect(() => {
     loadGames();
+    const intervalId = setInterval(loadGames, 10000); // 10초마다 실행
+
+    // 컴포넌트 언마운트 시 인터벌 정리
+    return () => clearInterval(intervalId);
   }, []);
+
+  const handleRefresh = useCallback(() => {
+    if (!isThrottled) {
+      console.log("새로고침");
+      setIsThrottled(true);
+      loadGames();
+      setTimeout(() => setIsThrottled(false), 1000); // 1초 동안 쓰로틀링 상태 유지
+    }
+  }, [isThrottled]);
 
   // 선택된 모드에 따른 게임 필터링
   const filteredGames = games.filter((game) => {
@@ -154,7 +170,7 @@ const Lobby = () => {
             </div>
             <div
               className={`${styles.iconButton} ${styles.refreshButton}`}
-              onClick={loadGames}
+              onClick={handleRefresh}
             >
               <Image
                 src="/icons/refresh.svg"
