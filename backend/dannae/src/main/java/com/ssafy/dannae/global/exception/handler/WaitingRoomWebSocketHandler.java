@@ -299,15 +299,16 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 playerId, status
         );
 
-        waitingRoomSessions.values().forEach(sessions ->
-                sessions.forEach(session -> {
-                    try {
-                        session.sendMessage(new TextMessage(message));
-                    } catch (IOException e) {
-                        log.error("Failed to send status update message", e);
-                    }
-                })
-        );
+        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
+        if (sessions != null) {
+            for (WebSocketSession session : sessions) {
+                try {
+                    session.sendMessage(new TextMessage(message));
+                } catch (IOException e) {
+                    log.error("Failed to send status update message", e);
+                }
+            }
+        }
 
         checkAllPlayersReadyAndNotify(roomId);
     }
