@@ -15,6 +15,7 @@ import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 import jakarta.annotation.PreDestroy;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -356,12 +357,12 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             playersJson.deleteCharAt(playersJson.length() - 1);
         }
         playersJson.append("]");
-
+        JSONArray userWordsJson = new JSONArray(res.userWords());
         String scoreMessage = String.format(
                 "{\"type\": \"round_end\", \"message\": \"라운드가 종료되었습니다.\", " +
                         "\"isEnd\": %s, \"userWords\": %s, \"playerDtos\": %s}",
                 res.isEnd(),
-                res.userWords(),
+                userWordsJson.toString(),
                 playersJson
         );
 
