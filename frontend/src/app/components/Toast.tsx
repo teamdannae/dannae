@@ -22,7 +22,7 @@ export default function Toast({ message, duration = 1000 }: ToastProps) {
 
   return (
     <div className={`${styles.toast} ${isVisible ? styles.visible : ""}`}>
-      <h4>{message}</h4>
+      <h3>{message}</h3>
     </div>
   );
 }
