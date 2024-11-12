@@ -1,7 +1,6 @@
 package com.ssafy.dannae.global.exception.handler;
 
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
-import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.entity.Room;
@@ -18,7 +17,6 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
