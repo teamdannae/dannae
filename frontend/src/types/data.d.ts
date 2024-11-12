@@ -27,7 +27,8 @@ interface message {
     | "round_end"
     | "game_end"
     | "elimination"
-    | "success";
+    | "success"
+    | "turn_start";
   event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
   creatorId?: string;
   nickname?: string;
