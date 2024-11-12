@@ -1,13 +1,15 @@
 package com.ssafy.dannae.domain.rank.service.impl;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.ssafy.dannae.domain.rank.entity.Rank;
 import com.ssafy.dannae.domain.rank.repository.RankRepository;
 import com.ssafy.dannae.domain.rank.service.RankCommandService;
 import com.ssafy.dannae.domain.rank.service.dto.RankDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor

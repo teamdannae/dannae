@@ -4,15 +4,16 @@ import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssafy.dannae.domain.player.controller.request.PlayerIdReq;
 import com.ssafy.dannae.domain.player.controller.request.PlayerReq;
 import com.ssafy.dannae.domain.player.controller.response.PlayerRes;
 import com.ssafy.dannae.domain.player.controller.response.PlayerScoreRes;
@@ -104,11 +105,11 @@ public class PlayerController {
         return ResponseEntity.ok(BaseResponse.ofSuccess(playerRes));
     }
 
-    @PostMapping("/result")
-    public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestBody PlayerIdReq playerIdReq) {
+    @GetMapping("/result")
+    public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestParam List<Long> playerIdList) {
 
         PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
-            .playerIdList(playerIdReq.playerIdList())
+            .playerIdList(playerIdList)
             .build();
 
         List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto);
@@ -117,7 +118,7 @@ public class PlayerController {
             .playerList(playerList)
             .build();
 
-        for(Player player : playerList) {
+        for (Player player : playerList) {
             player.resetScore();
             player.updateStatus(PlayerStatus.nonready);
         }

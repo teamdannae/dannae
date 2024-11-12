@@ -187,6 +187,9 @@ class OpenAIServiceImpl implements OpenAIService {
 			String wordQuestion = "다음 문장이 유효한 문장인지 판단해보세요 \n"
 				+ "문장: \"" + playerSentence + "\"\n"
 				+ "유효하지 않은 문장이라면 null 반환해주세요 \n"
+				+ "문장이 아니라 단어만 입력했을 때도 null 반환해주세요 \n"
+				+ "문장에서 단어의 뜻을 이해하고 문맥상 적절하게 사용되지 않은 경우 null 반환해주세요. \n"
+				+ "단어의 뜻을 고려하지 않고 단순히 언급된 경우에도 null 반환해주세요. \n"
 				+ "유효한 문장이라면 주어진 단어들 중 문장에서 적절하게 사용된 단어들을 반환해주세요.\n"
 				+ "적절하게 사용된 단어가 없다면 null 반환해주세요.\n"
 				+ "단어 목록: \"" + wordList.toString() + "\"\n"
@@ -204,6 +207,8 @@ class OpenAIServiceImpl implements OpenAIService {
 			String sentenceResult = prompt(sentencePrompt);
 
 			if (sentenceResult == null || sentenceResult.isEmpty() || sentenceResult.contains("null")) {
+				playerTotalScore.add(nowPlayer.getScore());
+				playerScore.add(0);
 				usedWordCount.add(0);
 			} else {
 				try {
@@ -220,9 +225,9 @@ class OpenAIServiceImpl implements OpenAIService {
 								Word usedWord = wordRepository.findFirstByWord(word)
 									.orElseThrow(() -> new NoWordException("Word not found : " + word));
 								count++; // 사용된 단어 개수 증가
-								int difficulty = usedWord.getDifficulty();
-								nowPlayer.updateScore(difficulty);
-								scoreCount += difficulty;
+								int difficultyScore = usedWord.getDifficulty()*10;
+								nowPlayer.updateScore(difficultyScore);
+								scoreCount += difficultyScore;
 								usedSentence.add(word.trim()); // 사용된 단어 집합에 추가
 							}
 						}
