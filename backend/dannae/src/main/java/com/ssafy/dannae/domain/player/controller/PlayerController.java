@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -104,7 +105,7 @@ public class PlayerController {
         return ResponseEntity.ok(BaseResponse.ofSuccess(playerRes));
     }
 
-    @PostMapping("/result")
+    @GetMapping("/result")
     public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestBody PlayerIdReq playerIdReq) {
 
         PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
