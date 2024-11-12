@@ -70,14 +70,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        for (String existingToken : sessionTokenMap.values()) {
-            if (existingToken.equals(token)) {
-                session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"이미 사용 중인 토큰입니다.\"}"));
-                session.close(CloseStatus.POLICY_VIOLATION);
-                return;
-            }
-        }
-
         sessions.add(session);
         sessionTokenMap.put(session, token);
 
