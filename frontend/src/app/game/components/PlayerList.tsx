@@ -9,18 +9,11 @@ interface playerProps {
 }
 
 export default function PlayerList({ users }: playerProps) {
-  const [previousScores, setPreviousScores] = useState(
-    users.map((user) => user.nowScore)
-  );
   const [isNewScore, setIsNewScore] = useState(Array(users.length).fill(false));
 
   useEffect(() => {
-    const newIsNewScore = users.map(
-      (user, index) => user.nowScore !== previousScores[index]
-    );
-    setIsNewScore(newIsNewScore);
-
-    setPreviousScores(users.map((user) => user.nowScore));
+    const newScoresArray = users.map((user) => user.nowScore > 0);
+    setIsNewScore(newScoresArray);
 
     const timer = setTimeout(() => {
       setIsNewScore(Array(users.length).fill(false));
@@ -52,13 +45,15 @@ export default function PlayerList({ users }: playerProps) {
               )}
 
               <div className={styles.cardInnerInfo}>
-                <p>{user.isHost ? "방장" : "\u00A0"}</p>
-                {user.totalScore > 0 && (
-                  <h5 className={styles.score}>
-                    {user.totalScore.toLocaleString()}점
-                  </h5>
-                )}
-                <h5>{user.nickname}</h5>
+                <h5>{user.isHost ? "방장" : "\u00A0"}</h5>
+                <div className={styles.cardInnerDetail}>
+                  {user.totalScore > 0 && (
+                    <h5 className={styles.score}>
+                      {user.totalScore.toLocaleString()}점
+                    </h5>
+                  )}
+                  <h5>{user.nickname}</h5>
+                </div>
               </div>
             </div>
           </Card>
