@@ -367,8 +367,13 @@
 
 .wordContainer {
   display: flex;
+  flex-wrap: wrap;
+  overflow-y: auto;
   width: 98%;
   gap: 10px;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .sentenceContainer {
