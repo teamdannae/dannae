@@ -73,7 +73,7 @@ export default function WaitingRoom() {
   const [roomInfo, setRoomInfo] = useState<room>({
     roomId: 0,
     title: "",
-    mode: "단어의 방",
+    mode: "",
     release: false,
     code: "",
     creator: 0,
@@ -294,6 +294,7 @@ export default function WaitingRoom() {
       setAreAllPlayersReady(true);
     } else if (data.type === "game_start" && data.room) {
       startGame();
+      setIsSend(true);
     } else if (data.type === "answer_result" && data.word && data.reason) {
       setIsSend(true);
       const wordData: word = {
@@ -366,18 +367,26 @@ export default function WaitingRoom() {
       }
     } else if (data.type === "round_end") {
       setRoundReset(true);
-      setIsSend(false);
+      // setIsSend(false);
       setWordList((prevWordList) =>
         prevWordList.map((word) =>
           data.userWords.includes(word.word) ? { ...word, used: true } : word
         )
       );
+
+      // 여기 부분 디자인 수정 필요
       const playerMessages = data.playerDtos.map((player) => {
         const playerMessage = `${player.nickname}: ${player.playerSentence}`;
         return playerMessage;
       });
 
-      setMessages((prevMessages) => [...prevMessages, ...playerMessages]);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        "------라운드 결과-----",
+        ...playerMessages,
+        "---------------------",
+      ]);
+      //
       setUsers((prevUsers) =>
         prevUsers.map((player) => {
           const updatedPlayer = data.playerDtos.find(
@@ -414,6 +423,7 @@ export default function WaitingRoom() {
       setIsSend(false);
       setIsInfiniteTurnStart(false);
       returnWaitingRoom();
+      setIsSend(false);
     } else if (data.type === "elimination" && data.playerId) {
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
@@ -438,6 +448,10 @@ export default function WaitingRoom() {
     }
 
     if (data.message) {
+      if (data.event === "join_game" || data.type === "round_end") {
+        return;
+      }
+
       if (data.round) {
         setPopupMessage(data.message || "");
         setShowPopup(true);

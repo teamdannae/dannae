@@ -2,7 +2,7 @@ interface room {
   roomId?: number;
   id?: string;
   title: string;
-  mode: "무한 초성 지옥" | "단어의 방";
+  mode: "무한 초성 지옥" | "단어의 방" | "";
   release: boolean;
   code: string;
   creator?: number;
@@ -29,7 +29,12 @@ interface message {
     | "elimination"
     | "success"
     | "turn_start";
-  event?: "creator" | "creator_change" | "player" | "rejoin_waiting";
+  event?:
+    | "creator"
+    | "creator_change"
+    | "player"
+    | "rejoin_waiting"
+    | "join_game";
   creatorId?: string;
   nickname?: string;
   token?: string;
