@@ -221,7 +221,7 @@ class OpenAIServiceImpl implements OpenAIService {
 								Word usedWord = wordRepository.findFirstByWord(word)
 									.orElseThrow(() -> new NoWordException("Word not found : " + word));
 								count++; // 사용된 단어 개수 증가
-								int difficultyScore = usedWord.getDifficulty()*100;
+								int difficultyScore = usedWord.getDifficulty()*10;
 								nowPlayer.updateScore(difficultyScore);
 								scoreCount += difficultyScore;
 								usedSentence.add(word.trim()); // 사용된 단어 집합에 추가
