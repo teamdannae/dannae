@@ -398,16 +398,4 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    public List<String> getWaitingRoomPlayers(Long roomId) {
-        List<WebSocketSession> sessions = waitingRoomSessions.get(roomId);
-        List<String> playerIds = new ArrayList<>();
-        if (sessions != null) {
-            for (WebSocketSession session : sessions) {
-                String playerId = getPlayerIdFromSession(session);
-                playerIds.add(playerId);
-            }
-        }
-        return playerIds;
-    }
-
 }
