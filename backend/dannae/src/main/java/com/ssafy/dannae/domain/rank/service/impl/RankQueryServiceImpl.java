@@ -1,14 +1,16 @@
 package com.ssafy.dannae.domain.rank.service.impl;
 
-import com.ssafy.dannae.domain.rank.repository.RankRepository;
-import com.ssafy.dannae.domain.rank.service.RankQueryService;
-import com.ssafy.dannae.domain.rank.service.dto.RankDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.ssafy.dannae.domain.rank.entity.Rank;
+import com.ssafy.dannae.domain.rank.repository.custom.RankRepositoryCustom;
+import com.ssafy.dannae.domain.rank.service.RankQueryService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -16,10 +18,11 @@ import java.util.List;
 @Service
 public class RankQueryServiceImpl implements RankQueryService {
 
-    private final RankRepository rankRepository;
+    private final RankRepositoryCustom rankRepositoryCustom;
 
     @Override
-    public List<RankDto> getRanksSortedByScoreDesc(String mode) {
-        return rankRepository.findAllByModeOrderByScoreDesc(mode);
+    public List<Rank> readRanksSortedByScoreDesc(String mode) {
+        return rankRepositoryCustom.findTop5ByMode(mode);
     }
+
 }

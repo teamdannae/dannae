@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssafy.dannae.domain.player.exception.TokenException;
+import com.ssafy.dannae.domain.rank.entity.Rank;
 import com.ssafy.dannae.domain.rank.service.RankQueryService;
-import com.ssafy.dannae.domain.rank.service.dto.RankDto;
 import com.ssafy.dannae.global.template.response.BaseResponse;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 
@@ -37,7 +37,7 @@ public class RankController {
             throw new TokenException("유효하지 않거나 만료된 토큰입니다.");
         }
 
-        List<RankDto> res = rankQueryService.getRanksSortedByScoreDesc(mode);
+        List<Rank> res = rankQueryService.readRanksSortedByScoreDesc(mode);
 
         return ResponseEntity.ok(BaseResponse.ofSuccess(res));
     }

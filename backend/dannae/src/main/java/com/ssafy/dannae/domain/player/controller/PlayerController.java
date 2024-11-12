@@ -106,13 +106,14 @@ public class PlayerController {
     }
 
     @GetMapping("/result")
-    public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestParam List<Long> playerIdList) {
+    public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestParam List<Long> playerIdList,
+        @RequestParam("mode") String mode) {
 
         PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
             .playerIdList(playerIdList)
             .build();
 
-        List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto);
+        List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto, mode);
 
         PlayerScoreRes res = PlayerScoreRes.builder()
             .playerList(playerList)
