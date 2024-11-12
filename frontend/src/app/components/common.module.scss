@@ -326,11 +326,11 @@
   bottom: 50%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.8);
-  color: vars.$black-color;
+  background-color: vars.$dark-color;
+  color: vars.$white-color;
   border: vars.$border;
-  padding: 24px;
-  border-radius: 8px;
+  padding: 33px 66px;
+  border-radius: 45px;
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 1000;
