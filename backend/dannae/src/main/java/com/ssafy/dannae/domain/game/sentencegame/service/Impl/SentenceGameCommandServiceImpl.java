@@ -154,6 +154,8 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 			sentenceGameRepository.deleteById(sentenceGameReq.roomId());
 		}
 
+		sentenceGameRepository.save(sentenceGame);
+
 		return res;
 	}
 
