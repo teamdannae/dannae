@@ -340,7 +340,7 @@
   justify-content: center;
   align-items: center;
 
-  &.isVisible {
+  &.isHidden {
     animation: roll-out-right 0.6s ease-in 4.5s both;
   }
 
