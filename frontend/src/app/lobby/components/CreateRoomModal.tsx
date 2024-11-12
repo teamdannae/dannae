@@ -42,7 +42,7 @@ const CreateRoomModal = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: createRoomModalState.newRoomTitle,
+          title: createRoomModalState.newRoomTitle.trim(),
           mode: createRoomModalState.selectedMode,
           isPublic: createRoomModalState.isPublic,
         }),

@@ -10,9 +10,9 @@ import Image from "next/image";
 const ProfileNickname = () => {
   const router = useRouter();
 
-  const [namingMode, setNamingMode] = useState(0);
-  const [nickname, setNickname] = useState("");
-  const [isValid, setIsValid] = useState(true);
+  const [namingMode, setNamingMode] = useState<number>(0);
+  const [nickname, setNickname] = useState<string>("");
+  const [isValid, setIsValid] = useState<boolean>(true);
 
   const getRandomNickname = async () => {
     try {
@@ -64,13 +64,14 @@ const ProfileNickname = () => {
   };
 
   const confirmNickname = async () => {
+    const trimmedNickname = nickname.trim();
     try {
       const response = await fetch("/api/next/profile/set-nickname", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ nickname }),
+        body: JSON.stringify({ nickname: trimmedNickname }),
       });
 
       if (response.ok) {

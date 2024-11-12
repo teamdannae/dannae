@@ -419,6 +419,9 @@ export default function WaitingRoom() {
       );
       setWordList([]);
       setAreAllPlayersReady(false);
+      setIsConsonantVisible(true);
+      setIsSend(false);
+      setIsInfiniteTurnStart(false);
       returnWaitingRoom();
       setIsSend(false);
     } else if (data.type === "elimination" && data.playerId) {
@@ -427,6 +430,7 @@ export default function WaitingRoom() {
           user.playerId === data.playerId ? { ...user, isFail: true } : user
         )
       );
+      setRoundReset(true);
     } else if (data.type === "success") {
       setRoundReset(true);
     } else if (data.type === "turn_start") {
