@@ -1,6 +1,7 @@
 package com.ssafy.dannae.global.exception.handler;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -87,7 +88,12 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
         if (sessions == null || sessions.isEmpty()) return;
 
-        Queue<WebSocketSession> initialTurnOrder = new LinkedList<>(sessions);
+        // 열려있는 세션만 포함하도록 필터링
+        List<WebSocketSession> activeSessions = sessions.stream()
+            .filter(WebSocketSession::isOpen)
+            .collect(Collectors.toList());
+
+        Queue<WebSocketSession> initialTurnOrder = new LinkedList<>(activeSessions);
         turnOrder.put(roomId, initialTurnOrder);
 
         System.out.println("Initialized turn order for room " + roomId + ": " + initialTurnOrder);
@@ -139,9 +145,19 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         String message = String.format("{\"type\": \"infiniteGameStart\", \"initial\": \"%s\", \"infiniteGameId\": \"%s\"}", initial, infiniteGameId);
 
         broadcastToRoom(roomId, message);
+
         scheduler.schedule(() -> {
             try {
-                startTurn(roomId, initialDto);
+                // 5초 후 실제 게임 시작 전에 플레이어 수 다시 확인
+                List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
+                if (activeSessions != null && activeSessions.size() > 1) {
+                    // turnOrder 재초기화
+                    initializeTurnOrder(roomId);
+                    startTurn(roomId, initialDto);
+                } else {
+                    // 플레이어가 부족하면 게임 종료
+                    endGame(roomId);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -302,15 +318,20 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, eliminationMessage);
 
             Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
+            List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
             roomTurnOrder.remove(session);
 
-            int remainingPlayers = roomTurnOrder.size();
-            System.out.println("남은 플레이어 수: " + remainingPlayers);
+            // 실제 활성 플레이어 수를 계산 (turnOrder에 있으면서 동시에 activeSessions에도 있는 플레이어)
+            long actualActivePlayers = roomTurnOrder.stream()
+                .filter(s -> activeSessions.contains(s))
+                .count();
 
-            if (remainingPlayers <= 1) {
+            System.out.println("실제 남은 플레이어 수: " + actualActivePlayers);
+
+            if (actualActivePlayers <= 1) {
                 endGame(roomId);
             } else {
-                startTurn(roomId, InfiniteGameDto.builder().roomId(roomId).build());  // moveToNextTurn 대신 바로 startTurn 호출
+                startTurn(roomId, InfiniteGameDto.builder().roomId(roomId).build());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -325,9 +346,20 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         try {
             Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
+            List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
 
             if (roomTurnOrder == null || roomTurnOrder.isEmpty()) {
                 System.out.println("Room " + roomId + "의 턴 순서가 없거나 비어있음 - 게임 종료 처리");
+                endGame(roomId);
+                return;
+            }
+
+            // 실제 활성 플레이어 수 확인
+            long actualActivePlayers = roomTurnOrder.stream()
+                .filter(s -> activeSessions.contains(s))
+                .count();
+
+            if (actualActivePlayers <= 1) {
                 endGame(roomId);
                 return;
             }
@@ -336,10 +368,17 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 .map(s -> sessionPlayerIdMap.get(s))
                 .collect(Collectors.joining(" -> ")));
 
-            // 정답자를 큐의 맨 뒤로
+            // 현재 플레이어를 큐에서 제거
             WebSocketSession currentSession = roomTurnOrder.poll();
-            if (currentSession != null) {
+
+            // 현재 세션이 activeSessions에 있는 경우에만 다시 큐에 추가
+            if (currentSession != null && activeSessions.contains(currentSession)) {
                 roomTurnOrder.offer(currentSession);
+            }
+
+            // 다음 차례의 플레이어가 activeSessions에 없다면 건너뛰기
+            while (!roomTurnOrder.isEmpty() && !activeSessions.contains(roomTurnOrder.peek())) {
+                roomTurnOrder.poll();
             }
 
             turnInProgress.put(roomId, true);
@@ -385,12 +424,25 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(String.format("{\"type\": \"error\", \"event\": \"%s\", \"message\": \"%s\"}", event, message)));
     }
 
-    private void broadcastToRoom(Long roomId, String message) throws IOException {
+    private void broadcastToRoom(Long roomId, String message) {
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
         if (sessions != null) {
+            // 열려있는 세션들의 리스트를 새로 만들어서 관리
+            List<WebSocketSession> openSessions = new ArrayList<>();
+
             for (WebSocketSession session : sessions) {
-                session.sendMessage(new TextMessage(message));
+                try {
+                    if (session.isOpen()) {  // 세션이 열려있는 경우에만 메시지 전송
+                        session.sendMessage(new TextMessage(message));
+                        openSessions.add(session);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+
+            // 열려있는 세션만 남도록 업데이트
+            gameRoomSessions.put(roomId, openSessions);
         }
     }
 
@@ -407,4 +459,63 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         }
         return null;
     }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        Long roomId = getRoomIdFromSession(session);
+        String playerId = sessionPlayerIdMap.get(session);
+
+        if (roomId != null && playerId != null) {
+            handlePlayerExit(session, roomId, playerId);
+        }
+    }
+
+    private void handlePlayerExit(WebSocketSession session, Long roomId, String playerId) {
+        try {
+            // 플레이어 상태 업데이트
+            playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.end);
+
+            // 플레이어의 닉네임 가져오기
+            String nickname = playerNicknames.get(playerId);
+
+            // 세션 관리 먼저 수행
+            List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+            if (sessions != null) {
+                sessions.remove(session);
+            }
+
+            // 턴 순서 관련 처리
+            Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
+            if (roomTurnOrder != null) {
+                WebSocketSession currentTurnSession = roomTurnOrder.peek();
+
+                // 현재 턴이 아닌 플레이어가 나간 경우에만 턴 순서에서 즉시 제거
+                if (currentTurnSession != session) {
+                    roomTurnOrder.remove(session);
+                }
+                // 현재 턴인 플레이어는 타임아웃될 때까지 턴 순서에 유지
+
+                // 남은 플레이어가 1명 이하면 게임 종료
+                if (roomTurnOrder.size() <= 1) {
+                    endGame(roomId);
+                    return;  // 게임이 종료되면 더 이상 메시지를 보내지 않음
+                }
+            }
+
+            // 나간 플레이어 알림 브로드캐스트
+            String exitMessage = String.format(
+                "{\"type\": \"exit\", \"playerId\": \"%s\", \"message\": \"%s님이 게임을 나갔습니다.\"}",
+                playerId,
+                nickname
+            );
+            broadcastToRoom(roomId, exitMessage);
+
+            // 세션-플레이어 ID 매핑 제거
+            sessionPlayerIdMap.remove(session);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
