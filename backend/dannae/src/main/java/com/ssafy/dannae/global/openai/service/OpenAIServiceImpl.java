@@ -184,8 +184,9 @@ class OpenAIServiceImpl implements OpenAIService {
 				.orElseThrow(() -> new NoPlayerException("Player not found with ID: " + playerId));
 			String playerSentence = sentenceList.get(i);
 
-			String wordQuestion = "다음 문장이 유효한 문장인지 판단해서 아니라면 null 반환해주세요.\n"
+			String wordQuestion = "다음 문장이 유효한 문장인지 판단해보세요 \n"
 				+ "문장: \"" + playerSentence + "\"\n"
+				+ "유효하지 않은 문장이라면 null 반환해주세요 \n"
 				+ "유효한 문장이라면 주어진 단어들 중 문장에서 적절하게 사용된 단어들을 반환해주세요.\n"
 				+ "적절하게 사용된 단어가 없다면 null 반환해주세요.\n"
 				+ "단어 목록: \"" + wordList.toString() + "\"\n"

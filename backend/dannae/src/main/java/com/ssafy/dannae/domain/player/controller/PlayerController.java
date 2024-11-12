@@ -119,6 +119,7 @@ public class PlayerController {
 
         for(Player player : playerList) {
             player.resetScore();
+            player.updateStatus(PlayerStatus.nonready);
         }
 
         return ResponseEntity.ok(BaseResponse.ofSuccess(res));
