@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import Image from "next/image";
 import styles from "./common.module.scss";
@@ -19,6 +20,34 @@ export default function WordCard({
   wrong,
   style,
 }: WordCardProps) {
+  const [meaning, setMeaning] = useState([]);
+  useEffect(() => {
+    const loadMeaning = async () => {
+      try {
+        const response = await fetch("/api/next/word", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            word: word,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch Meaning");
+        }
+
+        const data = await response.json();
+        console.log(data);
+        setMeaning(data.data.wordMeanings);
+      } catch (error) {
+        console.error("Failed to load Meaning:", error);
+      }
+    };
+    loadMeaning();
+  }, [word]);
+
   let className = `${styles.wordCard} ${styles[tier]}`;
 
   if (disabled) {
@@ -54,7 +83,7 @@ export default function WordCard({
               />
               <span>{word}</span>
             </div>
-            <p>김윤을 좋아하지만 티를 내지않는 </p>
+            <p>{meaning}</p>
             <Tooltip.Arrow
               className={styles.tooltipArrow}
               width={24}
