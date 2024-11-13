@@ -29,6 +29,5 @@ public class GameController {
 			.build();
 
 		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
-
 	}
 }
