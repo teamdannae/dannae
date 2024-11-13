@@ -511,6 +511,7 @@ export default function WaitingRoom() {
       } else if (data.type === "success" || data.type === "failure") {
         setRoundReset(true);
       } else if (data.type === "turn_start") {
+        new Audio("/bgm/Round-Start.mp3").play();
         setIsSend(false);
       } else if (data.type === "exit") {
         setUsers((prevUsers) =>
