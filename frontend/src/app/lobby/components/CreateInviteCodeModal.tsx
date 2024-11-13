@@ -1,9 +1,11 @@
-import { Button, Input } from "@/app/components";
+import { Button, Input, Toast } from "@/app/components";
 import styles from "./component.module.scss";
 import { useModal } from "@/hooks";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const CreateInviteCodeModal = () => {
+  const [showToast, setShowToast] = useState(false);
   const router = useRouter();
 
   const { createInviteCodeState, setCreateInviteCodeState, closeModal } =
@@ -28,14 +30,15 @@ const CreateInviteCodeModal = () => {
       });
 
       if (!response.ok) {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000); // 3초 후 토스트 숨김
         throw new Error("Failed to enter with invite code");
       }
 
       const data = await response.json();
       const roomId = data.data;
-      console.log("코드로 방 입장 성공:", data);
 
-      closeModal(); // 성공 시 모달 닫기
+      closeModal();
       router.push(`/game/${roomId}`);
     } catch (error) {
       console.error("코드로 방 입장에 실패했습니다.", error);
@@ -44,6 +47,7 @@ const CreateInviteCodeModal = () => {
 
   return (
     <div className={styles.modalContainer}>
+      {showToast && <Toast message="잘못된 초대 코드" duration={3000} />}
       <h3>초대 코드 입력</h3>
       <div className={styles.inputContainer}>
         <Input value={inviteCode} onChangeEvent={handleInviteCode} />

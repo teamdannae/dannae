@@ -52,3 +52,36 @@
   flex-direction: column;
   gap: 10px;
 }
+
+.rankingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.rankingPlayer {
+  display: flex;
+  gap: 36px;
+  align-items: center;
+  min-width: 800px;
+}
+
+.rankingTier {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.rankingImage {
+  border-radius: 20px;
+}
+
+.rankingNickname {
+  text-align: left;
+  width: 260px;
+}
+
+.rankingScore {
+  background-color: vars.$primary-color;
+}
