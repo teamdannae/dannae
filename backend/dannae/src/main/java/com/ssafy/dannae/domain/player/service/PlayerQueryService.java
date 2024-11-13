@@ -13,4 +13,6 @@ public interface PlayerQueryService {
 
     List<PlayerDto> readPlayerTotalScore(PlayerIdListDto playerIdListDto, String mode);
 
+    boolean canEnterRoom(long playerId);
+
 }
