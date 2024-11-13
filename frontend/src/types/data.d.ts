@@ -48,6 +48,7 @@ interface message {
     playerId: string;
     nickname: string;
     image: number;
+    status: "ready" | "nonready";
     authorization: "creator" | "player";
   }[];
   room?: room;
@@ -106,4 +107,12 @@ interface SentencePlayer {
   playerNowScore: number;
   playerTotalScore: number;
   playerSentence: string;
+}
+
+interface result {
+  id: number;
+  image: number;
+  nickname: string;
+  score: number;
+  status: string;
 }
