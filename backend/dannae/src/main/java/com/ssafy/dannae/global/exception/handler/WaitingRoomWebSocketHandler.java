@@ -203,13 +203,20 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             if (newCreatorToken != null && !newCreatorToken.isEmpty()) {
                 String playerIdFromToken = jwtTokenProvider.getPlayerIdFromToken(newCreatorToken);
                 Long newCreatorId = Long.parseLong(playerIdFromToken);
+
+                // 방장의 playerId 업데이트
                 roomCommandService.updateRoomCreator(roomId, newCreatorId);
+
+                // roomCreatorMap 업데이트
+                roomCreatorMap.put(roomId, newCreatorSession);
+                System.out.println("새 방장 등록됨: roomId=" + roomId + ", playerId=" + newCreatorId);
             }
         } catch (Exception e) {
             System.err.println("Error in assignNewCreator: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
