@@ -9,13 +9,17 @@ import {
   Chat,
   Infinite,
   Sentence,
+  ResultModal,
 } from "../components";
-import { useParams, useRouter } from "next/navigation";
+import {
+  useParams,
+  // useRouter
+} from "next/navigation";
 import styles from "./page.module.scss";
 import { Progress, Toast } from "@/app/components";
 
 export default function WaitingRoom() {
-  const router = useRouter();
+  // const router = useRouter();
   const { roomId } = useParams();
   const [url, setUrl] = useState<string>("");
   const [messages, setMessages] = useState<string[]>([]);
@@ -94,6 +98,8 @@ export default function WaitingRoom() {
   const [isSend, setIsSend] = useState(false);
   const [isInfiniteTurnStart, setIsInfiniteTurnStart] = useState(false);
   const [isConsonantVisible, setIsConsonantVisible] = useState(true);
+  const [gameResult, setGameResult] = useState<result[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -110,13 +116,10 @@ export default function WaitingRoom() {
     const tokenData = await tokenResponse.json();
     const roomData = await roomResponse.json();
 
-    console.log("게임 소켓 연결");
-
     const gameWebSocketUrl = `wss://dannae.kr/ws//${
       roomData.data.mode === "무한 초성 지옥" ? "infinite" : "sentence"
     }game?roomId=${roomId}&token=${tokenData.token}`;
 
-    console.log(gameWebSocketUrl);
     setUrl(gameWebSocketUrl);
   };
 
@@ -130,20 +133,59 @@ export default function WaitingRoom() {
     }, 1000);
   };
 
+  const getGameResult = async () => {
+    const roomResponse = await fetch(`/api/next/rooms/${roomId}`);
+    const roomData = await roomResponse.json();
+    const resultResponse = await fetch("/api/next/game/result", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        playerId: users.map((el) => +el.playerId).filter((el) => el !== 0),
+        mode: roomData.data.mode,
+      }),
+    });
+    const resultData = await resultResponse.json();
+    console.log(resultData.data);
+    setGameResult(resultData.data.playerList);
+    setIsModalOpen(true);
+  };
+
   const returnWaitingRoom = async () => {
+    // setUsers((prevUsers) =>
+    //   prevUsers.map((user) => ({
+    //     ...user,
+    //     isReady: false,
+    //   }))
+    // );
+    setMessages([]);
+    setWordList([]);
+    setIsStart(false);
+    setRoundReset(true);
     setUsers((prevUsers) =>
-      prevUsers.map((user) => ({
-        ...user,
+      prevUsers.map(() => ({
+        playerId: "",
+        image: 0,
+        nickname: "",
         isReady: false,
+        isEmpty: true,
+        isHost: false,
+        isTurn: false,
+        nowScore: 0,
+        totalScore: 0,
+        isFail: false,
       }))
     );
-    setMessages([]);
-    setIsStart(false);
+    setAreAllPlayersReady(false);
+    setIsConsonantVisible(true);
+    setIsInfiniteTurnStart(false);
+    setIsSend(false);
     const tokenResponse = await fetch("/api/next/profile/get-token");
     const tokenData = await tokenResponse.json();
     const waitingRoomWebSocketUrl = `wss://dannae.kr/ws//waitingroom?roomId=${roomId}&token=${tokenData.token}`;
-
     setUrl(waitingRoomWebSocketUrl);
+    setIsModalOpen(false);
   };
 
   useEffect(() => {
@@ -181,37 +223,250 @@ export default function WaitingRoom() {
     }
   }, [roomId]);
 
-  const handleMessage = useCallback((data: message) => {
-    if (data.type === "enter") {
-      if (
-        data.event === "creator" ||
-        data.event === "player" ||
-        data.event === "rejoin_waiting"
-      ) {
-        setUsers((prevUsers) => {
-          const updatedUsers = [...prevUsers];
-          for (let i = 0; i < updatedUsers.length; i++) {
-            if (updatedUsers[i].isEmpty === true) {
-              updatedUsers[i] = {
-                playerId: data.playerId || "",
-                image: data.image || 1,
-                nickname: data.nickname || "",
-                isReady: false,
-                isEmpty: false,
-                isHost: data.event === "creator",
-                isTurn: false,
-                nowScore: 0,
-                totalScore: 0,
-                isFail: false,
-              };
-              break;
+  const handleMessage = useCallback(
+    (data: message) => {
+      if (data.type === "enter") {
+        setAreAllPlayersReady(false);
+        if (
+          data.event === "creator" ||
+          data.event === "player" ||
+          data.event === "rejoin_waiting"
+        ) {
+          setUsers((prevUsers) => {
+            const updatedUsers = [...prevUsers];
+            for (let i = 0; i < updatedUsers.length; i++) {
+              if (updatedUsers[i].isEmpty === true) {
+                updatedUsers[i] = {
+                  playerId: data.playerId || "",
+                  image: data.image || 1,
+                  nickname: data.nickname || "",
+                  isReady: false,
+                  isEmpty: false,
+                  isHost: data.event === "creator",
+                  isTurn: false,
+                  nowScore: 0,
+                  totalScore: 0,
+                  isFail: false,
+                };
+                break;
+              }
             }
-          }
-          return updatedUsers;
+            return updatedUsers;
+          });
+          console.log(users);
+        }
+
+        if (data.event === "creator_change") {
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user.playerId === data.creatorId
+                ? { ...user, isHost: true }
+                : { ...user, isHost: false }
+            )
+          );
+        }
+      } else if (data.type === "leave") {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.playerId === data.playerId
+              ? {
+                  playerId: "",
+                  image: 0,
+                  nickname: "",
+                  isReady: false,
+                  isEmpty: true,
+                  isHost: false,
+                  isTurn: false,
+                  nowScore: 0,
+                  totalScore: 0,
+                  isFail: false,
+                }
+              : user
+          )
+        );
+      } else if (data.type === "current_players" && data.players) {
+        for (const player of data.players) {
+          setUsers((prevUsers) => {
+            const updatedUsers = [...prevUsers];
+            for (let i = 0; i < updatedUsers.length; i++) {
+              if (updatedUsers[i].isEmpty === true) {
+                updatedUsers[i] = {
+                  playerId: player.playerId || "",
+                  image: player.image || 1,
+                  nickname: player.nickname || "",
+                  isReady: player.status === "ready",
+                  isEmpty: false,
+                  isHost: data.creatorId === player.playerId,
+                  isTurn: false,
+                  nowScore: 0,
+                  totalScore: 0,
+                  isFail: false,
+                };
+                break;
+              }
+            }
+            return updatedUsers;
+          });
+        }
+      } else if (data.type === "status_update") {
+        if (data.status === "ready") {
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user.playerId === data.playerId
+                ? { ...user, isReady: true }
+                : user
+            )
+          );
+        } else {
+          setUsers((prevUsers) => {
+            const updatedUsers = prevUsers.map((user) =>
+              user.playerId === data.playerId
+                ? { ...user, isReady: false }
+                : user
+            );
+            const player = updatedUsers.find(
+              (user) => user.playerId === data.playerId
+            );
+            setMessages((prev) => [
+              ...prev,
+              `${
+                player?.nickname || "Unknown"
+              }님이 아직 준비가 덜 되었나 봅니다.`,
+            ]);
+
+            return updatedUsers;
+          });
+          setAreAllPlayersReady(false);
+        }
+      } else if (data.type === "game_start_ready") {
+        console.log("시작할 준비 완료");
+        setAreAllPlayersReady(true);
+      } else if (data.type === "game_start" && data.room) {
+        startGame();
+        setIsSend(true);
+      } else if (data.type === "answer_result" && data.word && data.reason) {
+        setIsSend(true);
+        const wordData: word = {
+          word: data.word,
+          difficulty: data.difficulty || null,
+          reason: data.reason,
+          correct: data.correct,
+        };
+        setWordList((prevWordList) => [...prevWordList, wordData]);
+        // 난이도 값이 있다면 점수 계산
+        if (wordData.difficulty) {
+          const scoreToAdd =
+            data.difficulty === 1
+              ? 10
+              : data.difficulty === 2
+              ? 20
+              : data.difficulty === 3
+              ? 40
+              : 60;
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user.isTurn
+                ? {
+                    ...user,
+                    nowScore: scoreToAdd,
+                    totalScore: user.totalScore + scoreToAdd,
+                  }
+                : user
+            )
+          );
+        }
+        // 무한 초성 지옥 게임 시작하면 초성 설정
+      } else if (data.type === "infiniteGameStart" && data.initial) {
+        setConsonant(data.initial);
+        setIsSend(true);
+        setIsConsonantVisible(false);
+        setToastMessage("5초 후에 게임이 시작됩니다!");
+        setShowToast(true);
+        setToastDuration(4500);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 4500);
+        // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
+      } else if (data.type === "error") {
+        // router.replace("/profile/nickname");
+        // 플레이어 턴 제시
+      } else if (data.type === "turn_info" && data.playerId) {
+        setIsInfiniteTurnStart(true);
+        setRoundReset(false);
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.playerId === data.playerId
+              ? { ...user, isTurn: true }
+              : { ...user, isTurn: false }
+          )
+        );
+      } else if (data.type === "round_start") {
+        setRoundReset(false);
+        setIsSend(false);
+        console.log(users);
+        if (data.words) {
+          const formattedWords = data.words.map(
+            (wordObj: { word: string; difficulty: number | null }) => ({
+              word: wordObj.word,
+              difficulty: wordObj.difficulty,
+              used: false,
+            })
+          );
+
+          setWordList((prev) => [...prev, ...formattedWords]);
+        }
+      } else if (data.type === "round_end") {
+        setRoundReset(true);
+        // setIsSend(false);
+        setWordList((prevWordList) =>
+          prevWordList.map((word) =>
+            data.userWords.includes(word.word) ? { ...word, used: true } : word
+          )
+        );
+
+        // 여기 부분 디자인 수정 필요
+        const playerMessages = data.playerDtos.map((player) => {
+          const playerMessage = `${player.nickname}: ${player.playerSentence}`;
+          return playerMessage;
         });
+
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          "------라운드 결과-----",
+          ...playerMessages,
+          "---------------------",
+        ]);
+
+        setUsers((prevUsers) =>
+          prevUsers.map((player) => {
+            const updatedPlayer = data.playerDtos.find(
+              (p) => p.playerId === +player.playerId
+            );
+            return updatedPlayer
+              ? {
+                  ...player,
+                  nowScore: updatedPlayer.playerNowScore,
+                  totalScore: updatedPlayer.playerTotalScore,
+                }
+              : player;
+          })
+        );
+      } else if (data.type === "game_end") {
+        getGameResult();
+      } else if (data.type === "elimination" && data.playerId) {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.playerId === data.playerId ? { ...user, isFail: true } : user
+          )
+        );
+        setRoundReset(true);
+      } else if (data.type === "success") {
+        setRoundReset(true);
+      } else if (data.type === "turn_start") {
+        setIsSend(false);
       }
 
-      if (data.event === "creator_change") {
+      if (data.creatorId) {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
             user.playerId === data.creatorId
@@ -220,252 +475,28 @@ export default function WaitingRoom() {
           )
         );
       }
-    } else if (data.type === "leave") {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.playerId === data.playerId
-            ? {
-                playerId: "",
-                image: 0,
-                nickname: "",
-                isReady: false,
-                isEmpty: true,
-                isHost: false,
-                isTurn: false,
-                nowScore: 0,
-                totalScore: 0,
-                isFail: false,
-              }
-            : user
-        )
-      );
-    } else if (data.type === "current_players" && data.players) {
-      for (const player of data.players) {
-        setUsers((prevUsers) => {
-          const updatedUsers = [...prevUsers];
-          for (let i = 0; i < updatedUsers.length; i++) {
-            if (updatedUsers[i].isEmpty === true) {
-              updatedUsers[i] = {
-                playerId: player.playerId || "",
-                image: player.image || 1,
-                nickname: player.nickname || "",
-                isReady: false,
-                isEmpty: false,
-                isHost: data.creatorId === player.playerId,
-                isTurn: false,
-                nowScore: 0,
-                totalScore: 0,
-                isFail: false,
-              };
-              break;
-            }
-          }
-          return updatedUsers;
-        });
+
+      if (data.message) {
+        if (data.event === "join_game" || data.type === "round_end") {
+          return;
+        }
+
+        if (data.round) {
+          setPopupMessage(data.message || "");
+          setShowPopup(true);
+          setTimeout(() => setShowPopup(false), 1000);
+        } else {
+          const newMessage =
+            data.type === "chat"
+              ? `${data.nickname}: ${data.message}`
+              : data.message;
+          setMessages((prev) => [...prev, newMessage]);
+        }
       }
-    } else if (data.type === "status_update") {
-      if (data.status === "ready") {
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.playerId === data.playerId ? { ...user, isReady: true } : user
-          )
-        );
-      } else {
-        setUsers((prevUsers) => {
-          const updatedUsers = prevUsers.map((user) =>
-            user.playerId === data.playerId ? { ...user, isReady: false } : user
-          );
-          const player = updatedUsers.find(
-            (user) => user.playerId === data.playerId
-          );
-          setMessages((prev) => [
-            ...prev,
-            `${
-              player?.nickname || "Unknown"
-            }님이 아직 준비가 덜 되었나 봅니다.`,
-          ]);
-
-          return updatedUsers;
-        });
-        setAreAllPlayersReady(false);
-      }
-    } else if (data.type === "game_start_ready") {
-      console.log("시작할 준비 완료");
-      setAreAllPlayersReady(true);
-    } else if (data.type === "game_start" && data.room) {
-      startGame();
-      setIsSend(true);
-    } else if (data.type === "answer_result" && data.word && data.reason) {
-      setIsSend(true);
-      const wordData: word = {
-        word: data.word,
-        difficulty: data.difficulty || null,
-        reason: data.reason,
-        correct: data.correct,
-      };
-      setWordList((prevWordList) => [...prevWordList, wordData]);
-      // 난이도 값이 있다면 점수 계산
-      if (wordData.difficulty) {
-        const scoreToAdd =
-          data.difficulty === 1
-            ? 10
-            : data.difficulty === 2
-            ? 20
-            : data.difficulty === 3
-            ? 40
-            : 60;
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.isTurn
-              ? {
-                  ...user,
-                  nowScore: scoreToAdd,
-                  totalScore: user.totalScore + scoreToAdd,
-                }
-              : user
-          )
-        );
-      }
-      // 무한 초성 지옥 게임 시작하면 초성 설정
-    } else if (data.type === "infiniteGameStart" && data.initial) {
-      setConsonant(data.initial);
-      setIsSend(true);
-      setIsConsonantVisible(false);
-      setToastMessage("5초 후에 게임이 시작됩니다!");
-      setShowToast(true);
-      setToastDuration(4500);
-      setTimeout(() => {
-        setShowToast(false);
-      }, 4500);
-      // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
-    } else if (data.type === "error") {
-      router.replace("/profile/nickname");
-      // 플레이어 턴 제시
-    } else if (data.type === "turn_info" && data.playerId) {
-      setIsInfiniteTurnStart(true);
-      setRoundReset(false);
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.playerId === data.playerId
-            ? { ...user, isTurn: true }
-            : { ...user, isTurn: false }
-        )
-      );
-    } else if (data.type === "round_start") {
-      setRoundReset(false);
-      setIsSend(false);
-      if (data.words) {
-        const formattedWords = data.words.map(
-          (wordObj: { word: string; difficulty: number | null }) => ({
-            word: wordObj.word,
-            difficulty: wordObj.difficulty,
-            used: false,
-          })
-        );
-
-        setWordList((prev) => [...prev, ...formattedWords]);
-      }
-    } else if (data.type === "round_end") {
-      setRoundReset(true);
-      // setIsSend(false);
-      setWordList((prevWordList) =>
-        prevWordList.map((word) =>
-          data.userWords.includes(word.word) ? { ...word, used: true } : word
-        )
-      );
-
-      // 여기 부분 디자인 수정 필요
-      const playerMessages = data.playerDtos.map((player) => {
-        const playerMessage = `${player.nickname}: ${player.playerSentence}`;
-        return playerMessage;
-      });
-
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        "------라운드 결과-----",
-        ...playerMessages,
-        "---------------------",
-      ]);
-      //
-      setUsers((prevUsers) =>
-        prevUsers.map((player) => {
-          const updatedPlayer = data.playerDtos.find(
-            (p) => p.playerId === +player.playerId
-          );
-          return updatedPlayer
-            ? {
-                ...player,
-                nowScore: updatedPlayer.playerNowScore,
-                totalScore: updatedPlayer.playerTotalScore,
-              }
-            : player;
-        })
-      );
-    } else if (data.type === "game_end") {
-      setRoundReset(true);
-      setUsers((prevUsers) =>
-        prevUsers.map(() => ({
-          playerId: "",
-          image: 0,
-          nickname: "",
-          isReady: false,
-          isEmpty: true,
-          isHost: false,
-          isTurn: false,
-          nowScore: 0,
-          totalScore: 0,
-          isFail: false,
-        }))
-      );
-      setWordList([]);
-      setAreAllPlayersReady(false);
-      setIsConsonantVisible(true);
-      setIsSend(false);
-      setIsInfiniteTurnStart(false);
-      returnWaitingRoom();
-      setIsSend(false);
-    } else if (data.type === "elimination" && data.playerId) {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.playerId === data.playerId ? { ...user, isFail: true } : user
-        )
-      );
-      setRoundReset(true);
-    } else if (data.type === "success") {
-      setRoundReset(true);
-    } else if (data.type === "turn_start") {
-      setIsSend(false);
-    }
-
-    if (data.creatorId) {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.playerId === data.creatorId
-            ? { ...user, isHost: true }
-            : { ...user, isHost: false }
-        )
-      );
-    }
-
-    if (data.message) {
-      if (data.event === "join_game" || data.type === "round_end") {
-        return;
-      }
-
-      if (data.round) {
-        setPopupMessage(data.message || "");
-        setShowPopup(true);
-        setTimeout(() => setShowPopup(false), 1000);
-      } else {
-        const newMessage =
-          data.type === "chat"
-            ? `${data.nickname}: ${data.message}`
-            : data.message;
-        setMessages((prev) => [...prev, newMessage]);
-      }
-    }
-    console.log(data);
-  }, []);
+      console.log(data);
+    },
+    [url]
+  );
 
   const { sendMessage } = useWebSocket(url, handleMessage);
 
@@ -513,6 +544,11 @@ export default function WaitingRoom() {
       className={styles.container}
     >
       {showToast && <Toast message={toastMessage} duration={toastDuration} />}
+      <ResultModal
+        result={gameResult}
+        isModalOpen={isModalOpen}
+        buttonClick={returnWaitingRoom}
+      />
       {isStart ? (
         roomInfo.mode === "무한 초성 지옥" ? (
           <Infinite
