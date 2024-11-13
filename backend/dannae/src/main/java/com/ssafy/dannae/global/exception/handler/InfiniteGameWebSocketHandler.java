@@ -57,6 +57,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, Long> gameIdsMap = new ConcurrentHashMap<>();
     private final Map<String, String> playerNicknames = new HashMap<>(); // 사용자 ID와 닉네임 매핑
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
+    private final Map<Long, Boolean> isSinglePlayerGame = new ConcurrentHashMap<>();
 
     private final InfiniteGameCommandService infiniteGameCommandService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -137,6 +138,12 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void startGame(Long roomId) throws IOException {
+        Long playerCount = roomQueryService.findById(roomId)
+            .orElseThrow(() -> new NoRoomException("no room exception"))
+            .getPlayerCount();
+
+        isSinglePlayerGame.put(roomId, playerCount == 1);
+
         InfiniteGameDto gameDto = InfiniteGameDto.builder().roomId(roomId).build();
         InfiniteGameDto initialDto = infiniteGameCommandService.createInitial(gameDto);
 
@@ -152,8 +159,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             try {
                 // 5초 후 실제 게임 시작 전에 플레이어 수 다시 확인
                 List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
-                if (activeSessions != null && activeSessions.size() > 1) {
-                    // turnOrder 재초기화
+                if (activeSessions != null && !activeSessions.isEmpty()) {
                     initializeTurnOrder(roomId);
                     startTurn(roomId, initialDto);
                 } else {
@@ -323,14 +329,19 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
             roomTurnOrder.remove(session);
 
-            // 실제 활성 플레이어 수를 계산 (turnOrder에 있으면서 동시에 activeSessions에도 있는 플레이어)
             long actualActivePlayers = roomTurnOrder.stream()
                 .filter(s -> activeSessions.contains(s))
                 .count();
 
             System.out.println("실제 남은 플레이어 수: " + actualActivePlayers);
 
-            if (actualActivePlayers <= 1) {
+            // 1인용 게임인 경우는 actualActivePlayers가 0이 되었을 때만 종료
+            // 다인용 게임인 경우는 actualActivePlayers가 1 이하가 되었을 때 종료
+            boolean shouldEndGame = Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))
+                ? actualActivePlayers < 1
+                : actualActivePlayers <= 1;
+
+            if (shouldEndGame) {
                 endGame(roomId);
             } else {
                 startTurn(roomId, InfiniteGameDto.builder().roomId(roomId).build());
@@ -356,12 +367,15 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            // 실제 활성 플레이어 수 확인
             long actualActivePlayers = roomTurnOrder.stream()
                 .filter(s -> activeSessions.contains(s))
                 .count();
 
-            if (actualActivePlayers <= 1) {
+            boolean shouldEndGame = Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))
+                ? actualActivePlayers < 1
+                : actualActivePlayers <= 1;
+
+            if (shouldEndGame) {
                 endGame(roomId);
                 return;
             }
@@ -411,6 +425,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         usedWords.remove(roomId);
         initialPlayerCount.remove(roomId);
         gameConsonantsMap.remove(roomId);
+        isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
     }
 
@@ -511,10 +526,13 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 }
                 // 현재 턴인 플레이어는 타임아웃될 때까지 턴 순서에 유지
 
-                // 남은 플레이어가 1명 이하면 게임 종료
-                if (roomTurnOrder.size() <= 1) {
+                boolean shouldEndGame = Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))
+                    ? roomTurnOrder.isEmpty()
+                    : roomTurnOrder.size() <= 1;
+
+                if (shouldEndGame) {
                     endGame(roomId);
-                    return;  // 게임이 종료되면 더 이상 메시지를 보내지 않음
+                    return;
                 }
             }
 
