@@ -54,10 +54,10 @@ const ResultModal = ({
                       <Image
                         src={`/profiles/profile${result[1].image}.svg`}
                         alt="profile icon"
-                        width={240}
-                        height={240}
+                        width={100}
+                        height={100}
                       />
-                      <div>
+                      <div className={styles.restInfo}>
                         <p>{result[1].nickname}</p>
                         <p className={styles.resultScore}>
                           {result[1].score.toLocaleString()}점
@@ -77,10 +77,10 @@ const ResultModal = ({
                       <Image
                         src={`/profiles/profile${result[2].image}.svg`}
                         alt="profile icon"
-                        width={240}
-                        height={240}
+                        width={100}
+                        height={100}
                       />
-                      <div>
+                      <div className={styles.restInfo}>
                         <p>{result[2].nickname}</p>
                         <p className={styles.resultScore}>
                           {result[2].score.toLocaleString()}점
@@ -100,10 +100,10 @@ const ResultModal = ({
                       <Image
                         src={`/profiles/profile${result[3].image}.svg`}
                         alt="profile icon"
-                        width={240}
-                        height={240}
+                        width={100}
+                        height={100}
                       />
-                      <div>
+                      <div className={styles.restInfo}>
                         <p>{result[3].nickname}</p>
                         <p className={styles.resultScore}>
                           {result[3].score.toLocaleString()}점

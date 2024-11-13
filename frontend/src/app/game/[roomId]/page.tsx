@@ -1,7 +1,7 @@
 "use client";
 
 import { useWebSocket } from "@/hooks";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Header,
   GameInfo,
@@ -20,6 +20,13 @@ import { Progress, Toast } from "@/app/components";
 
 export default function WaitingRoom() {
   // const router = useRouter();
+
+  // BGM 관련
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [musicUrl, setMusicUrl] = useState("/bgm/Game-Menu.mp3");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.7);
+
   const { roomId } = useParams();
   const [url, setUrl] = useState<string>("");
   const [messages, setMessages] = useState<string[]>([]);
@@ -101,6 +108,10 @@ export default function WaitingRoom() {
   const [gameResult, setGameResult] = useState<result[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    setIsPlaying(true);
+  }, []);
+
   const handleStart = async () => {
     setUsers((prevUsers) =>
       prevUsers.map((user) => ({
@@ -120,6 +131,12 @@ export default function WaitingRoom() {
       roomData.data.mode === "무한 초성 지옥" ? "infinite" : "sentence"
     }game?roomId=${roomId}&token=${tokenData.token}`;
 
+    if (roomData.data.mode === "무한 초성 지옥") {
+      setMusicUrl("/bgm/Mister-Sneakypants.mp3");
+    } else {
+      setMusicUrl("/bgm/Puzzle-Dreams.mp3");
+    }
+
     setUrl(gameWebSocketUrl);
   };
 
@@ -134,6 +151,8 @@ export default function WaitingRoom() {
   };
 
   const getGameResult = async () => {
+    setVolume(0.2);
+    setMusicUrl("/bgm/Game-End.mp3");
     const roomResponse = await fetch(`/api/next/rooms/${roomId}`);
     const roomData = await roomResponse.json();
     const resultResponse = await fetch("/api/next/game/result", {
@@ -159,7 +178,9 @@ export default function WaitingRoom() {
     //     isReady: false,
     //   }))
     // );
+    setMusicUrl("/bgm/Game-Menu.mp3");
     setMessages([]);
+    setNewMessage("");
     setWordList([]);
     setIsStart(false);
     setRoundReset(true);
@@ -187,6 +208,27 @@ export default function WaitingRoom() {
     setUrl(waitingRoomWebSocketUrl);
     setIsModalOpen(false);
   };
+
+  useEffect(() => {
+    const audioElement = audioRef.current;
+
+    if (audioElement) {
+      if (audioElement.src !== musicUrl) {
+        audioElement.src = musicUrl;
+        audioElement.play().catch((error) => {
+          console.error("Autoplay was prevented:", error);
+        });
+      }
+      audioElement.volume = volume;
+    }
+
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = "";
+      }
+    };
+  }, [musicUrl, isPlaying]);
 
   useEffect(() => {
     const initializeRoom = async () => {
@@ -401,6 +443,10 @@ export default function WaitingRoom() {
           )
         );
       } else if (data.type === "round_start") {
+        new Audio("/bgm/Round-Start.mp3").play();
+        if (audioRef.current) {
+          audioRef.current.volume = 0.3;
+        }
         setRoundReset(false);
         setIsSend(false);
         console.log(users);
@@ -416,8 +462,13 @@ export default function WaitingRoom() {
           setWordList((prev) => [...prev, ...formattedWords]);
         }
       } else if (data.type === "round_end") {
+        if (audioRef.current) {
+          audioRef.current.volume = 0.7;
+        }
+        new Audio("/bgm/Clear.mp3").play();
         setRoundReset(true);
-        // setIsSend(false);
+        setIsSend(true);
+        setNewMessage("");
         setWordList((prevWordList) =>
           prevWordList.map((word) =>
             data.userWords.includes(word.word) ? { ...word, used: true } : word
@@ -609,6 +660,7 @@ export default function WaitingRoom() {
           isSend={isSend}
         />
       </section>
+      <audio ref={audioRef} loop />
     </main>
   );
 }

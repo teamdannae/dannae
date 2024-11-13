@@ -24,6 +24,7 @@ const Input: React.FC<InputProps> = ({
   isValid = true,
 }: InputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(new Audio("/bgm/Input-Submit.mp3"));
 
   useEffect(() => {
     if (!disabled && inputRef.current) {
@@ -32,8 +33,19 @@ const Input: React.FC<InputProps> = ({
   }, [disabled]);
 
   const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && onEnterKey) {
-      onEnterKey();
+    if (e.key === "Enter") {
+      // 엔터 소리 재생
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch((error) => {
+          console.error("Audio playback failed:", error);
+        });
+      }
+
+      // onEnterKey 콜백 호출
+      if (onEnterKey) {
+        onEnterKey();
+      }
     }
   };
 
