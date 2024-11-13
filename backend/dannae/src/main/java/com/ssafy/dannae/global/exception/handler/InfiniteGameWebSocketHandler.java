@@ -70,13 +70,25 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Long roomId = getRoomIdFromSession(session);
         String token = getTokenFromSession(session);
+        String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
 
         if (!isTokenValidAndPlayerInWaitingRoom(token, roomId, session)) {
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
 
-        String playerId = jwtTokenProvider.getPlayerIdFromToken(token);
+        boolean alreadyConnected = gameRoomSessions.getOrDefault(roomId, new ArrayList<>()).stream()
+            .anyMatch(s -> {
+                String existingPlayerId = sessionPlayerIdMap.get(s);
+                return playerId.equals(existingPlayerId) && s.isOpen();
+            });
+
+        if (alreadyConnected) {
+            sendErrorMessage(session, "duplicate_connection", "이미 게임에 접속 중입니다.");
+            session.close();
+            return;
+        }
+
         initializePlayerInGame(session, roomId, playerId);
 
         if (areAllPlayersConnected(roomId)) {
@@ -128,6 +140,32 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         sendEnterGameMessage(session, playerId, nickname, image);
     }
 
+    private void cleanupRoomSessions(Long roomId) {
+        // 방 관련 모든 세션 정리
+        List<WebSocketSession> sessions = gameRoomSessions.getOrDefault(roomId, new ArrayList<>());
+        for (WebSocketSession session : sessions) {
+            try {
+                if (session.isOpen()) {
+                    session.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 해당 방의 모든 플레이어 상태 업데이트
+        sessions.forEach(session -> {
+            String playerId = sessionPlayerIdMap.get(session);
+            if (playerId != null) {
+                try {
+                    playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.nonready);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
     private boolean areAllPlayersConnected(Long roomId) {
         Long activePlayerCount = roomQueryService.findById(roomId)
             .orElseThrow(()-> new NoRoomException("no room exception"))
@@ -171,8 +209,19 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         }, 5, TimeUnit.SECONDS);
     }
 
+    private void cancelAllScheduledTasks(Long roomId) {
+        ScheduledFuture<?> timeoutTask = turnTimeoutTasks.get(roomId);
+        if (timeoutTask != null) {
+            timeoutTask.cancel(true);
+            turnTimeoutTasks.remove(roomId);
+        }
+        turnInProgress.remove(roomId);
+    }
+
     // startTurn 메서드 수정: 스케줄러 저장 및 턴 제한 시간 스케줄러 추가
     private void startTurn(Long roomId, InfiniteGameDto initialDto) throws IOException {
+        cancelAllScheduledTasks(roomId);
+
         Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
 
         if (roomTurnOrder == null || roomTurnOrder.isEmpty()) {
@@ -409,6 +458,15 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             return;  // 이미 종료된 게임이면 리턴
         }
 
+        if (Boolean.TRUE.equals(turnInProgress.get(roomId))) {
+            // 턴 종료 처리를 기다리거나 강제 종료할지 결정
+            ScheduledFuture<?> timeoutTask = turnTimeoutTasks.get(roomId);
+            if (timeoutTask != null) {
+                timeoutTask.cancel(true);
+            }
+            turnInProgress.put(roomId, false);
+        }
+
         // 게임 종료 메시지 전송
         broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임 종료!\"}");
 
@@ -419,21 +477,26 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
 
-        ScheduledFuture<?> timeoutTask = turnTimeoutTasks.get(roomId);
-        if (timeoutTask != null) {
-            timeoutTask.cancel(true);
-        }
+        // 4. 세션 정리 전 복사본 만들기
+        List<WebSocketSession> sessionsToClean = new ArrayList<>(
+            gameRoomSessions.getOrDefault(roomId, new ArrayList<>())
+        );
 
-        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-        if (sessions != null) {
-            sessions.forEach(session -> {
-                sessionPlayerIdMap.remove(session);
-                // 해당 세션의 플레이어 닉네임도 정리
+        for (WebSocketSession session : sessionsToClean) {
+            try {
                 String playerId = sessionPlayerIdMap.get(session);
                 if (playerId != null) {
+                    playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.nonready);
                     playerNicknames.remove(playerId);
+                    sessionPlayerIdMap.remove(session);
                 }
-            });
+                // 5. 열린 세션 닫기 추가
+                if (session.isOpen()) {
+                    session.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         gameRoomSessions.remove(roomId);
@@ -518,6 +581,24 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         if (roomId != null && playerId != null) {
             handlePlayerExit(session, roomId, playerId);
+        }
+    }
+
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        try {
+            Long roomId = getRoomIdFromSession(session);
+            String playerId = sessionPlayerIdMap.get(session);
+
+            if (roomId != null && playerId != null) {
+                handlePlayerExit(session, roomId, playerId);
+            }
+
+            if (session.isOpen()) {
+                session.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
