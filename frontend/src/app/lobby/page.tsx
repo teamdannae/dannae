@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import styles from "./page.module.scss";
 import Image from "next/image";
 import { Card } from "../components";
@@ -20,19 +20,32 @@ const Lobby = () => {
   const [games, setGames] = useState<gameroom[]>([]);
   const [isThrottled, setIsThrottled] = useState(false);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && audioRef.current) {
+      audioRef.current.play().catch((error) => {
+        console.error("BGM playback failed:", error);
+      });
+    }
+  }, []);
+
   const router = useRouter();
 
   const { openModal } = useModal();
 
   const handleCreateRoomModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     openModal(<CreateRoomModal />);
   };
 
   const handleCreateInviteCodeModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     openModal(<CreateInviteCodeModal />);
   };
 
   const handleCreateRankingModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     openModal(<CreateRankingModal />);
   };
 
@@ -65,6 +78,7 @@ const Lobby = () => {
     if (!isThrottled) {
       console.log("새로고침");
       setIsThrottled(true);
+      new Audio("/bgm/Button-Click.mp3").play();
       loadGames();
       setTimeout(() => setIsThrottled(false), 1000); // 1초 동안 쓰로틀링 상태 유지
     }
@@ -87,10 +101,12 @@ const Lobby = () => {
   const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
 
   const handleNextPage = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
   };
 
   const handlePrevPage = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
@@ -116,6 +132,11 @@ const Lobby = () => {
     setCurrentPage(0);
   }, [selectedGameIndex]);
 
+  const handleNavButtonClick = (index: number) => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    setSelectedGameIndex(index);
+  };
+
   return (
     <div className={styles.lobbyContainer}>
       <header className={`${styles.header} ${styles.mainHeader}`}>
@@ -139,7 +160,7 @@ const Lobby = () => {
         <div className={styles.header}>
           <nav className={styles.navContainer}>
             <div
-              onClick={() => setSelectedGameIndex(0)}
+              onClick={() => handleNavButtonClick(0)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 0
                   ? styles.selectedGame
@@ -149,7 +170,7 @@ const Lobby = () => {
               <p>전체 모드</p>
             </div>
             <div
-              onClick={() => setSelectedGameIndex(1)}
+              onClick={() => handleNavButtonClick(1)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 1
                   ? styles.selectedGame
@@ -159,7 +180,7 @@ const Lobby = () => {
               <p>단어의 방</p>
             </div>
             <div
-              onClick={() => setSelectedGameIndex(2)}
+              onClick={() => handleNavButtonClick(2)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 2
                   ? styles.selectedGame
@@ -257,6 +278,7 @@ const Lobby = () => {
           ))}
         </div>
       </section>
+      <audio ref={audioRef} src="/bgm/Main-BGM.mp3" loop />
     </div>
   );
 };

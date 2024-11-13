@@ -44,6 +44,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const closeModal = useCallback(() => {
+    new Audio("/bgm/Button-Click.mp3").play();
     setModalContent(null);
     // 모달이 닫힐 때 상태를 초기값으로 리셋
     setCreateRoomModalState(INITIAL_CREATE_ROOM_STATE);

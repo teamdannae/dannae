@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./components";
 import styles from "./page.module.scss";
@@ -9,6 +9,9 @@ import words from "@/data/word";
 
 export default function Home() {
   const router = useRouter();
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const [fallingWords, setFallingWords] = useState<string[]>(
     Array(50).fill("")
@@ -36,6 +39,19 @@ export default function Home() {
     });
   }, []);
 
+  const toggleAudio = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch((error) => {
+          console.error("BGM playback failed:", error);
+        });
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   const navigateToGame = () => {
     router.push("/lobby");
   };
@@ -54,6 +70,23 @@ export default function Home() {
           height={480}
           priority
         />
+        <div className={styles.speakerIcon} onClick={toggleAudio}>
+          {isPlaying ? (
+            <Image
+              src="/icons/headphone-cross.svg"
+              alt="Speaker Off"
+              width={36}
+              height={36}
+            />
+          ) : (
+            <Image
+              src="/icons/headphone.svg"
+              alt="Speaker On"
+              width={36}
+              height={36}
+            />
+          )}
+        </div>
         <div className={styles.startButton}>
           <Button
             buttonText="게임하기"
@@ -69,6 +102,8 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      <audio ref={audioRef} src="/bgm/Main-BGM.mp3" loop />
     </main>
   );
 }

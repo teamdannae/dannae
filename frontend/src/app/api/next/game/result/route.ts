@@ -11,8 +11,9 @@ export async function POST(request: NextRequest) {
       }
       return string;
     });
+    console.log(params.join(""));
     const response = await fetch(
-      `https://dannae.kr/api/v1/players/result?${params}&mode=${
+      `https://dannae.kr/api/v1/players/result?${params.join("")}&mode=${
         mode === "단어의 방" ? 1 : 2
       }`,
       {
