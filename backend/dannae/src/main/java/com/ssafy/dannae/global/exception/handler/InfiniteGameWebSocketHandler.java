@@ -31,6 +31,7 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
@@ -53,7 +54,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, ScheduledFuture<?>> turnTimeoutTasks = new ConcurrentHashMap<>();
 
     private final Map<Long, String> gameConsonantsMap = new ConcurrentHashMap<>();
-    private final Map<Long, Integer> initialPlayerCount = new ConcurrentHashMap<>();
     private final Map<Long, Long> gameIdsMap = new ConcurrentHashMap<>();
     private final Map<String, String> playerNicknames = new HashMap<>(); // 사용자 ID와 닉네임 매핑
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
@@ -81,7 +81,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         if (areAllPlayersConnected(roomId)) {
             usedWords.putIfAbsent(roomId, new HashSet<>());
-            initialPlayerCount.put(roomId, gameRoomSessions.get(roomId).size());
             initializeTurnOrder(roomId);
             startGame(roomId);
         }
@@ -423,7 +422,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         gameRoomSessions.remove(roomId);
         turnOrder.remove(roomId);
         usedWords.remove(roomId);
-        initialPlayerCount.remove(roomId);
         gameConsonantsMap.remove(roomId);
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
@@ -496,6 +494,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String playerId = sessionPlayerIdMap.get(session);
 
+        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
+
         if (roomId != null && playerId != null) {
             handlePlayerExit(session, roomId, playerId);
         }
@@ -513,6 +513,33 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
             if (sessions != null) {
                 sessions.remove(session);
+            }
+
+            Room room = roomQueryService.findById(roomId)
+                .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
+            Long creatorId = room.getCreator();
+
+            // 플레이어 수 업데이트
+            long playerCount = sessions != null ? sessions.size() : 0;
+            roomCommandService.updatePlayerCount(roomId, playerCount);
+
+            // 방장이 나간 경우 방장 할당 및 알림
+            if (creatorId.equals(Long.parseLong(playerId))) {
+                // 새로운 방장 할당
+                if (sessions != null && !sessions.isEmpty()) {
+                    WebSocketSession newCreatorSession = sessions.get(0);
+                    String newCreatorId = sessionPlayerIdMap.get(newCreatorSession);
+                    if (newCreatorId != null) {
+                        roomCommandService.updateRoomCreator(roomId, Long.parseLong(newCreatorId));
+
+                        String newCreatorNickname = playerQueryService.findPlayerById(Long.parseLong(newCreatorId)).nickname();
+                        String newCreatorMessage = String.format(
+                            "{\"type\": \"creator_change\", \"message\": \"%s님이 새로운 방장이 되었습니다.\", \"creatorId\": \"%s\", \"playerCount\": %d}",
+                            newCreatorNickname, newCreatorId, playerCount
+                        );
+                        broadcastToRoom(roomId, newCreatorMessage);
+                    }
+                }
             }
 
             // 턴 순서 관련 처리
