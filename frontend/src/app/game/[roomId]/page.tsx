@@ -24,7 +24,7 @@ export default function WaitingRoom() {
   // BGM 관련
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [musicUrl, setMusicUrl] = useState("/bgm/Game-Menu.mp3");
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying] = useState(true);
   const [volume, setVolume] = useState(0.7);
 
   const { roomId } = useParams();
@@ -107,10 +107,6 @@ export default function WaitingRoom() {
   const [isConsonantVisible, setIsConsonantVisible] = useState(true);
   const [gameResult, setGameResult] = useState<result[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    setIsPlaying(true);
-  }, []);
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
