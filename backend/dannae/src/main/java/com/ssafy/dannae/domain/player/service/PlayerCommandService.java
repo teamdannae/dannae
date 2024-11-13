@@ -6,4 +6,6 @@ public interface PlayerCommandService {
 
     void updateStatus(Long playerId, PlayerStatus status);
 
+    void resetScore(Long playerId);
+
 }

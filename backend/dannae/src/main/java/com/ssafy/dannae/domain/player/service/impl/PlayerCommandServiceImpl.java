@@ -23,8 +23,16 @@ public class PlayerCommandServiceImpl implements PlayerCommandService {
     @Override
     public void updateStatus(Long playerId, PlayerStatus status) {
         Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new NoRoomException("player not found"));
+            .orElseThrow(() -> new NoRoomException("player not found"));
         player.updateStatus(status);
+    }
+
+    @Override
+    public void resetScore(Long playerId) {
+        Player player = playerRepository.findById(playerId)
+            .orElseThrow(() -> new NoRoomException("player not found"));
+        player.resetScore();
+        playerRepository.save(player);
     }
 
 }
