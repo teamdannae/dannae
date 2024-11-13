@@ -28,7 +28,10 @@ interface message {
     | "game_end"
     | "elimination"
     | "success"
-    | "turn_start";
+    | "turn_start"
+    | "failure"
+    | "exit"
+    | "time_out";
   event?:
     | "creator"
     | "creator_change"
