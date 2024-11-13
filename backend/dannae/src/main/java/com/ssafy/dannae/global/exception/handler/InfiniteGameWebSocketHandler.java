@@ -419,12 +419,32 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
 
+        ScheduledFuture<?> timeoutTask = turnTimeoutTasks.get(roomId);
+        if (timeoutTask != null) {
+            timeoutTask.cancel(true);
+        }
+
+        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+        if (sessions != null) {
+            sessions.forEach(session -> {
+                sessionPlayerIdMap.remove(session);
+                // 해당 세션의 플레이어 닉네임도 정리
+                String playerId = sessionPlayerIdMap.get(session);
+                if (playerId != null) {
+                    playerNicknames.remove(playerId);
+                }
+            });
+        }
+
         gameRoomSessions.remove(roomId);
         turnOrder.remove(roomId);
         usedWords.remove(roomId);
+        submittedAnswers.remove(roomId);
+        turnTimeoutTasks.remove(roomId);
         gameConsonantsMap.remove(roomId);
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
+        turnInProgress.remove(roomId);
     }
 
     @Override
