@@ -103,7 +103,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             playerListMessage.append("{\"playerId\": \"").append(existingPlayerId)
                     .append("\", \"nickname\": \"").append(existingDto.nickname())
                     .append("\", \"image\": ").append(existingDto.image())
-                    .append("\", \"status\": ").append(existingDto.status())
+                    .append(", \"status\": \"").append(existingDto.status())
                     .append(", \"token\": \"").append(existingToken).append("\"},");
         }
         if (playerListMessage.charAt(playerListMessage.length() - 1) == ',') {
