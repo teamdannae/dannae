@@ -85,6 +85,10 @@ public class RoomController {
 	@GetMapping("/{room-id}")
 	public ResponseEntity<BaseResponse<?>> readRoom(@PathVariable("room-id") Long roomId,
 													@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+		if(roomQueryService.isPlayingRoom(roomId)){
+			RoomDetailDto res = roomQueryService.readDetail(roomId);
+			return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+		}
 		long playerId = jwtTokenDecoder.getPlayerId(token);
 		if(playerQueryService.canEnterRoom(playerId)) {
 			RoomDetailDto res = roomQueryService.readDetail(roomId);
