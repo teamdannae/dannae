@@ -2,6 +2,7 @@ package com.ssafy.dannae.domain.room.controller;
 
 import java.util.List;
 
+import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.global.exception.ResponseCode;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,7 @@ public class RoomController {
 	private final RoomCommandService roomCommandService;
 	private final RoomQueryService roomQueryService;
 	private final PlayerQueryService playerQueryService;
+	private final PlayerCommandService playerCommandService;
 	private final JwtTokenDecoder jwtTokenDecoder;
 
 	@PostMapping("")
@@ -86,6 +88,11 @@ public class RoomController {
 	public ResponseEntity<BaseResponse<?>> readRoom(@PathVariable("room-id") Long roomId,
 													@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
 		long playerId = jwtTokenDecoder.getPlayerId(token);
+		if(roomQueryService.isPlayingRoom(roomId)){
+			RoomDetailDto res = roomQueryService.readDetail(roomId);
+			playerCommandService.resetScore(playerId);
+			return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+		}
 		if(playerQueryService.canEnterRoom(playerId)) {
 			RoomDetailDto res = roomQueryService.readDetail(roomId);
 			return ResponseEntity.ok(BaseResponse.ofSuccess(res));

@@ -3,12 +3,12 @@ package com.ssafy.dannae.domain.player.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ssafy.dannae.domain.player.exception.AlreadyEnteredException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
+import com.ssafy.dannae.domain.player.exception.AlreadyEnteredException;
 import com.ssafy.dannae.domain.player.exception.NoPlayerException;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -93,8 +93,7 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                     .image(player.getImage())
                     .build());
 
-            player.resetScore();
-            player.updateStatus(PlayerStatus.nonready);
+            player.updateStatus(PlayerStatus.none);
         }
         playerList.sort((p1, p2) -> Long.compare(p2.score(), p1.score()));
 
@@ -104,7 +103,7 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
     @Override
     public boolean canEnterRoom(long playerId) {
         Player player = playerRepository.findById(playerId).orElseThrow(()
-                ->new NoPlayerException("해당 플레이어가 존재하지 않습니다"));
+                -> new NoPlayerException("해당 플레이어가 존재하지 않습니다"));
         if (player.getStatus() == PlayerStatus.none) {
             return true;
         }else{

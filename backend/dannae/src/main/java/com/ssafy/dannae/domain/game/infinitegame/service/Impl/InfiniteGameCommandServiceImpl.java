@@ -174,19 +174,17 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		infinitegame.updateList(infiniteGameDto.word());
 		infinitegameRepository.save(infinitegame);
 
+		Word easiestWord = words.stream()
+			.min((w1, w2) -> Integer.compare(w1.getDifficulty(), w2.getDifficulty()))
+			.orElse(words.get(0));
+
 		// 플레이어 점수 업데이트
 		Player player = playerRepository.findById(infiniteGameDto.playerId()).orElseThrow(() ->
 			new NoRoomException("플레이어를 찾을 수 없습니다.")
 		);
-		int totalScore = words.stream()
-			.mapToInt(word -> score[word.getDifficulty()])
-			.sum();
-		player.updateScore(totalScore);
+		int playerScore = score[easiestWord.getDifficulty()];
+		player.updateScore(playerScore);
 		playerRepository.save(player);
-
-		Word easiestWord = words.stream()
-			.min((w1, w2) -> Integer.compare(w1.getDifficulty(), w2.getDifficulty()))
-			.orElse(words.get(0));
 
 		return InfiniteGameDto.builder()
 			.correct(true)
