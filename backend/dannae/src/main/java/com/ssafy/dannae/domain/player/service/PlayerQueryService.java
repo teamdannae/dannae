@@ -12,6 +12,6 @@ public interface PlayerQueryService {
 
     PlayerDto findPlayerById(Long playerId);
 
-    List<Player> readPlayerTotalScore(PlayerIdListDto playerIdListDto);
+    List<Player> readPlayerTotalScore(PlayerIdListDto playerIdListDto, String mode);
 
 }

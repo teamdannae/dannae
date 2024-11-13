@@ -12,6 +12,9 @@ import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+import com.ssafy.dannae.domain.rank.entity.Rank;
+import com.ssafy.dannae.domain.rank.repository.RankRepository;
+import com.ssafy.dannae.domain.rank.service.RankCommandService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Service
 public class PlayerQueryServiceImpl implements PlayerQueryService {
+
     private final PlayerRepository playerRepository;
+    private final RankRepository rankRepository;
+    private final RankCommandService rankCommandService;
 
     @Override
     public PlayerDto createPlayer(PlayerDto dto){
@@ -56,12 +62,27 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
     }
 
     @Override
-    public List<Player> readPlayerTotalScore(PlayerIdListDto playerIdListDto){
+    public List<Player> readPlayerTotalScore(PlayerIdListDto playerIdListDto, String mode){
         List<Player> playerList = new ArrayList<>();
         List<Long> playerIdList = playerIdListDto.playerIdList();
         for(Long playerId : playerIdList){
             Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new NoPlayerException("No player find by Id."+ playerId));
+            List<Rank> rankList = rankRepository.findAll();
+            rankList.sort((r1, r2) -> Long.compare(r2.getScore(), r1.getScore()));
+            if (rankList.size() < 5 || player.getScore() > rankList.get(4).getScore()) {
+                if (rankList.size() >= 5 && player.getScore() == rankList.get(4).getScore()) {
+                    continue;
+                }
+                rankRepository.save(
+                    Rank.builder()
+                        .nickname(player.getNickname())
+                        .mode(mode)
+                        .score(player.getScore())
+                        .image(player.getImage())
+                        .build()
+                );
+            }
             playerList.add(player);
         }
         playerList.sort((p1, p2) -> Long.compare(p2.getScore(), p1.getScore()));
