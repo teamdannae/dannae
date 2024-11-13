@@ -82,6 +82,12 @@ class RoomQueryServiceImpl implements RoomQueryService {
 	}
 
 	@Override
+	public boolean isPlayingRoom(Long roomId) {
+		Room room = roomRepository.findById(roomId).orElseThrow(() -> new NoRoomException("Room not found"));
+        return room.getStatus() == RoomStatus.PLAYING;
+	}
+
+	@Override
 	public boolean existsById(Long roomId) {
 		return roomRepository.existsById(roomId);
 	}

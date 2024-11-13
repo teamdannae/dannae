@@ -18,4 +18,6 @@ public interface RoomQueryService {
 	Optional<Room> findById(Long roomId);
 
 	Long readUnreleasedRoom(String code);
+
+	boolean isPlayingRoom(Long roomId);
 }
