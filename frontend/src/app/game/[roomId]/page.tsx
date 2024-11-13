@@ -460,10 +460,31 @@ export default function WaitingRoom() {
           )
         );
         setRoundReset(true);
-      } else if (data.type === "success") {
+      } else if (data.type === "success" || data.type === "failure") {
         setRoundReset(true);
       } else if (data.type === "turn_start") {
         setIsSend(false);
+      } else if (data.type === "exit") {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.playerId === data.playerId
+              ? {
+                  playerId: "",
+                  image: 0,
+                  nickname: "",
+                  isReady: false,
+                  isEmpty: true,
+                  isHost: false,
+                  isTurn: false,
+                  nowScore: 0,
+                  totalScore: 0,
+                  isFail: false,
+                }
+              : user
+          )
+        );
+      } else if (data.type === "time_out") {
+        setRoundReset(true);
       }
 
       if (data.creatorId) {
