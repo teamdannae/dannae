@@ -93,7 +93,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         if (areAllPlayersConnected(roomId)) {
             usedWords.putIfAbsent(roomId, new HashSet<>());
-            initializeTurnOrder(roomId);
             startGame(roomId);
         }
     }
@@ -138,32 +137,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
         sendEnterGameMessage(session, playerId, nickname, image);
-    }
-
-    private void cleanupRoomSessions(Long roomId) {
-        // 방 관련 모든 세션 정리
-        List<WebSocketSession> sessions = gameRoomSessions.getOrDefault(roomId, new ArrayList<>());
-        for (WebSocketSession session : sessions) {
-            try {
-                if (session.isOpen()) {
-                    session.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // 해당 방의 모든 플레이어 상태 업데이트
-        sessions.forEach(session -> {
-            String playerId = sessionPlayerIdMap.get(session);
-            if (playerId != null) {
-                try {
-                    playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.nonready);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
     }
 
     private boolean areAllPlayersConnected(Long roomId) {
@@ -486,7 +459,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             try {
                 String playerId = sessionPlayerIdMap.get(session);
                 if (playerId != null) {
-                    playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.nonready);
+                    playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.none);
                     playerNicknames.remove(playerId);
                     sessionPlayerIdMap.remove(session);
                 }
@@ -577,7 +550,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String playerId = sessionPlayerIdMap.get(session);
 
-        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
+        if (playerId != null) {
+            playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.none);
+        }
 
         if (roomId != null && playerId != null) {
             handlePlayerExit(session, roomId, playerId);
@@ -605,7 +580,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private void handlePlayerExit(WebSocketSession session, Long roomId, String playerId) {
         try {
             // 플레이어 상태 업데이트
-            playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.end);
+            playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.none);
 
             // 플레이어의 닉네임 가져오기
             String nickname = playerNicknames.get(playerId);
