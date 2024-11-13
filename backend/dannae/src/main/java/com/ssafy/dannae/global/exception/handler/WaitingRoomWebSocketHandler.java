@@ -1,5 +1,18 @@
 package com.ssafy.dannae.global.exception.handler;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.json.JSONObject;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -9,20 +22,9 @@ import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Component
@@ -81,6 +83,9 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         // 새로 입장한 사용자의 PlayerDto 가져오기
         String playerId = getPlayerIdFromSession(session);
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
+
+        playerCommandService.resetScore(Long.parseLong(playerId));
+
         String nickname = dto.nickname();
         int image = dto.image();
 
