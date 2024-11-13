@@ -10,7 +10,7 @@ export default function BackButton() {
       onClick={() => router.push("/lobby")}
     >
       <div className={styles.backIcon} />
-      나가기
+      <p>나가기</p>
     </button>
   );
 }

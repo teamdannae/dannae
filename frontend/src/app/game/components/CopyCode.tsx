@@ -34,7 +34,7 @@ export default function CopyCode({ code }: CopyCodeProps) {
         onClick={copyToClipboard}
       >
         <Image src="/icons/copy.svg" alt="copy-icon" width={18} height={18} />
-        {code}
+        <p>{code}</p>
       </button>
       {isToastVisible && <Toast message="초대 링크가 복사되었습니다!" />}
     </>
