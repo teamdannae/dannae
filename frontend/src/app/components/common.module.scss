@@ -186,6 +186,7 @@
   justify-content: center;
   align-items: center;
   margin: 4px;
+  transition: background-color 0.3s, color 0.3s;
 
   &.common {
     background-color: vars.$word-common-color;
@@ -206,6 +207,7 @@
   &.disabled {
     background-color: vars.$disabled-color;
     color: vars.$white-color;
+    animation: static-burn 0.5s ease-in-out;
   }
 
   &.wrong {
@@ -214,6 +216,35 @@
 
   &.pointer {
     cursor: pointer;
+  }
+}
+
+@keyframes static-burn {
+  0% {
+    background-color: vars.$disabled-color;
+    opacity: 1;
+  }
+  20% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  40% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  60% {
+    background-color: vars.$darkgray-color;
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  80% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+  100% {
+    background-color: vars.$darkgray-color;
+    opacity: 0.1;
+    filter: brightness(0);
   }
 }
 

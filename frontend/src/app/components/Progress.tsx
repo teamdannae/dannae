@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import styles from "./common.module.scss";
 
 interface ProgressBarProps {
@@ -10,6 +10,7 @@ interface ProgressBarProps {
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
   const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(new Audio("/bgm/Round-End.mp3"));
 
   useEffect(() => {
     setProgress(0);
@@ -18,6 +19,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
 
     const interval = 100;
     const increment = 100 / ((duration * 1000) / interval);
+    const threshold = 100 - (2000 / (duration * 1000)) * 100;
 
     const timer = setInterval(() => {
       setProgress((prev) => {
@@ -26,6 +28,13 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
           clearInterval(timer);
           return 100;
         }
+
+        if (nextProgress >= threshold && audioRef.current) {
+          audioRef.current.play().catch((error) => {
+            console.error("Audio playback failed:", error);
+          });
+        }
+
         return nextProgress;
       });
     }, interval);
@@ -42,6 +51,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
         className={`${styles.progress} ${progressClass}`}
         style={{ width: `${progress}%` }}
       />
+      <audio ref={audioRef} src="/bgm/Round-End.mp3" />
     </div>
   );
 };
