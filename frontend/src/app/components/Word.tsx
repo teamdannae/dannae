@@ -39,7 +39,6 @@ export default function WordCard({
         }
 
         const data = await response.json();
-        console.log(data);
         setMeaning(data.data.wordMeanings);
       } catch (error) {
         console.error("Failed to load Meaning:", error);
