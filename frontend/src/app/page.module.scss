@@ -244,3 +244,11 @@ a.secondary {
 .startButton {
   width: 100%;
 }
+
+.speakerIcon {
+  display: flex;
+  width: 100%;
+  justify-content: end;
+  margin-bottom: 16px;
+  padding-right: 24px;
+}
