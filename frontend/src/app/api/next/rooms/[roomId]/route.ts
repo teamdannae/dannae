@@ -8,12 +8,13 @@ export async function GET(
     const roomId = (await params).roomId;
 
     const apiUrl = `https://dannae.kr/api/v1/rooms/${roomId}`;
-    // const apiUrl = `http://70.12.247.93:8080/api/v1/rooms/${roomId}`;
+    const token = request.cookies.get("token")?.value;
 
     const response = await fetch(apiUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       credentials: "include",
     });

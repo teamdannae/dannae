@@ -29,6 +29,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+input {
+  font-family: var(--font-main);
+  font-weight: 400;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -66,9 +71,9 @@ h5 {
 }
 
 p {
+  font-family: var(--font-main);
   font-size: vars.$font-size-p1;
 }
-
 
 /* @media (prefers-color-scheme: dark) {
   html {

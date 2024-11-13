@@ -66,7 +66,7 @@ const ProfileImage = () => {
         </div>
         <div className={styles.buttonContainer}>
           <Button
-            buttonText="게임 하러 가기"
+            buttonText="게임하러 가기"
             onClickEvent={confirmProfile}
             buttonColor="black"
             disabled={selectedImage === -1}
