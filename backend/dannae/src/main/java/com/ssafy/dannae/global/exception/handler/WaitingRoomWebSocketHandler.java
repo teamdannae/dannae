@@ -145,6 +145,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
             String token = sessionTokenMap.remove(session);
             String playerId = (token != null) ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
+            playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.none);
 
             // 방장의 playerId 가져오기
             Room room = roomQueryService.findById(roomId)
