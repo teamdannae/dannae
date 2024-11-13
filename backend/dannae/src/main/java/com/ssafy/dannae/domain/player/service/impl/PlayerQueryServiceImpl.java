@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.player.entity.Player;
+import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.exception.NoPlayerException;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
@@ -62,8 +63,8 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
     }
 
     @Override
-    public List<Player> readPlayerTotalScore(PlayerIdListDto playerIdListDto, String mode){
-        List<Player> playerList = new ArrayList<>();
+    public List<PlayerDto> readPlayerTotalScore(PlayerIdListDto playerIdListDto, String mode){
+        List<PlayerDto> playerList = new ArrayList<>();
         List<Long> playerIdList = playerIdListDto.playerIdList();
         for(Long playerId : playerIdList){
             Player player = playerRepository.findById(playerId)
@@ -83,9 +84,18 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                         .build()
                 );
             }
-            playerList.add(player);
+            playerList.add(PlayerDto.builder()
+                    .playerId(player.getId())
+                    .score(player.getScore())
+                    .status(player.getStatus())
+                    .nickname(player.getNickname())
+                    .image(player.getImage())
+                    .build());
+
+            player.resetScore();
+            player.updateStatus(PlayerStatus.nonready);
         }
-        playerList.sort((p1, p2) -> Long.compare(p2.getScore(), p1.getScore()));
+        playerList.sort((p1, p2) -> Long.compare(p2.score(), p1.score()));
 
         return playerList;
     }
