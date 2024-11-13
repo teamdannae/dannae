@@ -3,6 +3,7 @@ package com.ssafy.dannae.domain.player.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ssafy.dannae.domain.player.exception.AlreadyEnteredException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +99,17 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
         playerList.sort((p1, p2) -> Long.compare(p2.score(), p1.score()));
 
         return playerList;
+    }
+
+    @Override
+    public boolean canEnterRoom(long playerId) {
+        Player player = playerRepository.findById(playerId).orElseThrow(()
+                ->new NoPlayerException("해당 플레이어가 존재하지 않습니다"));
+        if (player.getStatus() == PlayerStatus.none) {
+            return true;
+        }else{
+            throw new AlreadyEnteredException("이미 방에 들어가 있습니다");
+        }
     }
 
 }

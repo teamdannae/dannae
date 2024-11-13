@@ -2,7 +2,10 @@ package com.ssafy.dannae.domain.room.controller;
 
 import java.util.List;
 
+import com.ssafy.dannae.domain.player.service.PlayerQueryService;
+import com.ssafy.dannae.global.exception.ResponseCode;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +30,7 @@ public class RoomController {
 
 	private final RoomCommandService roomCommandService;
 	private final RoomQueryService roomQueryService;
+	private final PlayerQueryService playerQueryService;
 	private final JwtTokenDecoder jwtTokenDecoder;
 
 	@PostMapping("")
@@ -79,10 +83,17 @@ public class RoomController {
 	}
 
 	@GetMapping("/{room-id}")
-	public ResponseEntity<BaseResponse<?>> readRoom(@PathVariable("room-id") Long roomId){
+	public ResponseEntity<BaseResponse<?>> readRoom(@PathVariable("room-id") Long roomId,
+													@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+		long playerId = jwtTokenDecoder.getPlayerId(token);
+		if(playerQueryService.canEnterRoom(playerId)) {
+			RoomDetailDto res = roomQueryService.readDetail(roomId);
+			return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+		}
 
-		RoomDetailDto res = roomQueryService.readDetail(roomId);
-		return ResponseEntity.ok(BaseResponse.ofSuccess(res));
+		return ResponseEntity
+				.status(HttpStatus.BAD_REQUEST)
+				.body(BaseResponse.ofFail(ResponseCode.ALREADY_IN_ROOM_EXCEPTION));
 
 	}
 
