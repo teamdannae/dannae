@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ssafy.dannae.domain.player.controller.request.PlayerReq;
 import com.ssafy.dannae.domain.player.controller.response.PlayerRes;
 import com.ssafy.dannae.domain.player.controller.response.PlayerScoreRes;
-import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.exception.TokenException;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
@@ -119,16 +118,11 @@ public class PlayerController {
             .findFirst()
             .orElse("무한 초성 지옥");
 
-        List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto, gameMode);
+        List<PlayerDto> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto, gameMode);
 
         PlayerScoreRes res = PlayerScoreRes.builder()
             .playerList(playerList)
             .build();
-
-        for (Player player : playerList) {
-            player.resetScore();
-            player.updateStatus(PlayerStatus.nonready);
-        }
 
         return ResponseEntity.ok(BaseResponse.ofSuccess(res));
     }
