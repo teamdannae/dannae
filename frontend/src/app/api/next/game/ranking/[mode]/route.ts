@@ -1,18 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ mode: string }> }
+) {
   try {
-    const response = await fetch("https://dannae.kr/api/v1/ranks", {
+    const mode = (await params).mode;
+    const token = request.cookies.get("token")?.value;
+
+    const response = await fetch(`https://dannae.kr/api/v1/ranks/${mode}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       credentials: "include",
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+
       return NextResponse.json(
-        { message: "게임 목록을 불러올 수 없습니다." },
+        { message: "순위 목록을 불러올 수 없습니다.", error: errorText },
         { status: 500 }
       );
     }
