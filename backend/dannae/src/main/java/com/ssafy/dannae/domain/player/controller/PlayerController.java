@@ -90,7 +90,7 @@ public class PlayerController {
 
         PlayerDto playerDto = playerQueryService.createPlayer(PlayerDto.builder()
                 .score(0L)
-                .status(PlayerStatus.nonready)
+                .status(PlayerStatus.none)
                 .nickname(req.nickname())
                 .image(req.image())
                 .build());
