@@ -24,6 +24,9 @@ const Input: React.FC<InputProps> = ({
   isValid = true,
 }: InputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(
+    typeof window !== "undefined" ? new Audio("/bgm/Input-Submit.mp3") : null
+  );
 
   useEffect(() => {
     if (!disabled && inputRef.current) {
@@ -33,7 +36,13 @@ const Input: React.FC<InputProps> = ({
 
   const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      new Audio("/bgm/Input-Submit.mp3").play();
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch((error) => {
+          console.error("Audio playback failed:", error);
+        });
+      }
+
       if (onEnterKey) {
         onEnterKey();
       }

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import styles from "./common.module.scss";
 
 interface ButtonProps {
@@ -13,10 +14,20 @@ const Button: React.FC<ButtonProps> = ({
   buttonColor,
   disabled = false,
 }) => {
+  const audioRef = useRef<HTMLAudioElement | null>(
+    typeof window !== "undefined" ? new Audio("/bgm/Button-Click.mp3") : null
+  );
+
   const handleClick = () => {
-    new Audio("/bgm/Button-Click.mp3").play();
-    onClickEvent(); // 추가적인 클릭 이벤트 실행
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch((error) => {
+        console.error("Audio playback failed:", error);
+      });
+    }
+    onClickEvent();
   };
+
   return (
     <button
       className={`${styles.buttonContainer} ${styles[buttonColor]}`}

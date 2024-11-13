@@ -58,7 +58,9 @@ const CreateRoomModal = () => {
       console.log(roomId);
 
       closeModal(); // 성공 시 모달 닫기
-      router.push(`/game/${roomId}`);
+      setTimeout(() => {
+        router.push(`/game/${roomId}`);
+      }, 500);
     } catch (error) {
       console.error("방 생성에 실패했습니다.", error);
     }

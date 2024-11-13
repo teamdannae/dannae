@@ -175,6 +175,7 @@ export default function WaitingRoom() {
     //   }))
     // );
     setMusicUrl("/bgm/Game-Menu.mp3");
+    setVolume(0.7);
     setMessages([]);
     setNewMessage("");
     setWordList([]);
