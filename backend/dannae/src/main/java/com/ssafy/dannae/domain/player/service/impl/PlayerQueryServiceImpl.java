@@ -93,7 +93,6 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
                     .image(player.getImage())
                     .build());
 
-            player.resetScore();
             player.updateStatus(PlayerStatus.none);
         }
         playerList.sort((p1, p2) -> Long.compare(p2.score(), p1.score()));
