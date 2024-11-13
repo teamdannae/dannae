@@ -104,7 +104,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                     .append("\", \"nickname\": \"").append(existingDto.nickname())
                     .append("\", \"image\": ").append(existingDto.image())
                     .append(", \"status\": \"").append(existingDto.status())
-                    .append(", \"token\": \"").append(existingToken).append("\"},");
+                    .append("\", \"token\": \"").append(existingToken).append("\"},");
+
         }
         if (playerListMessage.charAt(playerListMessage.length() - 1) == ',') {
             playerListMessage.deleteCharAt(playerListMessage.length() - 1);
