@@ -1,6 +1,7 @@
 package com.ssafy.dannae.domain.player.controller;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -107,13 +108,18 @@ public class PlayerController {
 
     @GetMapping("/result")
     public ResponseEntity<BaseResponse<PlayerScoreRes>> createResult(@RequestParam List<Long> playerIdList,
-        @RequestParam("mode") String mode) {
+        @RequestParam Integer mode) {
 
         PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
             .playerIdList(playerIdList)
             .build();
 
-        List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto, mode);
+        String gameMode = Stream.of(mode)
+            .map(m -> m == 1 ? "단어의 방" : "무한 초성 지옥")
+            .findFirst()
+            .orElse("무한 초성 지옥");
+
+        List<Player> playerList = playerQueryService.readPlayerTotalScore(playerIdListDto, gameMode);
 
         PlayerScoreRes res = PlayerScoreRes.builder()
             .playerList(playerList)
