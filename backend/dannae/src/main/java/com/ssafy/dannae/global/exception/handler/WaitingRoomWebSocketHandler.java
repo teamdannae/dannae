@@ -1,6 +1,7 @@
 package com.ssafy.dannae.global.exception.handler;
 
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
+import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.entity.Room;
@@ -8,6 +9,7 @@ import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
     private static final int MAX_ROOM_CAPACITY = 4;
@@ -34,13 +37,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
-
-    public WaitingRoomWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerQueryService playerQueryService, RoomQueryService roomQueryService, RoomCommandService roomCommandService) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.playerQueryService = playerQueryService;
-        this.roomQueryService = roomQueryService;
-        this.roomCommandService = roomCommandService;
-    }
+    private final PlayerCommandService playerCommandService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -80,6 +77,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
         Long creatorId = room.getCreator();
 
+        playerCommandService.updateStatus(creatorId,PlayerStatus.nonready);
         // 새로 입장한 사용자의 PlayerDto 가져오기
         String playerId = getPlayerIdFromSession(session);
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));

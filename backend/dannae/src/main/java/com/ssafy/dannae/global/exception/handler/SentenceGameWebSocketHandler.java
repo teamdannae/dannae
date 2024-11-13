@@ -11,6 +11,7 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
@@ -254,17 +255,68 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
 
         if (sessions != null) {
             sessions.remove(session);
+
+            // 방이 비었으면 종료
             if (sessions.isEmpty()) {
                 gameRoomSessions.remove(roomId);
                 ScheduledExecutorService scheduler = roomSchedulers.remove(roomId);
                 if (scheduler != null) scheduler.shutdownNow();
-            } else {
-                broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s}", nickname, playerId, nickname));
+                return;
+            }
+
+            // 다른 사용자에게 플레이어 나감 메시지 전송
+            broadcastToRoom(roomId, String.format("{\"type\": \"leave\", \"event\": \"disconnect\", \"message\": \"%s님이 게임을 나갔습니다.\", \"playerId\": \"%s\", \"nickname\": \"%s\"}", nickname, playerId, nickname));
+
+            // 방장의 playerId 가져오기
+            Room room = roomQueryService.findById(roomId)
+                    .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
+            Long creatorId = room.getCreator();
+
+            // 플레이어 수 업데이트
+            int playerCount = getRoomPlayerCount(roomId);
+            roomCommandService.updatePlayerCount(roomId, (long) playerCount);
+
+            // 방장이 나간 경우 방장 할당
+            if (creatorId.equals(Long.parseLong(playerId))) {
+                assignNewCreator(sessions, roomId);
+                creatorId = roomQueryService.findById(roomId).orElseThrow().getCreator(); // 새 방장 정보 가져오기
+
+                String newCreatorMessage = String.format(
+                        "{\"type\": \"creator_change\", \"message\": \"%s님이 새로운 방장이 되었습니다.\", \"creatorId\": \"%s\", \"playerCount\": %d}",
+                        playerQueryService.findPlayerById(creatorId).nickname(), creatorId, playerCount
+                );
+
+                // 모든 사용자에게 방장 변경 메시지 전송
+                broadcastToRoom(roomId, newCreatorMessage);
             }
         }
+    }
+
+    private void assignNewCreator(List<WebSocketSession> sessions, Long roomId) {
+        if (sessions.isEmpty()) return;
+
+        try {
+            WebSocketSession newCreatorSession = sessions.get(0);
+            String newCreatorToken = sessionTokenMap.get(newCreatorSession);
+
+            if (newCreatorToken != null && !newCreatorToken.isEmpty()) {
+                String playerIdFromToken = jwtTokenProvider.getPlayerIdFromToken(newCreatorToken);
+                Long newCreatorId = Long.parseLong(playerIdFromToken);
+                roomCommandService.updateRoomCreator(roomId, newCreatorId);
+            }
+        } catch (Exception e) {
+            System.err.println("Error in assignNewCreator: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public int getRoomPlayerCount(Long roomId) {
+        List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+        return sessions != null ? sessions.size() : 0;
     }
 
     private Long getRoomIdFromSession(WebSocketSession session) {
