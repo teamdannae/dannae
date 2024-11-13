@@ -77,12 +77,14 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
                 .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
         Long creatorId = room.getCreator();
 
-        playerCommandService.updateStatus(creatorId,PlayerStatus.nonready);
+
         // 새로 입장한 사용자의 PlayerDto 가져오기
         String playerId = getPlayerIdFromSession(session);
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
         int image = dto.image();
+
+        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
 
         // 새로 입장한 사용자가 방장인 경우 roomCreatorMap에 등록
         if (creatorId.equals(Long.parseLong(playerId))) {
