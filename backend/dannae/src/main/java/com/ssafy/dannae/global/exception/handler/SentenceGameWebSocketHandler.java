@@ -255,6 +255,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
 
         if (sessions != null) {
             sessions.remove(session);
