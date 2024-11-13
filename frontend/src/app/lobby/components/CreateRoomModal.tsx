@@ -94,17 +94,19 @@ const CreateRoomModal = () => {
           <p>무한 초성 지옥</p>
         </div>
       </nav>
-      <Input
-        value={newRoomTitle}
-        onChangeEvent={handleNewRoomTitleChange}
-        inputLabel="방 제목"
-      />
-      <Button
-        buttonText="생성하기"
-        onClickEvent={handleCreateRoom}
-        buttonColor="black"
-        disabled={newRoomTitle.length === 0}
-      />
+      <div className={styles.inputContainer}>
+        <Input
+          value={newRoomTitle}
+          onChangeEvent={handleNewRoomTitleChange}
+          inputLabel="방 제목"
+        />
+        <Button
+          buttonText="생성하기"
+          onClickEvent={handleCreateRoom}
+          buttonColor="black"
+          disabled={newRoomTitle.length === 0}
+        />
+      </div>
     </div>
   );
 };

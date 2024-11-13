@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import styles from "./common.module.scss";
 
@@ -22,16 +23,26 @@ const Input: React.FC<InputProps> = ({
   disabled = false,
   isValid = true,
 }: InputProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!disabled && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [disabled]);
+
   const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && onEnterKey) {
       onEnterKey();
     }
   };
+
   return (
     <div className={styles.inputFormContainer}>
       <label className={styles.inputLabel}>{inputLabel}</label>
       <div className={styles.inputWrapper}>
         <input
+          ref={inputRef}
           type="text"
           value={value}
           onChange={onChangeEvent}
@@ -44,7 +55,7 @@ const Input: React.FC<InputProps> = ({
             isValid ? "" : styles.invalidInputValue
           }`}
         />
-        {/* 유효성 검사 실패시 아이콘 보여주기 */}
+        {/* 유효성 검사 실패 시 아이콘 보여주기 */}
         {!isValid && (
           <Image
             src="/icons/warning.svg"
