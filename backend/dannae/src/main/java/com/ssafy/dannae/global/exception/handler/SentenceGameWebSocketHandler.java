@@ -255,7 +255,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
         String nickname = dto.nickname();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
+        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.none);
 
         if (sessions != null) {
             sessions.remove(session);
@@ -419,8 +419,19 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, scoreMessage);
 
             if (res.isEnd()) {
-                roomCommandService.updateStatus(roomId);
+                List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+                if (sessions != null) {
+                    for (WebSocketSession session : sessions) {
+                        String playerId = getPlayerIdFromSession(session);
+                        if (playerId != null) {
+                            playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.none);
+                        }
+                    }
+                }
+
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
+
+                roomCommandService.updateStatus(roomId);
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
                 scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
