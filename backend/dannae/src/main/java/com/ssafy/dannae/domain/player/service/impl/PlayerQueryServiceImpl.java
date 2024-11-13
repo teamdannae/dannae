@@ -68,7 +68,7 @@ public class PlayerQueryServiceImpl implements PlayerQueryService {
         for(Long playerId : playerIdList){
             Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new NoPlayerException("No player find by Id."+ playerId));
-            List<Rank> rankList = rankRepository.findAll();
+            List<Rank> rankList = rankRepository.findAllByMode(mode);
             rankList.sort((r1, r2) -> Long.compare(r2.getScore(), r1.getScore()));
             if (rankList.size() < 5 || player.getScore() > rankList.get(4).getScore()) {
                 if (rankList.size() >= 5 && player.getScore() == rankList.get(4).getScore()) {

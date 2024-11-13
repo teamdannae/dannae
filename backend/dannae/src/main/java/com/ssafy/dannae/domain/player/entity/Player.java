@@ -56,4 +56,5 @@ public class Player {
     public void updateStatus(PlayerStatus status) {
         this.status = status;
     }
+
 }
