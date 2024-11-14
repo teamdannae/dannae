@@ -127,6 +127,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"게임을 시작할 수 없습니다.\"}");
         }
     }
+
     @PreDestroy
     public void destroy() {
         try {
