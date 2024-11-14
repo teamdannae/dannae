@@ -50,6 +50,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, AtomicBoolean> isRoundInProgressMap = new ConcurrentHashMap<>();
     private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
     private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
+    private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
 
     public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService) {
         this.roomQueryService = roomQueryService;
@@ -94,7 +95,10 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         currentRoundMap.put(roomId, 0);
 
         roomSchedulers.computeIfAbsent(roomId, k -> Executors.newScheduledThreadPool(1));
-        if (areAllPlayersInGameRoom(roomId)) {
+        gameStartedMap.putIfAbsent(roomId, new AtomicBoolean(false)); // 초기화
+
+        // 모든 플레이어가 입장한 경우, 게임이 시작되지 않았다면 시작
+        if (areAllPlayersInGameRoom(roomId) && gameStartedMap.get(roomId).compareAndSet(false, true)) {
             startGame(roomId);
         }
     }
@@ -123,7 +127,6 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, "{\"type\": \"error\", \"message\": \"게임을 시작할 수 없습니다.\"}");
         }
     }
-
     @PreDestroy
     public void destroy() {
         try {
