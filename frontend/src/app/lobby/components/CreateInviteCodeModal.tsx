@@ -50,7 +50,11 @@ const CreateInviteCodeModal = () => {
       {showToast && <Toast message="잘못된 초대 코드" duration={3000} />}
       <h3>초대 코드 입력</h3>
       <div className={styles.inputContainer}>
-        <Input value={inviteCode} onChangeEvent={handleInviteCode} />
+        <Input
+          value={inviteCode}
+          onChangeEvent={handleInviteCode}
+          onEnterKey={handleSubmitInviteCode}
+        />
         <Button
           buttonText="입장하기"
           buttonColor="black"
