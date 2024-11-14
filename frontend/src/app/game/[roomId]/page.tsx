@@ -527,7 +527,7 @@ export default function WaitingRoom() {
               : user
           )
         );
-      } else if (data.type === "time_out") {
+      } else if (data.type === "timeout") {
         setRoundReset(true);
       }
 
