@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.ssafy.dannae.global.openai.service.OpenAIService;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -40,6 +41,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
     private final PlayerCommandService playerCommandService;
+    private final OpenAIService openAIService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -244,10 +246,10 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
             String playerId = getPlayerIdFromSession(session);
             PlayerDto playerDto = playerQueryService.findPlayerById(Long.parseLong(playerId));
-
+            String filteredMessage =openAIService.filterMessage(jsonMessage.getString("message"));
             String chatMessage = String.format(
                     "{\"type\": \"chat\", \"nickname\": \"%s\", \"message\": \"%s\", \"playerId\": \"%s\", \"image\": %d}",
-                    playerDto.nickname(), jsonMessage.getString("message"), playerId, playerDto.image()
+                    playerDto.nickname(), filteredMessage , playerId, playerDto.image()
             );
 
             broadcastToRoom(roomId, chatMessage);
