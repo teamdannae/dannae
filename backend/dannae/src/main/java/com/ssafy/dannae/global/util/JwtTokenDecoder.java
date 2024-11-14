@@ -14,15 +14,22 @@ public class JwtTokenDecoder {
 
 	public Long getPlayerId(String token) {
 
-		String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
-
-		if (!jwtTokenProvider.validateToken(jwtToken)) {
-			throw new TokenException("유효하지 않거나 만료된 토큰입니다.");
-		}
+		String jwtToken = validateToken(token);
 
 		String id = jwtTokenProvider.getPlayerIdFromToken(jwtToken);
 		Long playerId = Long.parseLong(id);
 
 		return playerId;
+	}
+
+	public String validateToken(String token) {
+
+		String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+
+		if (!jwtTokenProvider.validateToken(jwtToken)) {
+			throw new TokenException("유효하지 않거나 만료된 토큰입니다.");
+		}
+		return jwtToken;
+
 	}
 }
