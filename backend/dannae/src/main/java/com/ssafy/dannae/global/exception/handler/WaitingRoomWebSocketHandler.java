@@ -41,7 +41,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
     private final PlayerCommandService playerCommandService;
-    private final OpenAIService openAIService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -246,15 +245,15 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
             String playerId = getPlayerIdFromSession(session);
             PlayerDto playerDto = playerQueryService.findPlayerById(Long.parseLong(playerId));
-            String filteredMessage =openAIService.filterMessage(jsonMessage.getString("message"));
+
             String chatMessage = String.format(
                     "{\"type\": \"chat\", \"nickname\": \"%s\", \"message\": \"%s\", \"playerId\": \"%s\", \"image\": %d}",
-                    playerDto.nickname(), filteredMessage , playerId, playerDto.image()
+                    playerDto.nickname(), jsonMessage.getString("message") , playerId, playerDto.image()
             );
 
             broadcastToRoom(roomId, chatMessage);
         } else {
-            // 알 수 없는 타입의 메시지 처리
+
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"알 수 없는 메시지 타입입니다.\"}"));
         }
     }
