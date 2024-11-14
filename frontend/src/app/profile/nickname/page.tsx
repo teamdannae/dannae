@@ -46,6 +46,7 @@ const ProfileNickname = () => {
   }, [namingMode]);
 
   const changeMode = (e: React.ChangeEvent<HTMLInputElement>) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     const newMode = Number(e.target.value);
     setNamingMode(newMode);
 
@@ -108,6 +109,7 @@ const ProfileNickname = () => {
             inputLabel="별명"
             placeholder="한글, 8자 이내로 입력해주세요"
             isValid={isValid}
+            onEnterKey={confirmNickname}
           />
           <div className={styles.errorContainer}>
             {!isValid && (

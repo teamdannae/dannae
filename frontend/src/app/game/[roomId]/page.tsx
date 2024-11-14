@@ -441,6 +441,7 @@ export default function WaitingRoom() {
         );
       } else if (data.type === "round_start") {
         new Audio("/bgm/Round-Start.mp3").play();
+        setMessages([]);
         if (audioRef.current) {
           audioRef.current.volume = 0.3;
         }
@@ -472,18 +473,12 @@ export default function WaitingRoom() {
           )
         );
 
-        // 여기 부분 디자인 수정 필요
         const playerMessages = data.playerDtos.map((player) => {
           const playerMessage = `${player.nickname}: ${player.playerSentence}`;
           return playerMessage;
         });
 
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          "------라운드 결과-----",
-          ...playerMessages,
-          "---------------------",
-        ]);
+        setMessages(() => [`------이번 라운드 결과------`, ...playerMessages]);
 
         setUsers((prevUsers) =>
           prevUsers.map((player) => {
