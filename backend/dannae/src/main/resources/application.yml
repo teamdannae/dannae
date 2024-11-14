@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: dannae
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: '${SPRING_DATASOURCE_URL}'
+    username: '${SPRING_DATASOURCE_USERNAME}'
+    password: '${SPRING_DATASOURCE_PASSWORD}'
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: '${SPRING_JPA_HIBERNATE_DDL_AUTO}'
+    show-sql: '${SPRING_JPA_SHOW_SQL}'
+  websocket:
+    time-limit: 300000
+    send-timeout: 300000
+  data:
+    redis:
+      host: '${SPRING_DATA_REDIS_HOST}'
+      port: '${SPRING_DATA_REDIS_PORT}'
+      password: '${SPRING_DATA_REDIS_PASSWORD}'
+server:
+  port: 8080
+jwt:
+  secret-key: '${JWT_SECRET_KEY}'
+
+openai:
+  api:
+    key: '${OPENAI_API_KEY}'
+  model: '${OPENAI_API_MODEL}'
+
+korean:
+  api:
+    url: '${KOREAN_API_URL}'
+    key: '${KOREAN_API_KEY}'
