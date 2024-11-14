@@ -108,6 +108,7 @@ export default function GameInfo({
   }, [areAllPlayersReady, hostPlayerId]);
 
   const handleOpenModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     if (mode === "단어의 방") {
       openModal(<SentenceGuide />);
     } else {

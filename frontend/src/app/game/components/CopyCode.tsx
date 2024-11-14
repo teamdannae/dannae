@@ -13,6 +13,7 @@ export default function CopyCode({ code }: CopyCodeProps) {
   const [isToastVisible, setIsToastVisible] = useState(false);
 
   const copyToClipboard = () => {
+    new Audio("/bgm/Copy-Button.mp3").play();
     if (typeof window !== "undefined" && navigator.clipboard) {
       navigator.clipboard
         .writeText(code)

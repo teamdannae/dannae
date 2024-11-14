@@ -21,8 +21,7 @@ const HellGuide = () => {
       videoSrc: "/guide/hell-guide-2.mp4",
       text: (
         <>
-          차례대로 순서가 넘어가며 정답인 단어에 대해 <br />
-          어려운 단어를 쓸수록 높은 점수를 받으며
+          차례대로 순서가 넘어가며 정답인 단어가 어려울수록 높은 점수를 받으며
           <br />그 등급은 <span className={styles.common}>쉬움</span>,{" "}
           <span className={styles.rare}>보통</span>,{" "}
           <span className={styles.epic}>어려움</span>,{" "}
