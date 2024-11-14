@@ -3,6 +3,7 @@ package com.ssafy.dannae.domain.game.repository.custom;
 import static com.ssafy.dannae.domain.game.entity.QWord.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -53,6 +54,8 @@ public class WordRepositoryCustom {
 		result.addAll(difficulty2Words);
 		result.addAll(difficulty3Words);
 		result.addAll(difficulty4Words);
+
+		Collections.shuffle(result);
 
 		return result;
 	}
