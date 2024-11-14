@@ -1,0 +1,380 @@
+@use "../../styles/variables.scss" as vars;
+
+// Modal
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modalContent {
+  position: relative;
+  background-color: vars.$white-color;
+  border: vars.$border;
+  border-radius: 8px;
+  padding: 40px 20px;
+  width: auto;
+  min-width: 500px;
+  box-shadow: vars.$box-shadow;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 1000;
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: url("/icons/cross-block.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-image: url("/icons/cross-blockB.svg");
+  }
+}
+
+// Input
+.inputFormContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.inputLabel {
+  color: vars.$dark-color;
+  font-size: vars.$font-size-p2;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.inputValue {
+  width: 100%;
+  background-color: vars.$white-color;
+  color: vars.$dark-color;
+  font-size: vars.$font-size-p1;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  height: 60px;
+  padding: 18px 30px;
+
+  &::placeholder {
+    color: vars.$disabled-color;
+    font-family: var(--font-main);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &[type="text"][disabled] {
+    background-color: vars.$disabled-color;
+    cursor: not-allowed;
+  }
+}
+
+.invalidInputValue {
+  border: 2px solid vars.$red-color;
+}
+
+.warningIcon {
+  position: absolute;
+  right: 30px;
+}
+
+// Progress
+.progressContainer {
+  width: 100%;
+  height: 12px;
+  background-color: vars.$grey-color;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  transition: width 0.1s linear;
+  border-radius: 10px 0 0 10px;
+
+  &.low {
+    background-color: vars.$primary-color;
+  }
+
+  &.medium {
+    background-color: vars.$word-unique-color;
+  }
+
+  &.high {
+    background-color: vars.$red-color;
+  }
+}
+
+// Radio
+.radioContainer {
+  border: none;
+  display: flex;
+  gap: 35px;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.radioButton[type="radio"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  width: 28px;
+  height: 28px;
+  border: 1px solid vars.$dark-color;
+  border-radius: 50%;
+  cursor: pointer;
+  background-color: vars.$white-color;
+  position: relative;
+
+  &:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: vars.$primary-color;
+    border-radius: 50%;
+  }
+}
+
+.radioText {
+  font-size: vars.$font-size-p1;
+}
+
+// Word
+.wordCard {
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: vars.$font-size-p1;
+  font-family: var(--font-head);
+  color: vars.$black-color;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px;
+  transition: background-color 0.3s, color 0.3s;
+
+  &.common {
+    background-color: vars.$word-common-color;
+  }
+
+  &.rare {
+    background-color: vars.$word-rare-color;
+  }
+
+  &.epic {
+    background-color: vars.$word-epic-color;
+  }
+
+  &.unique {
+    background-color: vars.$word-unique-color;
+  }
+
+  &.disabled {
+    background-color: vars.$disabled-color;
+    color: vars.$white-color;
+    animation: static-burn 0.5s ease-in-out;
+  }
+
+  &.wrong {
+    background-color: vars.$red-color;
+  }
+
+  &.pointer {
+    cursor: pointer;
+  }
+}
+
+@keyframes static-burn {
+  0% {
+    background-color: vars.$disabled-color;
+    opacity: 1;
+  }
+  20% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  40% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  60% {
+    background-color: vars.$darkgray-color;
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  80% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+  100% {
+    background-color: vars.$darkgray-color;
+    opacity: 0.1;
+    filter: brightness(0);
+  }
+}
+
+.tooltip {
+  background-color: vars.$primary-color;
+  color: vars.$black-color;
+  padding: 12px;
+  border-radius: 8px;
+  width: 280px;
+  text-align: left;
+  font-size: vars.$font-size-p2;
+  z-index: 1000;
+  word-break: keep-all;
+
+  .tooltipHeader {
+    font-size: vars.$font-size-p1;
+    font-weight: bolder;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.tooltipArrow {
+  fill: vars.$primary-color;
+}
+
+// Button
+.buttonContainer {
+  width: 100%;
+  padding: 20px 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: vars.$white-color;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &.black {
+    background-color: vars.$dark-color;
+  }
+
+  &.green {
+    background-color: vars.$primary-color;
+    color: vars.$dark-color;
+    font-family: var(--font-head);
+    border: none;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    background-color: vars.$disabled-color;
+    border: none;
+    cursor: not-allowed;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// Card
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 160px;
+  z-index: 100;
+  padding: 24px 30px;
+  border: 1px solid vars.$dark-color;
+  border-radius: 45px;
+  background-color: vars.$white-color;
+  box-shadow: vars.$box-shadow;
+
+  &.empty {
+    background-color: vars.$grey-color;
+  }
+
+  &.selected {
+    background-color: vars.$primary-color;
+  }
+}
+
+// CardTag
+.cardBannerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+
+  width: 170px;
+  height: 62px;
+  z-index: 101;
+  transform: rotate(-10deg);
+  border: 2px solid vars.$dark-color;
+  border-radius: 7px;
+  background-color: vars.$primary-color;
+
+  &.fail {
+    background-color: vars.$red-color;
+  }
+}
+
+// Toast
+.toast {
+  position: fixed;
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: vars.$dark-color;
+  color: vars.$white-color;
+  border: vars.$border;
+  padding: 33px 66px;
+  border-radius: 45px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+
+  &.visible {
+    opacity: 1;
+  }
+}

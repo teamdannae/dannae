@@ -1,0 +1,87 @@
+@use "../../../styles/variables.scss" as vars;
+
+.modalContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 20px;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navButton {
+  display: flex;
+  width: 14.2857rem;
+  height: 68px;
+  padding: 20px 35px;
+  justify-content: center;
+  align-items: center;
+  color: vars.$dark-color;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.selectedGame {
+    background-color: vars.$primary-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.deselectedGame {
+    background-color: vars.$dark-color;
+    color: vars.$white-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rankingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.rankingPlayer {
+  display: flex;
+  gap: 36px;
+  align-items: center;
+  min-width: 800px;
+}
+
+.rankingTier {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.rankingImage {
+  border-radius: 20px;
+}
+
+.rankingNickname {
+  text-align: left;
+  width: 260px;
+}
+
+.rankingScore {
+  background-color: vars.$primary-color;
+}

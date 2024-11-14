@@ -1,0 +1,635 @@
+@use "@/styles/variables.scss" as vars;
+
+.headerContainer {
+  display: flex;
+  width: 80%;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding-top: 8px;
+}
+
+.backButton {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  font-size: vars.$font-size-p1;
+
+  &:hover {
+    font-weight: bold;
+  }
+
+  &:hover .backIcon {
+    background-image: url("/icons/chevron-double-left.svg");
+    transform: scale(1.5);
+  }
+}
+
+.backIcon {
+  width: 24px;
+  height: 24px;
+  background: url("/icons/chevron-left.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 기본 버튼 스타일 제거
+.buttonReset {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.infoContainer {
+  height: 280px;
+  width: 100%;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.infoMain {
+  position: relative;
+  background-color: vars.$grey-color;
+  width: 75%;
+  border-radius: 24px;
+  height: 280px;
+  padding: 24px;
+
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+
+  &.flip {
+    transform: rotateY(90deg);
+  }
+}
+
+.infoMainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  backface-visibility: hidden;
+}
+
+.infoMainBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+}
+
+.description {
+  color: vars.$darkgray-color;
+  font-size: vars.$font-size-p2;
+}
+
+.infoIcon {
+  width: 32px;
+  height: 32px;
+  background: url("/icons/info-octagon.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+.illustration {
+  position: absolute;
+  bottom: -5%;
+  right: 5%;
+}
+
+.detailButton {
+  width: fit-content;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@keyframes rainbowBorder {
+  0% {
+    border-color: #ff0000; // 빨간색
+  }
+  16.66% {
+    border-color: #ff7f00; // 주황색
+  }
+  33.33% {
+    border-color: #ffff00; // 노란색
+  }
+  50% {
+    border-color: #00ff00; // 초록색
+  }
+  66.66% {
+    border-color: #0000ff; // 파란색
+  }
+  83.33% {
+    border-color: #4b0082; // 남색
+  }
+  100% {
+    border-color: #8b00ff; // 보라색
+  }
+}
+
+.startButton {
+  border: 4px solid;
+  animation: rainbowBorder 3s linear infinite;
+}
+
+.leftButton {
+  width: 32px;
+  height: 32px;
+  background: url("/icons/chevron-left.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+
+  &:hover {
+    background-image: url("/icons/chevron-double-left.svg");
+    transform: scale(1.5);
+  }
+}
+
+.rightButton {
+  width: 32px;
+  height: 32px;
+  background: url("/icons/chevron-right.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+
+  &:hover {
+    background-image: url("/icons/chevron-double-right.svg");
+    transform: scale(1.5);
+  }
+}
+
+.readyButton {
+  width: 25%;
+  border-radius: 19px;
+  transition: transform 0.3s ease;
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.playerContainer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(100px, 260px));
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  width: 75%;
+  margin: auto;
+}
+
+.popup {
+  position: fixed;
+  bottom: 20%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 10;
+  width: fit-content;
+  height: fit-content;
+  background-color: vars.$primary-color;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.messagesContainer {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 12px;
+  height: 160px;
+  border: vars.$border;
+  border-radius: 12px;
+  background-color: vars.$white-color;
+  position: relative;
+  z-index: 1;
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: white;
+    border-radius: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 8px;
+    border: 3px solid white;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: vars.$font-size-p2;
+}
+
+.inputContainer {
+  display: flex;
+  padding-top: 8px;
+  gap: 12px;
+}
+
+.inputContainer > :first-child {
+  flex: 10;
+}
+
+.inputContainer > :last-child {
+  flex: 1;
+}
+
+.cardInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  height: 80%;
+}
+
+.cardInnerImage {
+  border-radius: 36px;
+}
+
+@media (max-width: 1024px) {
+  .cardInnerImage {
+    display: none;
+  }
+}
+
+.cardInnerInfo {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: end;
+  margin-right: 4px;
+
+  h5 {
+    font-size: vars.$font-size-p1;
+  }
+}
+
+.cardInnerDetail {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+// 무한 초성 지옥 관련 CSS
+.infiniteGameContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  width: 75%;
+  height: 470px;
+  background-color: vars.$grey-color;
+  border-radius: 45px;
+  margin-bottom: 8px;
+  padding: 20px;
+}
+
+.consonantContainer {
+  display: flex;
+  gap: 30px;
+  padding: 20px 0;
+  justify-content: center;
+  align-items: center;
+
+  &.isHidden {
+    animation: roll-out-right 0.6s ease-in 4.5s both;
+  }
+
+  &.isStart {
+    display: none;
+  }
+}
+
+@keyframes roll-out-right {
+  0% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(1000px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+.consonant {
+  display: flex;
+  width: 100px;
+  height: 100px;
+  align-items: center;
+  justify-content: center;
+  background-color: vars.$white-color;
+  border: 1px solid vars.$dark-color;
+  border-radius: 25px;
+  box-shadow: vars.$box-shadow;
+}
+
+.wordContainer {
+  display: flex;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  width: 98%;
+  gap: 10px;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.sentenceContainer {
+  min-height: 320px;
+  width: 80%;
+  background-color: vars.$grey-color;
+  margin: 8px 0;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.score {
+  background-color: vars.$primary-color;
+  width: fit-content;
+  border-radius: 4px;
+  align-self: flex-end;
+}
+
+.loaderContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.loader {
+  position: relative;
+  height: 200px;
+  width: 200px;
+  border-bottom: 3px solid #ff3d00;
+  box-sizing: border-box;
+  animation: drawLine 4s linear infinite;
+}
+
+.loader:before {
+  content: "";
+  position: absolute;
+  left: calc(100% + 14px);
+  bottom: -6px;
+  width: 16px;
+  height: 100px;
+  border-radius: 20px 20px 50px 50px;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(#ff3d00 6px, transparent 0),
+    linear-gradient(45deg, rgba(0, 0, 0, 0.02) 49%, white 51%),
+    linear-gradient(315deg, rgba(0, 0, 0, 0.02) 49%, white 51%),
+    linear-gradient(
+      to bottom,
+      #ffffff 10%,
+      #ff3d00 10%,
+      #ff3d00 90%,
+      #ffffff 90%
+    );
+  background-size: 3px 3px, 8px 8px, 8px 8px, 16px 88px;
+  background-position: center bottom, left 88px, right 88px, left top;
+  transform: rotate(25deg);
+  animation: pencilRot 4s linear infinite;
+}
+
+.loadingText {
+  position: absolute;
+  bottom: 10%;
+  font-size: vars.$font-size-h3;
+}
+
+@keyframes drawLine {
+  0%,
+  100% {
+    width: 0px;
+  }
+
+  45%,
+  55% {
+    width: 200px;
+  }
+}
+
+@keyframes pencilRot {
+  0%,
+  45% {
+    bottom: -6px;
+    left: calc(100% + 14px);
+    transform: rotate(25deg);
+  }
+
+  55%,
+  100% {
+    bottom: -12px;
+    left: calc(100% + 16px);
+    transform: rotate(220deg);
+  }
+}
+
+// 결과 모달
+
+// ResultModal.module.scss
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContainer {
+  background-color: vars.$grey-color;
+  border-radius: 8px;
+  max-width: 700px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modalHeader {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.modalContent {
+  margin: 15px 0;
+  display: flex;
+  width: 100%;
+  height: 600px;
+  gap: 3%;
+}
+
+.modalContent > div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3%;
+}
+
+.firstCard {
+  background-color: vars.$primary-color;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: vars.$border;
+  img {
+    border-radius: 24px;
+  }
+  position: relative;
+}
+
+.winnerCrown {
+  position: absolute;
+  top: -60px;
+  left: 0;
+  rotate: -10deg;
+}
+
+.restCard {
+  background-color: vars.$dark-color;
+  border-radius: 14px;
+  width: 100%;
+  height: 31%;
+  color: vars.$white-color;
+  display: flex;
+  border: vars.$border;
+
+  img {
+    border-radius: 12px;
+  }
+}
+
+.restCard > div {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  gap: 3%;
+}
+
+.emptyCard {
+  background-color: vars.$grey-color;
+}
+
+.restInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.resultScore {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-p1;
+  background-color: vars.$white-color;
+  border-radius: 8px;
+  width: fit-content;
+  padding: 8px;
+  color: vars.$dark-color;
+}
+
+.modalFooter {
+  display: flex;
+}
+
+.closeButton,
+.confirmButton {
+  padding: 8px 15px;
+  font-size: 1em;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.closeButton {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.confirmButton {
+  background-color: #4caf50;
+  color: white;
+}
+
+.closeButton:hover {
+  background-color: #c7c7c7;
+}
+
+.confirmButton:hover {
+  background-color: #45a049;
+}
+
+// Fade-in animation for modal appearance
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
