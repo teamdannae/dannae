@@ -54,21 +54,21 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
 
         // 방 인원 제한 확인
         if (sessions.size() >= MAX_ROOM_CAPACITY) {
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"방 인원이 최대치에 도달했습니다.\"}"));
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"errorCode\": \"ROOM_FULL\", \"message\": \"방 인원이 최대치에 도달했습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
 
         // 토큰 유효성 검사
         if (token == null || !jwtTokenProvider.validateToken(token)) {
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"유효하지 않은 토큰입니다.\"}"));
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"errorCode\": \"INVALID_TOKEN\", \"message\": \"유효하지 않은 토큰입니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
 
         // 방의 상태가 playing(게임 진행 중)인지 확인
         if (room.getStatus().equals("playing")) {
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"현재 게임이 진행 중인 방입니다. 대기실에 들어올 수 없습니다.\"}"));
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"errorCode\": \"GAME_IN_PROGRESS\", \"message\": \"현재 게임이 진행 중인 방입니다. 대기실에 들어올 수 없습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
@@ -235,11 +235,12 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             Room room = roomQueryService.findById(roomId)
                     .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
 
-            if (room.getCreator().equals(Long.parseLong(playerId))) {
-                onGameStartButtonClicked(roomId, session); // 방장이 맞다면 게임 시작
-            } else {
-                session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"게임 시작 권한이 없습니다.\"}"));
+            if (!room.getCreator().equals(Long.parseLong(playerId))) {
+                session.sendMessage(new TextMessage("{\"type\": \"error\", \"errorCode\": \"NOT_ROOM_CREATOR\", \"message\": \"게임 시작 권한이 없습니다.\"}"));
+                return;
             }
+
+            onGameStartButtonClicked(roomId, session);
         } else if ("chat".equals(type)) {
 
             String playerId = getPlayerIdFromSession(session);
@@ -253,7 +254,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, chatMessage);
         } else {
 
-            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"알 수 없는 메시지 타입입니다.\"}"));
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"errorCode\": \"UNKNOWN_TYPE\", \"message\": \"알 수 없는 메시지 타입입니다.\"}"));
         }
     }
 
