@@ -285,6 +285,7 @@
 .cardInner {
   display: flex;
   align-items: center;
+  justify-content: left;
   gap: 8px;
   width: max-content;
   height: 80%;
@@ -676,7 +677,7 @@
     }
 
     span.big {
-      font-size: 36px;
+      font-size: 32px;
     }
   }
 }

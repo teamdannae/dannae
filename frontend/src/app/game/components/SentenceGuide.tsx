@@ -24,7 +24,8 @@ const SentenceGuide = () => {
         <>
           제공된 단어들을 활용하여 문장을 완성해보세요!
           <br /> 어려운 단어를 쓸수록{" "}
-          <span className={styles.big}>높은 점수</span>를 획득합니다.
+          <span className={`${styles.big} ${styles.unique}`}>높은 점수</span>를
+          획득합니다.
         </>
       ),
     },
@@ -32,9 +33,10 @@ const SentenceGuide = () => {
       videoSrc: "/guide/sentence-guide-3.mp4",
       text: (
         <>
-          모든 유저가 <span className={styles.big}>같은 라운드</span>를 진행하며{" "}
-          <br />
-          사용한 단어는 다시 사용할 수 없으며 그 의미를 확인할 수 있습니다.
+          모든 유저가{" "}
+          <span className={`${styles.big} ${styles.unique}`}>같은 라운드</span>
+          를 진행하며 사용한 단어는 다시 사용할 수 없습니다. <br />
+          어려운 단어는 의미를 확인하고 활용해보세요!
         </>
       ),
     },

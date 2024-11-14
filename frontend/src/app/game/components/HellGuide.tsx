@@ -10,7 +10,9 @@ const HellGuide = () => {
       videoSrc: "/guide/hell-guide-1.mp4",
       text: (
         <>
-          게임이 시작되면 <span className={styles.big}>초성</span>이 제공되고
+          게임이 시작되면{" "}
+          <span className={`${styles.big} ${styles.unique}`}>초성</span>이
+          제공되고
           <br /> 그 초성에 대응되는 단어를 입력하면 정답입니다.
         </>
       ),
@@ -33,8 +35,9 @@ const HellGuide = () => {
       text: (
         <>
           정답인 단어에 대해선 그 의미를 볼 수 있으며
-          <br /> <span className={styles.big}>마지막 한 명</span>이 살아남을
-          때까지 게임은 진행됩니다.
+          <br />{" "}
+          <span className={`${styles.big} ${styles.unique}`}>마지막 한 명</span>
+          이 살아남을 때까지 게임은 진행됩니다.
         </>
       ),
     },

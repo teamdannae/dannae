@@ -368,10 +368,10 @@
   padding: 8px 12px;
   border-radius: 8px;
   color: vars.$dark-color;
-  font-size: vars.$font-size-p1;
+  font-size: vars.$font-size-p2;
   min-width: 260px;
   z-index: 102;
-  word-break: break-all;
+  word-break: keep-all;
   text-align: left;
   margin-bottom: 8px;
 
