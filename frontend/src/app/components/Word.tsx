@@ -82,7 +82,11 @@ export default function WordCard({
               />
               <span>{word}</span>
             </div>
-            <p>{meaning}</p>
+            <ul className={styles.tooltipBody}>
+              {meaning.map((mean, index) => (
+                <li key={index}>{mean}</li>
+              ))}
+            </ul>
             <Tooltip.Arrow
               className={styles.tooltipArrow}
               width={24}

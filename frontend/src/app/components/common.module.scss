@@ -253,11 +253,17 @@
   color: vars.$black-color;
   padding: 12px;
   border-radius: 8px;
-  width: 280px;
+  width: 320px;
   text-align: left;
   font-size: vars.$font-size-p2;
   z-index: 1000;
   word-break: keep-all;
+  max-height: 400px;
+  overflow-y: scroll;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   .tooltipHeader {
     font-size: vars.$font-size-p1;
@@ -266,6 +272,17 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .tooltipBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-left: 1rem;
+
+    p {
+      font-size: vars.$font-size-p2;
+    }
   }
 }
 

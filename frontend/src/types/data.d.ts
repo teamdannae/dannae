@@ -64,6 +64,7 @@ interface message {
   round?: string;
   userWords: string[];
   playerDtos: SentencePlayer[];
+  errorCode?: string;
 }
 
 interface chat {

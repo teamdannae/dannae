@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Input, Radio } from "../../components";
+import { Button, Input } from "../../components";
 import styles from "./page.module.scss";
 import { nicknamePattern } from "@/utils/regex";
 import { useRouter } from "next/navigation";
@@ -10,11 +10,11 @@ import Image from "next/image";
 const ProfileNickname = () => {
   const router = useRouter();
 
-  const [namingMode, setNamingMode] = useState<number>(0);
   const [nickname, setNickname] = useState<string>("");
   const [isValid, setIsValid] = useState<boolean>(true);
 
   const getRandomNickname = async () => {
+    new Audio("/bgm/Button-Click.mp3").play();
     try {
       const response = await fetch(
         "https://www.rivestsoft.com/nickname/getRandomNickname.ajax",
@@ -38,22 +38,8 @@ const ProfileNickname = () => {
   };
 
   useEffect(() => {
-    if (namingMode === 0) {
-      getRandomNickname();
-    } else {
-      setNickname("");
-    }
-  }, [namingMode]);
-
-  const changeMode = (e: React.ChangeEvent<HTMLInputElement>) => {
-    new Audio("/bgm/Button-Click.mp3").play();
-    const newMode = Number(e.target.value);
-    setNamingMode(newMode);
-
-    if (newMode === 0) {
-      getRandomNickname();
-    }
-  };
+    getRandomNickname();
+  }, []);
 
   const changeNickname = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -96,21 +82,31 @@ const ProfileNickname = () => {
             자신을 잘 표현할 수 있는 별명을 선택해주세요!
           </p>
         </header>
-        <Radio
-          selectedIndex={namingMode}
-          values={["임의 설정", "직접 설정"]}
-          onChangeEvent={changeMode}
-        />
+
         <div className={styles.inputContainer}>
-          <Input
-            value={nickname}
-            onChangeEvent={changeNickname}
-            onBlurEvent={validateNickname}
-            inputLabel="별명"
-            placeholder="한글, 8자 이내로 입력해주세요"
-            isValid={isValid}
-            onEnterKey={confirmNickname}
-          />
+          <div className={styles.input}>
+            <Input
+              value={nickname}
+              onChangeEvent={changeNickname}
+              onBlurEvent={validateNickname}
+              inputLabel="별명"
+              placeholder="한글, 8자 이내로 입력해주세요"
+              isValid={isValid}
+            />
+            <div
+              className={`${styles.iconButton} ${styles.refreshButton}`}
+              onClick={getRandomNickname}
+            >
+              <Image
+                src="/icons/refresh.svg"
+                alt="refresh button"
+                width={40}
+                height={40}
+                priority
+                className={styles.refreshIcon}
+              />
+            </div>
+          </div>
           <div className={styles.errorContainer}>
             {!isValid && (
               <p className={styles.errorMessage}>
