@@ -60,8 +60,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, String> playerNicknames = new HashMap<>(); // 사용자 ID와 닉네임 매핑
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
     private final Map<Long, Boolean> isSinglePlayerGame = new ConcurrentHashMap<>();
-    private final Map<Long, Boolean> gameStarting = new ConcurrentHashMap<>(); // 게임 시작 상태 추적을 위한 새로운 맵
-
 
     private final InfiniteGameCommandService infiniteGameCommandService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -152,49 +150,38 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void startGame(Long roomId) throws IOException {
+        Long playerCount = roomQueryService.findById(roomId)
+            .orElseThrow(() -> new NoRoomException("no room exception"))
+            .getPlayerCount();
 
-        if (Boolean.FALSE.equals(gameStarting.putIfAbsent(roomId, true))) {
-            return;
-        }
+        isSinglePlayerGame.put(roomId, playerCount == 1);
 
-        try {
-            Long playerCount = roomQueryService.findById(roomId)
-                .orElseThrow(() -> new NoRoomException("no room exception"))
-                .getPlayerCount();
+        InfiniteGameDto gameDto = InfiniteGameDto.builder().roomId(roomId).build();
+        InfiniteGameDto initialDto = infiniteGameCommandService.createInitial(gameDto);
 
-            isSinglePlayerGame.put(roomId, playerCount == 1);
+        String initial = initialDto.initial();
+        gameConsonantsMap.put(roomId, initial);
+        Long infiniteGameId = initialDto.gameId();
+        gameIdsMap.put(roomId, infiniteGameId);
+        String message = String.format("{\"type\": \"infiniteGameStart\", \"initial\": \"%s\", \"infiniteGameId\": \"%s\"}", initial, infiniteGameId);
 
-            InfiniteGameDto gameDto = InfiniteGameDto.builder().roomId(roomId).build();
-            InfiniteGameDto initialDto = infiniteGameCommandService.createInitial(gameDto);
+        broadcastToRoom(roomId, message);
 
-            String initial = initialDto.initial();
-            gameConsonantsMap.put(roomId, initial);
-            Long infiniteGameId = initialDto.gameId();
-            gameIdsMap.put(roomId, infiniteGameId);
-            String message = String.format("{\"type\": \"infiniteGameStart\", \"initial\": \"%s\", \"infiniteGameId\": \"%s\"}", initial, infiniteGameId);
-
-            broadcastToRoom(roomId, message);
-
-            // 단일 스케줄러 작업으로 통합
-            scheduler.schedule(() -> {
-                try {
-                    List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
-                    if (activeSessions != null && !activeSessions.isEmpty()) {
-                        initializeTurnOrder(roomId);
-                        startTurn(roomId, initialDto);
-                    } else {
-                        endGame(roomId);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    gameStarting.remove(roomId); // 게임 시작 상태 제거
+        scheduler.schedule(() -> {
+            try {
+                // 5초 후 실제 게임 시작 전에 플레이어 수 다시 확인
+                List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
+                if (activeSessions != null && !activeSessions.isEmpty()) {
+                    initializeTurnOrder(roomId);
+                    startTurn(roomId, initialDto);
+                } else {
+                    // 플레이어가 부족하면 게임 종료
+                    endGame(roomId);
                 }
-            }, 5, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            gameStarting.remove(roomId); // 에러 발생 시에도 게임 시작 상태 제거
-            throw e;
-        }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, 5, TimeUnit.SECONDS);
     }
 
     private void cancelAllScheduledTasks(Long roomId) {
@@ -208,10 +195,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
     // startTurn 메서드 수정: 스케줄러 저장 및 턴 제한 시간 스케줄러 추가
     private void startTurn(Long roomId, InfiniteGameDto initialDto) throws IOException {
-        if (Boolean.TRUE.equals(turnInProgress.get(roomId))) {
-            return;
-        }
-
         cancelAllScheduledTasks(roomId);
 
         Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
@@ -223,13 +206,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         WebSocketSession currentSession = roomTurnOrder.peek();
         if (currentSession != null && currentSession.isOpen()) {
-            synchronized (turnInProgress) {
-                if (Boolean.TRUE.equals(turnInProgress.get(roomId))) {
-                    return;
-                }
-                turnInProgress.put(roomId, true);  // 한 번만 설정
-            }
-
             String currentPlayerId = sessionPlayerIdMap.get(currentSession);
             String nickname = playerNicknames.get(currentPlayerId);
 
@@ -241,6 +217,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             String personalTurnMessage = "{\"type\": \"turn_start\", \"message\": \"당신의 차례입니다. 10초 안에 정답을 입력해주세요!\"}";
             currentSession.sendMessage(new TextMessage(personalTurnMessage));
 
+            turnInProgress.put(roomId, true);
+
             // 제한 시간 스케줄러 설정 및 저장
             ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
                 try {
@@ -250,7 +228,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 }
             }, 10, TimeUnit.SECONDS);
 
-            turnTimeoutTasks.put(roomId, timeoutTask);
+            turnTimeoutTasks.put(roomId, timeoutTask); // 스케줄러 저장
         }
     }
 
@@ -291,14 +269,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         if (isTimeout) {
             broadcastToRoom(roomId, "{\"type\": \"timeout\", \"message\": \"턴 종료!\"}");
-            turnInProgress.put(roomId, false); // 현재 턴 종료 표시
             scheduler.schedule(() -> {
-                try {
-                    handlePlayerElimination(currentSession, roomId, "시간 초과");
-                    moveToNextTurn(roomId);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                handlePlayerElimination(currentSession, roomId, "시간 초과");
+                moveToNextTurn(roomId);
             }, 2, TimeUnit.SECONDS);
         } else {
             SubmittedAnswer lastAnswer = answers.stream()
@@ -342,7 +315,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                         "{\"type\": \"success\", \"message\": \"%s님 정답입니다!\"}", nickname
                     );
                     broadcastToRoom(roomId, successMessage);
-                    turnInProgress.put(roomId, false); // 현재 턴 종료 표시
+
                     scheduler.schedule(() -> {
                         moveToNextTurn(roomId);
                     }, 2, TimeUnit.SECONDS);
@@ -351,20 +324,17 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                         "{\"type\": \"failure\", \"message\": \"%s님 %s\"}", nickname, result.meaning().get(0)
                     );
                     broadcastToRoom(roomId, failureMessage);
-                    turnInProgress.put(roomId, false); // 현재 턴 종료 표시
+
                     scheduler.schedule(() -> {
-                        try {
-                            handlePlayerElimination(currentSession, roomId, "오답입니다!");
-                            moveToNextTurn(roomId);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        handlePlayerElimination(currentSession, roomId, "오답입니다!");
+                        moveToNextTurn(roomId);
                     }, 2, TimeUnit.SECONDS);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        turnInProgress.put(roomId, false); // 턴 완료 표시
         submittedAnswers.remove(roomId);
     }
 
@@ -383,19 +353,16 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             roomTurnOrder.remove(session);
 
             long actualActivePlayers = roomTurnOrder.stream()
-                .filter(s -> activeSessions.contains(s) && s.isOpen())
+                .filter(s -> activeSessions.contains(s))
                 .count();
 
             System.out.println("실제 남은 플레이어 수: " + actualActivePlayers);
 
             // 1인용 게임인 경우는 actualActivePlayers가 0이 되었을 때만 종료
             // 다인용 게임인 경우는 actualActivePlayers가 1 이하가 되었을 때 종료
-            boolean shouldEndGame;
-            if (Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))) {
-                shouldEndGame = actualActivePlayers == 0;
-            } else {
-                shouldEndGame = actualActivePlayers <= 1;  // 다인용 게임에서 1명 이하 남으면 종료
-            }
+            boolean shouldEndGame = Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))
+                ? actualActivePlayers < 1
+                : actualActivePlayers <= 1;
 
             if (shouldEndGame) {
                 endGame(roomId);
@@ -404,16 +371,15 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            try {
-                endGame(roomId);  // 에러 발생 시 안전하게 게임 종료
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
     private void moveToNextTurn(Long roomId) {
-        // 턴 진행 상태 체크 제거 (이미 handleTurnTimeoutOrCheckAnswer에서 false로 설정됨)
+        if (Boolean.TRUE.equals(turnInProgress.get(roomId))) {
+            System.out.println("턴이 이미 진행 중이라 moveToNextTurn 스킵");
+            return;
+        }
+
         try {
             Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
             List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
@@ -428,17 +394,18 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 .filter(s -> activeSessions.contains(s))
                 .count();
 
-            boolean shouldEndGame;
-            if (Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))) {
-                shouldEndGame = actualActivePlayers == 0;
-            } else {
-                shouldEndGame = actualActivePlayers <= 1;  // 다인용 게임에서 1명 이하 남으면 종료
-            }
+            boolean shouldEndGame = Boolean.TRUE.equals(isSinglePlayerGame.get(roomId))
+                ? actualActivePlayers < 1
+                : actualActivePlayers <= 1;
 
             if (shouldEndGame) {
                 endGame(roomId);
                 return;
             }
+
+            System.out.println("moveToNextTurn 시작 시 turnOrder: " + roomTurnOrder.stream()
+                .map(s -> sessionPlayerIdMap.get(s))
+                .collect(Collectors.joining(" -> ")));
 
             // 현재 플레이어를 큐에서 제거
             WebSocketSession currentSession = roomTurnOrder.poll();
@@ -453,10 +420,10 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 roomTurnOrder.poll();
             }
 
+            turnInProgress.put(roomId, true);
             startTurn(roomId, InfiniteGameDto.builder().roomId(roomId).build());
         } catch (Exception e) {
             e.printStackTrace();
-            turnInProgress.put(roomId, false); // 에러 발생 시 턴 진행 상태 초기화
         }
     }
 
@@ -516,8 +483,6 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
         turnInProgress.remove(roomId);
-        gameStarting.remove(roomId);
-
     }
 
     @Override
