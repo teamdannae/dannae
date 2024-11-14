@@ -38,9 +38,11 @@ import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
     private final Map<Long, List<WebSocketSession>> gameRoomSessions = new ConcurrentHashMap<>();
@@ -151,7 +153,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
     private void startGame(Long roomId) throws IOException {
 
-        if (!gameStarting.putIfAbsent(roomId, true)) {
+        if (Boolean.FALSE.equals(gameStarting.putIfAbsent(roomId, true))) {
             return;
         }
 
@@ -506,6 +508,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
         turnInProgress.remove(roomId);
+        gameStarting.remove(roomId);
+
     }
 
     @Override
