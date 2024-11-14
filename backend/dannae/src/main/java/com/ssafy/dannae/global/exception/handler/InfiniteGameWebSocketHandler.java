@@ -512,22 +512,15 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private void broadcastToRoom(Long roomId, String message) {
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
         if (sessions != null) {
-            // 열려있는 세션들의 리스트를 새로 만들어서 관리
-            List<WebSocketSession> openSessions = new ArrayList<>();
-
             for (WebSocketSession session : sessions) {
                 try {
                     if (session.isOpen()) {  // 세션이 열려있는 경우에만 메시지 전송
                         session.sendMessage(new TextMessage(message));
-                        openSessions.add(session);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-
-            // 열려있는 세션만 남도록 업데이트
-            gameRoomSessions.put(roomId, openSessions);
         }
     }
 
