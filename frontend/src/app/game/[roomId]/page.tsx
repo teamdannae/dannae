@@ -474,7 +474,12 @@ export default function WaitingRoom() {
         );
 
         const playerMessages = data.playerDtos.map((player) => {
-          const playerMessage = `${player.nickname}: ${player.playerSentence}`;
+          let playerMessage;
+          if (player.playerSentence.length > 0) {
+            playerMessage = `${player.nickname}: ${player.playerSentence}`;
+          } else {
+            playerMessage = `${player.nickname}는 문장을 완성하지 못했습니다.`;
+          }
           return playerMessage;
         });
 
