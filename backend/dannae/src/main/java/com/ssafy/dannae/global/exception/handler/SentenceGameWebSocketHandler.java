@@ -435,6 +435,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
                 roomCommandService.updateStatus(roomId);
+                gameStartedMap.get(roomId).set(false);
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
                 scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
