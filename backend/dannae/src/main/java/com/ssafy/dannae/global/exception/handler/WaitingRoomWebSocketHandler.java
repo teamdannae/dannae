@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.ssafy.dannae.domain.room.entity.RoomStatus;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -66,8 +67,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        // 방의 상태가 playing(게임 진행 중)인지 확인
-        if (room.getStatus().equals("PLAYING")) {
+        if (room.getStatus().equals(RoomStatus.PLAYING)) {
             session.sendMessage(new TextMessage("{\"type\": \"error\", \"errorCode\": \"GAME_IN_PROGRESS\", \"message\": \"현재 게임이 진행 중인 방입니다. 대기실에 들어올 수 없습니다.\"}"));
             session.close(CloseStatus.POLICY_VIOLATION);
             return;
