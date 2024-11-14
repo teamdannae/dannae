@@ -5,21 +5,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceWordDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.game.entity.Word;
 import com.ssafy.dannae.domain.game.exception.NoWordException;
 import com.ssafy.dannae.domain.game.repository.WordRepository;
+import com.ssafy.dannae.domain.game.repository.custom.WordRepositoryCustom;
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
+import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
 import com.ssafy.dannae.domain.game.sentencegame.entity.SentenceGame;
-import com.ssafy.dannae.domain.game.sentencegame.factory.SentenceGameFactory;
 import com.ssafy.dannae.domain.game.sentencegame.repository.SentenceGameRepository;
 import com.ssafy.dannae.domain.game.sentencegame.service.SentenceGameCommandService;
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceGameDto;
 import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentencePlayerDto;
+import com.ssafy.dannae.domain.game.sentencegame.service.dto.SentenceWordDto;
 import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.exception.NoPlayerException;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
@@ -27,7 +28,6 @@ import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.global.openai.service.OpenAIService;
 import com.ssafy.dannae.global.openai.service.dto.SentenceDto;
 import com.ssafy.dannae.global.openai.service.dto.WordResultDto;
-import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +47,8 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 			1000, 1050, 1100, 1150, 1200
 	};
 	private final SentenceGameRepository sentenceGameRepository;
-	private final SentenceGameFactory sentenceGameFactory;
 	private final WordRepository wordRepository;
+	private final WordRepositoryCustom wordRepositoryCustom;
 	private final PlayerRepository playerRepository;
 	private final OpenAIService openAIService;
 
@@ -60,7 +60,7 @@ class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 	@Override
 	public SentenceGameCreateRes createInitial(SentenceGameDto sentenceGameDto) {
 
-		List<Word> initialWords = wordRepository.findRandomWords();
+		List<Word> initialWords = wordRepositoryCustom.findRandomWords();
 		List<SentenceWordDto> words = new ArrayList<>();
 		Set<String> activeWords = new HashSet<>();
 		for (Word word : initialWords) {
