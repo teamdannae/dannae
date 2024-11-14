@@ -58,6 +58,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, String> playerNicknames = new HashMap<>(); // 사용자 ID와 닉네임 매핑
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
     private final Map<Long, Boolean> isSinglePlayerGame = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> gameStarting = new ConcurrentHashMap<>(); // 게임 시작 상태 추적을 위한 새로운 맵
+
 
     private final InfiniteGameCommandService infiniteGameCommandService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -148,38 +150,49 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void startGame(Long roomId) throws IOException {
-        Long playerCount = roomQueryService.findById(roomId)
-            .orElseThrow(() -> new NoRoomException("no room exception"))
-            .getPlayerCount();
 
-        isSinglePlayerGame.put(roomId, playerCount == 1);
+        if (!gameStarting.putIfAbsent(roomId, true)) {
+            return;
+        }
 
-        InfiniteGameDto gameDto = InfiniteGameDto.builder().roomId(roomId).build();
-        InfiniteGameDto initialDto = infiniteGameCommandService.createInitial(gameDto);
+        try {
+            Long playerCount = roomQueryService.findById(roomId)
+                .orElseThrow(() -> new NoRoomException("no room exception"))
+                .getPlayerCount();
 
-        String initial = initialDto.initial();
-        gameConsonantsMap.put(roomId, initial);
-        Long infiniteGameId = initialDto.gameId();
-        gameIdsMap.put(roomId, infiniteGameId);
-        String message = String.format("{\"type\": \"infiniteGameStart\", \"initial\": \"%s\", \"infiniteGameId\": \"%s\"}", initial, infiniteGameId);
+            isSinglePlayerGame.put(roomId, playerCount == 1);
 
-        broadcastToRoom(roomId, message);
+            InfiniteGameDto gameDto = InfiniteGameDto.builder().roomId(roomId).build();
+            InfiniteGameDto initialDto = infiniteGameCommandService.createInitial(gameDto);
 
-        scheduler.schedule(() -> {
-            try {
-                // 5초 후 실제 게임 시작 전에 플레이어 수 다시 확인
-                List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
-                if (activeSessions != null && !activeSessions.isEmpty()) {
-                    initializeTurnOrder(roomId);
-                    startTurn(roomId, initialDto);
-                } else {
-                    // 플레이어가 부족하면 게임 종료
-                    endGame(roomId);
+            String initial = initialDto.initial();
+            gameConsonantsMap.put(roomId, initial);
+            Long infiniteGameId = initialDto.gameId();
+            gameIdsMap.put(roomId, infiniteGameId);
+            String message = String.format("{\"type\": \"infiniteGameStart\", \"initial\": \"%s\", \"infiniteGameId\": \"%s\"}", initial, infiniteGameId);
+
+            broadcastToRoom(roomId, message);
+
+            // 단일 스케줄러 작업으로 통합
+            scheduler.schedule(() -> {
+                try {
+                    List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
+                    if (activeSessions != null && !activeSessions.isEmpty()) {
+                        initializeTurnOrder(roomId);
+                        startTurn(roomId, initialDto);
+                    } else {
+                        endGame(roomId);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    gameStarting.remove(roomId); // 게임 시작 상태 제거
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }, 5, TimeUnit.SECONDS);
+            }, 5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            gameStarting.remove(roomId); // 에러 발생 시에도 게임 시작 상태 제거
+            throw e;
+        }
     }
 
     private void cancelAllScheduledTasks(Long roomId) {
@@ -193,6 +206,11 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
     // startTurn 메서드 수정: 스케줄러 저장 및 턴 제한 시간 스케줄러 추가
     private void startTurn(Long roomId, InfiniteGameDto initialDto) throws IOException {
+
+        if (Boolean.TRUE.equals(turnInProgress.get(roomId))) {
+            return;
+        }
+
         cancelAllScheduledTasks(roomId);
 
         Queue<WebSocketSession> roomTurnOrder = turnOrder.get(roomId);
@@ -204,6 +222,13 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         WebSocketSession currentSession = roomTurnOrder.peek();
         if (currentSession != null && currentSession.isOpen()) {
+            synchronized (turnInProgress) {
+                if (Boolean.TRUE.equals(turnInProgress.get(roomId))) {
+                    return;
+                }
+                turnInProgress.put(roomId, true);
+            }
+
             String currentPlayerId = sessionPlayerIdMap.get(currentSession);
             String nickname = playerNicknames.get(currentPlayerId);
 
