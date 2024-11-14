@@ -1,0 +1,1 @@
+export const nicknamePattern = /^[가-힣\s]{1,8}$/;

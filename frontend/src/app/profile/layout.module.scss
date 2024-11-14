@@ -1,0 +1,21 @@
+@use "../../styles/variables.scss" as vars;
+
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.profileContainer {
+  display: flex;
+  align-items: center;
+
+  width: 1240px;
+  height: 740px;
+  background-color: vars.$grey-color;
+  border-radius: 45px;
+  padding: 60px 100px 80px 100px;
+  overflow: hidden;
+}

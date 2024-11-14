@@ -1,0 +1,159 @@
+@use "@/styles/variables.scss" as vars;
+
+.lobbyContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  height: 100vh;
+  padding: 24px 76px 24px 76px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.header h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    gap: 12px;
+
+    h1 {
+      text-align: center;
+    }
+  }
+}
+
+@media (max-width: 820px) {
+  .navContainer {
+    flex-direction: column;
+  }
+
+  .pageController {
+    justify-content: center;
+  }
+}
+
+.mainHeader {
+  margin-bottom: 32px;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navButton {
+  display: flex;
+  width: 14.2857rem;
+  height: 68px;
+  padding: 20px 35px;
+  justify-content: center;
+  align-items: center;
+  color: vars.$dark-color;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.selectedGame {
+    background-color: vars.$primary-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.deselectedGame {
+    background-color: vars.$dark-color;
+    color: vars.$white-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.gameFinder {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.iconButton {
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.disabled {
+    background-color: vars.$disabled-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.refreshButton {
+  &:hover .refreshIcon {
+    transform: rotate(360deg);
+    transition: transform 1s ease;
+  }
+}
+
+.refreshIcon {
+  transition: transform 0.5s ease;
+}
+
+.pageController {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.gameListContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  column-gap: 24px;
+  row-gap: 24px;
+}
+
+.cardItem {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: center;
+
+  .playerCount {
+    text-align: right;
+  }
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
