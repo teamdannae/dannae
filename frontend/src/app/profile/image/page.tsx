@@ -55,6 +55,11 @@ const ProfileImage = () => {
     }
   };
 
+  const toggleImage = (index: number) => {
+    new Audio("/bgm/Profile-Click.mp3").play();
+    selectImage(index);
+  };
+
   return (
     <section
       className={`${styles.imageContainer} ${isFinish ? styles.isDone : ""}`}
@@ -84,7 +89,7 @@ const ProfileImage = () => {
             className={`${styles.profileImage} ${
               selectedImage === index ? styles.selected : ""
             }`}
-            onClick={() => selectImage(index)}
+            onClick={() => toggleImage(index)}
             priority
           />
         ))}

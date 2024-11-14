@@ -41,6 +41,11 @@ const CreateRankingModal = () => {
     loadRanking(mode);
   }, [mode]);
 
+  const toggleMode = (index: string) => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    setMode(index);
+  };
+
   return (
     <div
       className={styles.modalContainer}
@@ -49,7 +54,7 @@ const CreateRankingModal = () => {
       <h3>순위표</h3>
       <nav className={styles.navContainer} style={{ justifyContent: "center" }}>
         <div
-          onClick={() => setMode("1")}
+          onClick={() => toggleMode("1")}
           className={`${styles.navButton} ${
             mode === "1" ? styles.selectedGame : styles.deselectedGame
           }`}
@@ -57,7 +62,7 @@ const CreateRankingModal = () => {
           <p>단어의 방</p>
         </div>
         <div
-          onClick={() => setMode("2")}
+          onClick={() => toggleMode("2")}
           className={`${styles.navButton} ${
             mode === "2" ? styles.selectedGame : styles.deselectedGame
           }`}

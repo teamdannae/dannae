@@ -13,6 +13,7 @@ const CreateRoomModal = () => {
   const { selectedMode, newRoomTitle, isPublic } = createRoomModalState;
 
   const handleIsPublicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     const newValue = e.target.value === "0";
     setCreateRoomModalState({
       ...createRoomModalState,
@@ -21,6 +22,7 @@ const CreateRoomModal = () => {
   };
 
   const handleSelectedModeChange = (newMode: string) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     setCreateRoomModalState({
       ...createRoomModalState,
       selectedMode: newMode,
@@ -101,6 +103,7 @@ const CreateRoomModal = () => {
           value={newRoomTitle}
           onChangeEvent={handleNewRoomTitleChange}
           inputLabel="방 제목"
+          onEnterKey={handleCreateRoom}
         />
         <Button
           buttonText="생성하기"
