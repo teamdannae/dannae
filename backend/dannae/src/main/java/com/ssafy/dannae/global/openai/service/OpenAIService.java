@@ -10,4 +10,6 @@ public interface OpenAIService {
 
 	WordResultDto wordResult(SentenceDto sentenceDto);
 
+	String filterMessage(String message);
+
 }

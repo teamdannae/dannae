@@ -248,6 +248,25 @@ class OpenAIServiceImpl implements OpenAIService {
 			.build();
 	}
 
+	@Override
+	public String filterMessage(String message){
+
+		String question =  "다음 문장에 비속어가 포함되어있는지 판단해보세요 \n"
+			+ "문장: \"" + message + "\"\n"
+			+ "비속어가 포함되어 있지 않으면 그대로 문장을 반환해주세요 \n"
+			+ "비속어가 포함되어 있으면 포함되어 있는 부분을 *로 바꿔서 반환해주세요 \n"
+			+ "예시에 맞는 형식으로만 반환해주세요 \n"
+			+ "예시: 안녕하세요\n"
+			+ "과정 설명 없이 문장만 반환해주세요.\n";
+
+		PromptDto questionPrompt = PromptDto.builder()
+			.messages(List.of(Map.of("role", "user", "content", question)))
+			.temperature(0.8f)
+			.max_tokens(1000)
+			.build();
+
+		return prompt(questionPrompt);
+	}
 
 }
 
