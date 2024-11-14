@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.json.JSONObject;
@@ -60,6 +61,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, String> playerNicknames = new HashMap<>(); // 사용자 ID와 닉네임 매핑
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
     private final Map<Long, Boolean> isSinglePlayerGame = new ConcurrentHashMap<>();
+    private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
 
     private final InfiniteGameCommandService infiniteGameCommandService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -93,7 +95,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         initializePlayerInGame(session, roomId, playerId);
 
-        if (areAllPlayersConnected(roomId)) {
+        gameStartedMap.putIfAbsent(roomId, new AtomicBoolean(false)); // 초기화
+
+        if (areAllPlayersConnected(roomId) && gameStartedMap.get(roomId).compareAndSet(false, true)) {
             usedWords.putIfAbsent(roomId, new HashSet<>());
             startGame(roomId);
         }
@@ -150,6 +154,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void startGame(Long roomId) throws IOException {
+
         Long playerCount = roomQueryService.findById(roomId)
             .orElseThrow(() -> new NoRoomException("no room exception"))
             .getPlayerCount();
@@ -428,6 +433,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private synchronized void endGame(Long roomId) throws IOException {
+
         // 이미 게임이 종료되었는지 확인 (맵에서 제거되었는지 체크)
         if (!gameRoomSessions.containsKey(roomId)) {
             return;  // 이미 종료된 게임이면 리턴
@@ -448,6 +454,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         try {
             // room status 변경 (한 번만 실행되도록 보장)
             roomCommandService.updateStatus(roomId);
+            gameStartedMap.get(roomId).set(false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -483,6 +490,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
         turnInProgress.remove(roomId);
+
     }
 
     @Override
