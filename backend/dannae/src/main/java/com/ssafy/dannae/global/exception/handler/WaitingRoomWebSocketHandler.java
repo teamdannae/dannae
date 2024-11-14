@@ -46,9 +46,8 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         Long roomId = getRoomIdFromSession(session);
         String token = getTokenFromSession(session);
 
-        if (roomId == null || !roomQueryService.existsById(roomId)) {
-            throw new NoRoomException("존재하지 않는 방입니다.");
-        }
+        Room room = roomQueryService.findById(roomId)
+                .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
 
         // 현재 방의 세션 리스트 가져오기
         List<WebSocketSession> sessions = waitingRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
@@ -67,35 +66,37 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        // 방의 상태가 playing(게임 진행 중)인지 확인
+        if (room.getStatus().equals("playing")) {
+            session.sendMessage(new TextMessage("{\"type\": \"error\", \"message\": \"현재 게임이 진행 중인 방입니다. 대기실에 들어올 수 없습니다.\"}"));
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
+        }
+
         sessions.add(session);
         sessionTokenMap.put(session, token);
 
-        // 플레이어 수 업데이트
         int playerCount = sessions.size();
         roomCommandService.updatePlayerCount(roomId, (long) playerCount);
 
-        // 현재 방장의 playerId 가져오기
-        Room room = roomQueryService.findById(roomId)
-                .orElseThrow(() -> new NoRoomException("방을 찾을 수 없습니다."));
-        Long creatorId = room.getCreator();
-
+        WebSocketSession creatorSession = roomCreatorMap.get(roomId);
+        if (creatorSession == null || !creatorSession.isOpen()) {
+            // 방장이 없으면 새로운 방장을 할당
+            assignNewCreator(sessions, roomId);
+        }
 
         // 새로 입장한 사용자의 PlayerDto 가져오기
         String playerId = getPlayerIdFromSession(session);
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
-
-        playerCommandService.resetScore(Long.parseLong(playerId));
-
         String nickname = dto.nickname();
         int image = dto.image();
 
-        playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.nonready);
-
-        // 새로 입장한 사용자가 방장인 경우 roomCreatorMap에 등록
-        if (creatorId.equals(Long.parseLong(playerId))) {
+        // 방장인 경우 roomCreatorMap에 등록
+        if (room.getCreator().equals(Long.parseLong(playerId))) {
             roomCreatorMap.put(roomId, session);
-            System.out.println("방장 등록됨: roomId=" + roomId + ", playerId=" + playerId);
         }
+
+        Long creatorId = room.getCreator();
 
         // 현재 대기실에 있는 플레이어 목록 생성
         StringBuilder playerListMessage = new StringBuilder("{\"type\": \"current_players\", \"players\": [");
@@ -191,7 +192,6 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
             log.error("Error in afterConnectionClosed", e);
         }
     }
-
 
     private void assignNewCreator(List<WebSocketSession> sessions, Long roomId) {
         if (sessions.isEmpty()) return;
