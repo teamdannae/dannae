@@ -359,6 +359,37 @@
   }
 }
 
+.roundSentence {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: vars.$primary-color;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: vars.$dark-color;
+  font-size: vars.$font-size-p1;
+  min-width: 260px;
+  z-index: 102;
+  word-break: break-all;
+  text-align: left;
+  margin-bottom: 8px;
+
+  /* 말풍선 꼬리 */
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid vars.$primary-color;
+  }
+}
+
 // Toast
 .toast {
   position: fixed;

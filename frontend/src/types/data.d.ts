@@ -119,3 +119,8 @@ interface result {
   score: number;
   status: string;
 }
+
+interface roundSentence {
+  playerId: number;
+  sentence: string;
+}

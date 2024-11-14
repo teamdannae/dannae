@@ -107,6 +107,7 @@ export default function WaitingRoom() {
   const [isConsonantVisible, setIsConsonantVisible] = useState(true);
   const [gameResult, setGameResult] = useState<result[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [roundSentence, setRoundSentence] = useState<roundSentence[]>([]);
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -149,6 +150,7 @@ export default function WaitingRoom() {
   const getGameResult = async () => {
     setVolume(0.2);
     setMusicUrl("/bgm/Game-End.mp3");
+    setRoundSentence([]);
     const roomResponse = await fetch(`/api/next/rooms/${roomId}`);
     const roomData = await roomResponse.json();
     const resultResponse = await fetch("/api/next/game/result", {
@@ -441,6 +443,7 @@ export default function WaitingRoom() {
         );
       } else if (data.type === "round_start") {
         new Audio("/bgm/Round-Start.mp3").play();
+        setRoundSentence([]);
         setMessages([]);
         if (audioRef.current) {
           audioRef.current.volume = 0.3;
@@ -472,6 +475,25 @@ export default function WaitingRoom() {
             data.userWords.includes(word.word) ? { ...word, used: true } : word
           )
         );
+
+        data.playerDtos.map((player) => {
+          setRoundSentence((prev) => {
+            if (player.playerSentence.length > 0) {
+              return [
+                ...prev,
+                { playerId: player.playerId, sentence: player.playerSentence },
+              ];
+            } else {
+              return [
+                ...prev,
+                {
+                  playerId: player.playerId,
+                  sentence: "문장을 완성하지 못했습니다.",
+                },
+              ];
+            }
+          });
+        });
 
         const playerMessages = data.playerDtos.map((player) => {
           let playerMessage;
@@ -659,7 +681,7 @@ export default function WaitingRoom() {
         </div>
       )}
       <section aria-labelledby="player-list" className={styles.section}>
-        <PlayerList users={users} />
+        <PlayerList users={users} roundSentence={roundSentence} />
       </section>
       <section aria-labelledby="chat" className={styles.section}>
         <Chat

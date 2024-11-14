@@ -6,9 +6,10 @@ import Image from "next/image";
 
 interface playerProps {
   users: player[];
+  roundSentence: roundSentence[];
 }
 
-export default function PlayerList({ users }: playerProps) {
+export default function PlayerList({ users, roundSentence }: playerProps) {
   const [previousTotalScores, setPreviousTotalScores] = useState(
     users.map((user) => user.totalScore)
   );
@@ -40,6 +41,9 @@ export default function PlayerList({ users }: playerProps) {
             isNewScore={isNewScore[index]}
             newScore={user.nowScore}
             isFail={user.isFail}
+            roundSentence={roundSentence.find(
+              (el) => el.playerId === +user.playerId
+            )}
           >
             <div className={styles.cardInner}>
               {!user.isEmpty && (
