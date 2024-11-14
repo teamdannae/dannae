@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useModal } from "@/hooks";
 import { Button } from "@/app/components";
+import { HellGuide, SentenceGuide } from ".";
 import styles from "./components.module.scss";
 import Image from "next/image";
 
@@ -107,11 +108,12 @@ export default function GameInfo({
   }, [areAllPlayersReady, hostPlayerId]);
 
   const handleOpenModal = () => {
-    openModal(
-      <div>
-        <p>모달 내용입니다.</p>
-      </div>
-    );
+    new Audio("/bgm/Button-Click.mp3").play();
+    if (mode === "단어의 방") {
+      openModal(<SentenceGuide />);
+    } else {
+      openModal(<HellGuide />);
+    }
   };
 
   // const handleFlip = (newIndex: number) => {

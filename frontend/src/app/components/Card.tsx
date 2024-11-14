@@ -13,6 +13,7 @@ interface CardProps {
   isFail?: boolean;
   onClickEvent?: () => void;
   children?: ReactNode;
+  roundSentence?: roundSentence;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -24,6 +25,7 @@ const Card: React.FC<CardProps> = ({
   isFail,
   onClickEvent,
   children,
+  roundSentence,
 }) => {
   const [showBanner, setShowBanner] = useState(isNewScore);
 
@@ -69,6 +71,9 @@ const Card: React.FC<CardProps> = ({
     >
       {renderBanner()}
       {children}
+      {roundSentence && (
+        <p className={styles.roundSentence}>{roundSentence.sentence}</p>
+      )}
     </div>
   );
 };

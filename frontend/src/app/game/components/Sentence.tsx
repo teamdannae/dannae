@@ -27,7 +27,7 @@ const Sentence = ({ wordList }: SentenceProps) => {
                 ? "epic"
                 : "unique"
             }
-            viewMeaning={word.used}
+            viewMeaning={true}
             disabled={word.used}
             style={{ padding: "12px 36px" }}
           />
