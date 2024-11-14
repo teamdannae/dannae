@@ -6,9 +6,10 @@ import Image from "next/image";
 
 interface playerProps {
   users: player[];
+  roundSentence: roundSentence[];
 }
 
-export default function PlayerList({ users }: playerProps) {
+export default function PlayerList({ users, roundSentence }: playerProps) {
   const [previousTotalScores, setPreviousTotalScores] = useState(
     users.map((user) => user.totalScore)
   );
@@ -40,6 +41,9 @@ export default function PlayerList({ users }: playerProps) {
             isNewScore={isNewScore[index]}
             newScore={user.nowScore}
             isFail={user.isFail}
+            roundSentence={roundSentence.find(
+              (el) => el.playerId === +user.playerId
+            )}
           >
             <div className={styles.cardInner}>
               {!user.isEmpty && (
@@ -47,12 +51,16 @@ export default function PlayerList({ users }: playerProps) {
                   src={`/profiles/profile${user.image}.svg`}
                   alt="player profile"
                   className={styles.cardInnerImage}
-                  width={110}
-                  height={110}
+                  width={100}
+                  height={100}
                 />
               )}
 
-              <div className={styles.cardInnerInfo}>
+              <div
+                className={`${styles.cardInnerDetail} ${
+                  user.nickname.length > 6 ? styles.longNickname : ""
+                }`}
+              >
                 <h5>{user.isHost ? "방장" : "\u00A0"}</h5>
                 <div className={styles.cardInnerDetail}>
                   {user.totalScore > 0 && (
@@ -60,7 +68,7 @@ export default function PlayerList({ users }: playerProps) {
                       {user.totalScore.toLocaleString()}점
                     </h5>
                   )}
-                  <h5>{user.nickname}</h5>
+                  <h5 className={styles.nickname}>{user.nickname}</h5>
                 </div>
               </div>
             </div>
