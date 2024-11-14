@@ -1,3 +1,5 @@
+@use "@/styles/variables.scss" as vars;
+
 .pageWrapper {
   display: flex;
   position: relative;
@@ -7,7 +9,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 40px;
+  gap: 20px;
 }
 
 .headerText {
@@ -15,6 +17,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 20px;
+  margin-bottom: 50px;
 
   p {
     text-wrap: pretty;
@@ -29,6 +32,39 @@
 
 .inputContainer {
   width: 100%;
+}
+
+.input {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+}
+
+.iconButton {
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+  background-color: vars.$white-color;
+  height: 60px;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+}
+
+.refreshButton {
+  &:hover .refreshIcon {
+    transform: rotate(360deg);
+    transition: transform 1s ease;
+  }
+}
+
+.refreshIcon {
+  transition: transform 0.5s ease;
 }
 
 .errorContainer {
