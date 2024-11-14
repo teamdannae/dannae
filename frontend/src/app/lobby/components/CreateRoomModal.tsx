@@ -51,6 +51,7 @@ const CreateRoomModal = () => {
       });
 
       if (!response.ok) {
+        router.replace("/profile/nickname");
         throw new Error("Failed to create room");
       }
 

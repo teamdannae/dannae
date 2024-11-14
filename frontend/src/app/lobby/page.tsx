@@ -56,6 +56,7 @@ const Lobby = () => {
       const response = await fetch("/api/next/rooms/list");
 
       if (!response.ok) {
+        router.replace("/profile/nickname");
         throw new Error("Failed to fetch games");
       }
 
@@ -115,6 +116,7 @@ const Lobby = () => {
       const response = await fetch(`/api/next/rooms/${roomId.toString()}`);
 
       if (!response.ok) {
+        router.replace("/profile/nickname");
         throw new Error("Failed to load room data");
       }
 

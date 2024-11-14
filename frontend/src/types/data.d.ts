@@ -31,7 +31,7 @@ interface message {
     | "turn_start"
     | "failure"
     | "exit"
-    | "time_out";
+    | "timeout";
   event?:
     | "creator"
     | "creator_change"
