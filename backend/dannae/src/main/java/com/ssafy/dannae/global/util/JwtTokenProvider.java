@@ -14,7 +14,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 public class JwtTokenProvider {
 
     private final String secretKey;
-    private final long tokenValidity = 60 * 60 * 1000L; // 30분 (밀리초 단위)
+    private final long tokenValidity = 7 * 24 * 60 * 60 * 1000L; // 7일 (밀리초 단위)
 
     public JwtTokenProvider(@Value("${jwt.secret-key}") String secretKey) {
         this.secretKey = secretKey;
