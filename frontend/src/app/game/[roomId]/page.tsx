@@ -11,15 +11,12 @@ import {
   Sentence,
   ResultModal,
 } from "../components";
-import {
-  useParams,
-  // useRouter
-} from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.scss";
 import { Progress, Toast } from "@/app/components";
 
 export default function WaitingRoom() {
-  // const router = useRouter();
+  const router = useRouter();
 
   // BGM 관련
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -428,8 +425,26 @@ export default function WaitingRoom() {
           setShowToast(false);
         }, 4500);
         // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
-      } else if (data.type === "error") {
-        // router.replace("/profile/nickname");
+      } else if (data.type === "error" && data.errorCode) {
+        if (data.errorCode === "ROOM_FULL") {
+          setToastMessage("방에 자리가 없습니다!");
+          setToastDuration(1500);
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+            router.replace("/lobby");
+          }, 1500);
+        } else if (data.errorCode === "GAME_IN_PROGRESS") {
+          setToastMessage("이미 게임이 진행 중입니다!");
+          setToastDuration(1500);
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+            router.replace("/lobby");
+          }, 1500);
+        } else {
+          router.replace("/profile/nickname");
+        }
         // 플레이어 턴 제시
       } else if (data.type === "turn_info" && data.playerId) {
         setIsInfiniteTurnStart(true);
