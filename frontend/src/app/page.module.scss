@@ -261,3 +261,31 @@ a.secondary {
   outline: none;
   cursor: pointer;
 }
+
+.errorPageContainer {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  height: 100vh;
+  gap: 4rem;
+  padding: 10rem;
+  background-color: vars.$grey-color;
+}
+
+.errorIcon {
+  border-radius: 45px;
+}
+
+.errorContent {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 10rem 2rem;
+  gap: 1rem;
+}
+
+.errorButton {
+  margin-top: 5rem;
+  width: 20rem;
+}
