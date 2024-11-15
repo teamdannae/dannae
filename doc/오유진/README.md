@@ -62,3 +62,4 @@
 - https://aiopen.etri.re.kr/bertModel
 
 # api 명세서 작성완료 
+# ucc 스토리보드 작성완료 
