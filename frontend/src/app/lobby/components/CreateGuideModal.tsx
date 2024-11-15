@@ -6,6 +6,7 @@ const CreateGuideModal = () => {
   const [index, setIndex] = useState(1);
 
   const toggleMode = (index: number) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     setIndex(index);
   };
 

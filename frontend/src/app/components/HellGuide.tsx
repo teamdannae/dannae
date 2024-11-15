@@ -51,6 +51,7 @@ const HellGuide = () => {
   }, [slides.length]);
 
   const goToSlide = (index: number) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     setCurrentSlide(index);
   };
 
