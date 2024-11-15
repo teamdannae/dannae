@@ -11,6 +11,7 @@ import {
   CreateRankingModal,
 } from "./components";
 import { useRouter } from "next/navigation";
+import CreateGuideModal from "./components/CreateGuideModal";
 
 const gamesPerPage = 12;
 
@@ -33,6 +34,11 @@ const Lobby = () => {
   const router = useRouter();
 
   const { openModal } = useModal();
+
+  const handleGameGuideModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    openModal(<CreateGuideModal />);
+  };
 
   const handleCreateRoomModal = () => {
     new Audio("/bgm/Button-Click.mp3").play();
@@ -146,6 +152,9 @@ const Lobby = () => {
       <header className={`${styles.header} ${styles.mainHeader}`}>
         <h1>게임 목록</h1>
         <nav className={styles.navContainer}>
+          <div onClick={handleGameGuideModal} className={styles.navButton}>
+            <p>게임 설명</p>
+          </div>
           <div onClick={handleCreateRankingModal} className={styles.navButton}>
             <p>순위표</p>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./components.module.scss";
+import styles from "./common.module.scss";
 
 const HellGuide = () => {
   const [currentSlide, setCurrentSlide] = useState(0);

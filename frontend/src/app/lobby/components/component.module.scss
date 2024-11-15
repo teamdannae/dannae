@@ -24,6 +24,7 @@
   border: 1px solid vars.$dark-color;
   border-radius: 15px;
   cursor: pointer;
+  transition: all 0.3s ease;
 
   &:hover {
     background-color: vars.$grey-color;
@@ -84,4 +85,21 @@
 
 .rankingScore {
   background-color: vars.$primary-color;
+}
+
+.guideButtonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.guideContent {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.guideContentActive {
+  opacity: 1;
+  transform: translateY(0);
 }
