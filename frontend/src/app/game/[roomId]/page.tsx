@@ -224,6 +224,7 @@ export default function WaitingRoom() {
         audioElement.src = "";
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [musicUrl, isPlaying]);
 
   useEffect(() => {
@@ -602,6 +603,7 @@ export default function WaitingRoom() {
       }
       console.log(data);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [url]
   );
 

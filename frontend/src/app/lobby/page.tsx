@@ -11,6 +11,7 @@ import {
   CreateRankingModal,
 } from "./components";
 import { useRouter } from "next/navigation";
+import CreateGuideModal from "./components/CreateGuideModal";
 
 const gamesPerPage = 12;
 
@@ -33,6 +34,11 @@ const Lobby = () => {
   const router = useRouter();
 
   const { openModal } = useModal();
+
+  const handleGameGuideModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    openModal(<CreateGuideModal />);
+  };
 
   const handleCreateRoomModal = () => {
     new Audio("/bgm/Button-Click.mp3").play();
@@ -73,6 +79,7 @@ const Lobby = () => {
 
     // 컴포넌트 언마운트 시 인터벌 정리
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -83,6 +90,7 @@ const Lobby = () => {
       loadGames();
       setTimeout(() => setIsThrottled(false), 1000); // 1초 동안 쓰로틀링 상태 유지
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isThrottled]);
 
   // 선택된 모드에 따른 게임 필터링
@@ -144,6 +152,9 @@ const Lobby = () => {
       <header className={`${styles.header} ${styles.mainHeader}`}>
         <h1>게임 목록</h1>
         <nav className={styles.navContainer}>
+          <div onClick={handleGameGuideModal} className={styles.navButton}>
+            <p>게임 설명</p>
+          </div>
           <div onClick={handleCreateRankingModal} className={styles.navButton}>
             <p>순위표</p>
           </div>

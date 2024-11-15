@@ -8,5 +8,3 @@ export { default as Infinite } from "./Infinite";
 export { default as Sentence } from "./Sentence";
 export { default as WordLoader } from "./WordLoader";
 export { default as ResultModal } from "./ResultModal";
-export { default as SentenceGuide } from "./SentenceGuide";
-export { default as HellGuide } from "./HellGuide";

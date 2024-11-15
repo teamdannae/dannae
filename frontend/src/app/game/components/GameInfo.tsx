@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useModal } from "@/hooks";
 import { Button } from "@/app/components";
-import { HellGuide, SentenceGuide } from ".";
+import { HellGuide, SentenceGuide } from "../../components";
 import styles from "./components.module.scss";
 import Image from "next/image";
 
