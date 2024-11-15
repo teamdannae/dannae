@@ -28,6 +28,7 @@ export default function PlayerList({ users, roundSentence }: playerProps) {
     }, 2000);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users]);
 
   return (

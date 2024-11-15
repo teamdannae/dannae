@@ -73,6 +73,7 @@ const Lobby = () => {
 
     // 컴포넌트 언마운트 시 인터벌 정리
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -83,6 +84,7 @@ const Lobby = () => {
       loadGames();
       setTimeout(() => setIsThrottled(false), 1000); // 1초 동안 쓰로틀링 상태 유지
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isThrottled]);
 
   // 선택된 모드에 따른 게임 필터링

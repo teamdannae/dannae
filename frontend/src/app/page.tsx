@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./components";
 import styles from "./page.module.scss";
@@ -9,7 +9,6 @@ import words from "@/data/word";
 
 export default function Home() {
   const router = useRouter();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [fallingWords, setFallingWords] = useState<string[]>(
     Array(50).fill("")
   );
@@ -34,17 +33,11 @@ export default function Home() {
       element.style.setProperty("--delay", `${delay}s`);
       element.style.setProperty("--rotate", `${rotate}deg`);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const navigateToGame = () => {
     router.push("/lobby");
-  };
-
-  const unmuteAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = false;
-      audioRef.current.play();
-    }
   };
 
   return (
@@ -54,16 +47,13 @@ export default function Home() {
           단<span className={styles.fontChange}>어를</span> 내{" "}
           <span className={styles.fontChange}>것으로</span>
         </h1>
-        <button onClick={unmuteAudio} className={styles.buttonReset}>
-          <Image
-            src="/illustration/illustration-landing.svg"
-            alt="home illustration"
-            width={480}
-            height={480}
-            priority
-          />
-        </button>
-
+        <Image
+          src="/illustration/illustration-landing.svg"
+          alt="home illustration"
+          width={480}
+          height={480}
+          priority
+        />
         <div className={styles.startButton}>
           <Button
             buttonText="게임하기"
@@ -79,7 +69,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-      <audio ref={audioRef} src="/bgm/Main-BGM.mp3" loop muted />
     </main>
   );
 }
