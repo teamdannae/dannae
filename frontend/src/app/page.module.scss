@@ -245,31 +245,14 @@ a.secondary {
   width: 100%;
 }
 
-.speakerIcon {
-  display: flex;
-  width: 100%;
-  justify-content: end;
-  margin-bottom: 16px;
-  padding-right: 24px;
-}
-
-.buttonReset {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  outline: none;
-  cursor: pointer;
-}
-
 .errorPageContainer {
   display: flex;
   align-items: center;
   flex-direction: row;
   justify-content: center;
   height: 100vh;
-  gap: 4rem;
-  padding: 10rem;
+  gap: 3rem;
+  padding: 8rem;
   background-color: vars.$grey-color;
 }
 

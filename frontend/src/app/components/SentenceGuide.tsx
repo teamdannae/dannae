@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./components.module.scss";
+import styles from "./common.module.scss";
 
 const SentenceGuide = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -33,10 +33,10 @@ const SentenceGuide = () => {
       videoSrc: "/guide/sentence-guide-3.mp4",
       text: (
         <>
-          모든 유저가{" "}
+          모두가{" "}
           <span className={`${styles.big} ${styles.unique}`}>같은 라운드</span>
           를 진행하며 사용한 단어는 다시 사용할 수 없습니다. <br />
-          어려운 단어는 의미를 확인하고 활용해보세요!
+          단어가 어렵다면 뜻을 확인할 수 있습니다!
         </>
       ),
     },
@@ -51,6 +51,7 @@ const SentenceGuide = () => {
   }, [slides.length]);
 
   const goToSlide = (index: number) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     setCurrentSlide(index);
   };
 
@@ -70,7 +71,7 @@ const SentenceGuide = () => {
               loop
               muted
               playsInline
-              width={1000}
+              width={800}
             />
           </div>
           <h5>{slide.text}</h5>

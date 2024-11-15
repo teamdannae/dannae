@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./components.module.scss";
+import styles from "./common.module.scss";
 
 const HellGuide = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -51,6 +51,7 @@ const HellGuide = () => {
   }, [slides.length]);
 
   const goToSlide = (index: number) => {
+    new Audio("/bgm/Button-Click.mp3").play();
     setCurrentSlide(index);
   };
 
@@ -70,7 +71,7 @@ const HellGuide = () => {
               loop
               muted
               playsInline
-              width={1000}
+              width={800}
             />
           </div>
           <h5>{slide.text}</h5>

@@ -49,7 +49,7 @@ const CreateRankingModal = () => {
   return (
     <div
       className={styles.modalContainer}
-      style={{ width: 1000, padding: "20px 0px 20px 60px" }}
+      style={{ width: 1000, padding: "10px 0px 0px 60px" }}
     >
       <h3>순위표</h3>
       <nav className={styles.navContainer} style={{ justifyContent: "center" }}>
