@@ -8,4 +8,6 @@ public interface PlayerCommandService {
 
     void resetScore(Long playerId);
 
+    void updateScore(Long playerId, int score);
+
 }
