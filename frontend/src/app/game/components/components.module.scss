@@ -190,7 +190,6 @@
 .readyButton {
   width: 25%;
   border-radius: 16px;
-  border: vars.$border;
   transition: transform 0.3s ease;
   &:hover {
     transform: scale(1.1);
