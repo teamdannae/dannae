@@ -30,6 +30,16 @@ export default function RootLayout({
     <html lang="ko">
       <body className={`${headFont.className} ${mainFont.className}`}>
         <ModalProvider>{children}</ModalProvider>
+        <footer className="zapsplat-credit">
+          Sounds provided by{" "}
+          <a
+            href="https://www.zapsplat.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ZapSplat
+          </a>
+        </footer>
       </body>
     </html>
   );
