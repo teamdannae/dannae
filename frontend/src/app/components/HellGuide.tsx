@@ -11,7 +11,7 @@ const HellGuide = () => {
       text: (
         <>
           게임이 시작되면{" "}
-          <span className={`${styles.big} ${styles.unique}`}>초성</span>이
+          <span className={`${styles.big} ${styles.highlight}`}>초성</span>이
           제공되고
           <br /> 그 초성에 대응되는 단어를 입력하면 정답입니다.
         </>
@@ -35,7 +35,9 @@ const HellGuide = () => {
         <>
           정답인 단어에 대해선 그 의미를 볼 수 있으며
           <br />{" "}
-          <span className={`${styles.big} ${styles.unique}`}>마지막 한 명</span>
+          <span className={`${styles.big} ${styles.highlight}`}>
+            마지막 한 명
+          </span>
           이 살아남을 때까지 게임은 진행됩니다.
         </>
       ),

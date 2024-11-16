@@ -468,6 +468,10 @@
       background-color: vars.$word-unique-color;
     }
 
+    span.highlight {
+      background-color: vars.$primary-color;
+    }
+
     span.big {
       font-size: 32px;
     }
