@@ -269,16 +269,40 @@ const Lobby = () => {
             >
               {!game.isEmpty && (
                 <div className={styles.cardItem}>
-                  <h5>{game.title}</h5>
+                  <h5
+                    className={
+                      game.mode === "단어의 방"
+                        ? styles.blueTitle
+                        : styles.redTitle
+                    }
+                  >
+                    {game.title}
+                  </h5>
                   <div>
                     <div className={styles.info}>
-                      <Image
-                        src="/icons/gameboy.svg"
-                        alt="mode icon"
-                        width={24}
-                        height={24}
-                      />
-                      <p>{game.mode}</p>
+                      {game.mode === "단어의 방" ? (
+                        <Image
+                          src="/icons/gameboy.svg"
+                          alt="mode icon"
+                          width={24}
+                          height={24}
+                        />
+                      ) : (
+                        <Image
+                          src="/icons/gameboyB.svg"
+                          alt="mode icon"
+                          width={24}
+                          height={24}
+                        />
+                      )}
+
+                      <p
+                        className={
+                          game.mode === "단어의 방" ? styles.blue : styles.red
+                        }
+                      >
+                        {game.mode}
+                      </p>
                     </div>
                     <div className={styles.info}>
                       <Image
@@ -290,6 +314,26 @@ const Lobby = () => {
                       <p>{game.creatorNickname}</p>
                     </div>
                   </div>
+                  {game.mode === "단어의 방" ? (
+                    <Image
+                      className={styles.birdIllustration}
+                      src="/illustration/bird.svg"
+                      alt="mode icon"
+                      width={160}
+                      height={160}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <Image
+                      className={styles.catIllustration}
+                      src="/illustration/cat.svg"
+                      alt="mode icon"
+                      width={170}
+                      height={200}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
+
                   <p className={styles.playerCount}>{game.playerCount} / 4</p>
                 </div>
               )}

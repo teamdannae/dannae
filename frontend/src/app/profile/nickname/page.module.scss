@@ -30,6 +30,12 @@
   right: -120%;
 }
 
+@media (max-width: 1024px) {
+  .illustration {
+    display: none;
+  }
+}
+
 .inputContainer {
   width: 100%;
 }

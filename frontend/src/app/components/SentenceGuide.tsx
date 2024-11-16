@@ -24,8 +24,8 @@ const SentenceGuide = () => {
         <>
           제공된 단어들을 활용하여 문장을 완성해보세요!
           <br /> 어려운 단어를 쓸수록{" "}
-          <span className={`${styles.big} ${styles.unique}`}>높은 점수</span>를
-          획득합니다.
+          <span className={`${styles.big} ${styles.highlight}`}>높은 점수</span>
+          를 획득합니다.
         </>
       ),
     },
@@ -34,7 +34,9 @@ const SentenceGuide = () => {
       text: (
         <>
           모두가{" "}
-          <span className={`${styles.big} ${styles.unique}`}>같은 라운드</span>
+          <span className={`${styles.big} ${styles.highlight}`}>
+            같은 라운드
+          </span>
           를 진행하며 사용한 단어는 다시 사용할 수 없습니다. <br />
           단어가 어렵다면 뜻을 확인할 수 있습니다!
         </>

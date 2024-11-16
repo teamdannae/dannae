@@ -48,10 +48,11 @@ export default function Home() {
           <span className={styles.fontChange}>것으로</span>
         </h1>
         <Image
+          className={styles.landingImage}
           src="/illustration/illustration-landing.svg"
           alt="home illustration"
-          width={480}
-          height={480}
+          width={400}
+          height={400}
           priority
         />
         <div className={styles.startButton}>

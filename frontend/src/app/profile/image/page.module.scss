@@ -18,6 +18,13 @@
   width: 100%;
 }
 
+@media (max-width: 1024px) {
+  .headerContainer {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
 .headerText {
   display: flex;
   flex-direction: column;
