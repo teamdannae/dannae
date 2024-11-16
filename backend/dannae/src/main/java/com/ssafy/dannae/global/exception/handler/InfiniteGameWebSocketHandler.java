@@ -62,6 +62,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
     private final Map<Long, Boolean> isSinglePlayerGame = new ConcurrentHashMap<>();
     private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
+    private final Map<Long, Set<String>> activePlayersMap = new ConcurrentHashMap<>();
 
     private final InfiniteGameCommandService infiniteGameCommandService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -139,6 +140,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
+
+        Set<String> activePlayers = activePlayersMap.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet());
+        activePlayers.add(playerId);
 
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
@@ -348,6 +352,16 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         try {
             playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.end);
 
+            Set<String> activePlayers = activePlayersMap.get(roomId);
+            if (activePlayers != null) {
+                activePlayers.remove(playerId);
+
+                // 남은 활성 플레이어들의 점수 업데이트
+                for (String survivorId : activePlayers) {
+                    playerCommandService.updateScore(Long.parseLong(survivorId), 100);
+                }
+            }
+
             String eliminationMessage = String.format(
                 "{\"type\": \"elimination\", \"playerId\": \"%s\", \"reason\": \"%s\"}", playerId, reason
             );
@@ -490,6 +504,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
         turnInProgress.remove(roomId);
+        activePlayersMap.remove(roomId);
 
     }
 
@@ -588,6 +603,12 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             // 플레이어의 닉네임 가져오기
             String nickname = playerNicknames.get(playerId);
 
+            // 나간 플레이어를 활성 플레이어 목록에서 제거
+            Set<String> activePlayers = activePlayersMap.get(roomId);
+            if (activePlayers != null) {
+                activePlayers.remove(playerId);
+            }
+
             // 세션 관리 먼저 수행
             List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
             if (sessions != null) {
@@ -657,5 +678,4 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
     }
-
 }
