@@ -152,19 +152,25 @@ const Lobby = () => {
       <header className={`${styles.header} ${styles.mainHeader}`}>
         <h1>게임 목록</h1>
         <nav className={styles.navContainer}>
-          <div onClick={handleGameGuideModal} className={styles.navButton}>
+          <div onClick={handleGameGuideModal} className={styles.smallNavButton}>
             <p>게임 설명</p>
           </div>
-          <div onClick={handleCreateRankingModal} className={styles.navButton}>
+          <div
+            onClick={handleCreateRankingModal}
+            className={styles.smallNavButton}
+          >
             <p>순위표</p>
           </div>
           <div
             onClick={handleCreateInviteCodeModal}
-            className={styles.navButton}
+            className={styles.smallNavButton}
           >
             <p>초대 코드 입력</p>
           </div>
-          <div onClick={handleCreateRoomModal} className={styles.navButton}>
+          <div
+            onClick={handleCreateRoomModal}
+            className={styles.smallNavButton}
+          >
             <p>방 만들기</p>
           </div>
         </nav>
