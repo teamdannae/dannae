@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.ssafy.dannae.domain.room.entity.RoomStatus;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -19,6 +18,7 @@ import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
 import com.ssafy.dannae.domain.room.entity.Room;
+import com.ssafy.dannae.domain.room.entity.RoomStatus;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
@@ -88,6 +88,7 @@ public class WaitingRoomWebSocketHandler extends TextWebSocketHandler {
         // 새로 입장한 사용자의 PlayerDto 가져오기
         String playerId = getPlayerIdFromSession(session);
         PlayerDto dto = playerQueryService.findPlayerById(Long.parseLong(playerId));
+        playerCommandService.updateStatus(Long.valueOf(playerId), PlayerStatus.nonready);
         String nickname = dto.nickname();
         int image = dto.image();
 
