@@ -547,9 +547,15 @@ export default function WaitingRoom() {
         );
         setRoundReset(true);
       } else if (data.type === "success" || data.type === "failure") {
+        if (audioRef.current) {
+          audioRef.current.volume = 0.7;
+        }
         setRoundReset(true);
       } else if (data.type === "turn_start") {
         new Audio("/bgm/Round-Start.mp3").play();
+        if (audioRef.current) {
+          audioRef.current.volume = 0.3;
+        }
         setIsSend(false);
       } else if (data.type === "exit") {
         setUsers((prevUsers) =>
