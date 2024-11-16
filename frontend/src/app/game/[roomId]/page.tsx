@@ -396,12 +396,12 @@ export default function WaitingRoom() {
         if (wordData.difficulty) {
           const scoreToAdd =
             data.difficulty === 1
-              ? 10
+              ? 100
               : data.difficulty === 2
-              ? 20
+              ? 120
               : data.difficulty === 3
-              ? 40
-              : 60;
+              ? 140
+              : 160;
           setUsers((prevUsers) =>
             prevUsers.map((user) =>
               user.isTurn
@@ -542,7 +542,15 @@ export default function WaitingRoom() {
       } else if (data.type === "elimination" && data.playerId) {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.playerId === data.playerId ? { ...user, isFail: true } : user
+            user.playerId === data.playerId
+              ? { ...user, isFail: true }
+              : !user.isEmpty
+              ? {
+                  ...user,
+                  nowScore: 100,
+                  totalScore: user.totalScore + 100,
+                }
+              : user
           )
         );
         setRoundReset(true);
