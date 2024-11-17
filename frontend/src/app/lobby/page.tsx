@@ -192,7 +192,7 @@ const Lobby = () => {
               onClick={() => handleNavButtonClick(1)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 1
-                  ? styles.selectedGame
+                  ? styles.selectedSentenceGame
                   : styles.deselectedGame
               }`}
             >
@@ -202,7 +202,7 @@ const Lobby = () => {
               onClick={() => handleNavButtonClick(2)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 2
-                  ? styles.selectedGame
+                  ? styles.selectedInfiniteGame
                   : styles.deselectedGame
               }`}
             >
