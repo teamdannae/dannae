@@ -96,6 +96,22 @@
     }
   }
 
+  &.selectedSentenceGame {
+    background-color: #aec6cf;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.selectedInfiniteGame {
+    background-color: #ff6961;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
   &.deselectedGame {
     background-color: vars.$dark-color;
     color: vars.$white-color;
