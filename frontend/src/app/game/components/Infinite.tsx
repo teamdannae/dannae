@@ -43,6 +43,7 @@ const Infinite = ({
             }
             wrong={!word.correct}
             viewMeaning={word.correct}
+            style={{ padding: "8px 20px" }}
           />
         ))}
       </div>
