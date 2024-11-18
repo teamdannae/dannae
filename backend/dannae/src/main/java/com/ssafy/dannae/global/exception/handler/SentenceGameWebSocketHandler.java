@@ -66,18 +66,19 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
     private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
     private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
+    private final Map<Long, AtomicBoolean> isGameEndInProgressMap = new ConcurrentHashMap<>();
 
 
     public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService,
-		RankCommandService rankCommandService) {
+                                        RankCommandService rankCommandService) {
         this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService = playerCommandService;
         this.playerQueryService = playerQueryService;
         this.sentenceGameCommandService = sentenceGameCommandService;
         this.roomCommandService = roomCommandService;
-		this.rankCommandService = rankCommandService;
-	}
+        this.rankCommandService = rankCommandService;
+    }
 
     private final ScheduledExecutorService globalScheduler = Executors.newScheduledThreadPool(
             1,
@@ -208,13 +209,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
-            // 이전 타이머가 있다면 취소
             ScheduledFuture<?> previousTask = roundTimeoutTasks.get(roomId);
             if (previousTask != null && !previousTask.isDone()) {
                 previousTask.cancel(true);
             }
 
-            // 새로운 타이머 설정
             ScheduledFuture<?> timeoutTask = roomSchedulers.get(roomId).schedule(() -> {
                 if (!checkIfAllPlayersSentMessages(roomId)) {
                     endRound(roomId);
@@ -453,7 +452,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
                 roomCommandService.updateStatus(roomId);
-                endGameAndUpdateRank(roomId);
+                synchronized (gameStartedMap) {
+                    if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
+                        endGameAndUpdateRank(roomId);
+                    }
+                }
 
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
@@ -502,18 +505,47 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private synchronized void endGameAndUpdateRank(Long roomId) {
-        if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
-            List<Long> playerIdList = sessionTokenMap.values().stream()
-                    .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
-                    .distinct()
-                    .collect(Collectors.toList());
+        isGameEndInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
+        if (!isGameEndInProgressMap.get(roomId).compareAndSet(false, true)) {
+            System.out.println("랭크 업데이트가 이미 진행 중입니다. 방 ID: " + roomId);
+            return;
+        }
 
-            PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
-                    .playerIdList(playerIdList)
-                    .build();
+        try {
+            if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
+                List<Long> playerIdList = sessionTokenMap.values().stream()
+                        .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
+                        .distinct()
+                        .collect(Collectors.toList());
 
-            rankCommandService.updateRank("단어의 방", playerIdListDto);
-            gameStartedMap.remove(roomId);
+                PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                        .playerIdList(playerIdList)
+                        .build();
+
+                rankCommandService.updateRank("단어의 방", playerIdListDto);
+                resetRoomState(roomId);
+            }
+        } finally {
+            isGameEndInProgressMap.get(roomId).set(false); // 작업이 끝난 후 플래그 해제
         }
     }
+
+    private void resetRoomState(Long roomId) {
+        if (!gameRoomSessions.containsKey(roomId)) {
+            return; // 이미 초기화된 상태라면 무시
+        }
+        gameStartedMap.remove(roomId);
+        currentRoundMap.remove(roomId);
+        roundPlayerStatus.remove(roomId);
+        playerMessages.remove(roomId);
+        isRoundInProgressMap.remove(roomId);
+        isRoundEndInProgressMap.remove(roomId);
+        roundTimeoutTasks.remove(roomId);
+
+        ScheduledExecutorService scheduler = roomSchedulers.remove(roomId);
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+    }
+
 }
