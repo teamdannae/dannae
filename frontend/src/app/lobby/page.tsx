@@ -145,6 +145,12 @@ const Lobby = () => {
       <header className={`${styles.header} ${styles.mainHeader}`}>
         <h1 className={styles.headerText}>게임 목록</h1>
         <nav className={styles.navContainer}>
+          <div
+            onClick={() => router.push("/profile/nickname")}
+            className={styles.smallNavButton}
+          >
+            <p>프로필 재설정</p>
+          </div>
           <div onClick={handleGameGuideModal} className={styles.smallNavButton}>
             <p>게임 설명</p>
           </div>
@@ -315,6 +321,7 @@ const Lobby = () => {
                       width={160}
                       height={160}
                       onClick={(e) => e.stopPropagation()}
+                      priority
                     />
                   ) : (
                     <Image
@@ -324,6 +331,7 @@ const Lobby = () => {
                       width={170}
                       height={200}
                       onClick={(e) => e.stopPropagation()}
+                      priority
                     />
                   )}
 
