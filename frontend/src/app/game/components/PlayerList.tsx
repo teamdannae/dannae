@@ -34,7 +34,7 @@ export default function PlayerList({ users, roundSentence }: playerProps) {
   return (
     <div className={styles.playerContainer}>
       {users.map((user, index) => (
-        <div key={index}>
+        <div key={index} className={styles.cardWrapper}>
           <Card
             isEmpty={user.isEmpty}
             isReady={user.isReady}

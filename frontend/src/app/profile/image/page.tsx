@@ -80,18 +80,18 @@ const ProfileImage = () => {
       </header>
       <article className={styles.imageGrid}>
         {[...Array(8)].map((_, index) => (
-          <Image
-            key={index}
-            src={`/profiles/profile${index + 1}.svg`}
-            alt={`profile image ${index + 1}`}
-            width={180}
-            height={180}
-            className={`${styles.profileImage} ${
-              selectedImage === index ? styles.selected : ""
-            }`}
-            onClick={() => toggleImage(index)}
-            priority
-          />
+          <div key={index} className={styles.imageWrapper}>
+            <Image
+              src={`/profiles/profile${index + 1}.svg`}
+              alt={`profile image ${index + 1}`}
+              fill
+              className={`${styles.profileImage} ${
+                selectedImage === index ? styles.selected : ""
+              }`}
+              onClick={() => toggleImage(index)}
+              priority
+            />
+          </div>
         ))}
       </article>
     </section>
