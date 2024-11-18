@@ -73,7 +73,7 @@ const HellGuide = () => {
               loop
               muted
               playsInline
-              width={800}
+              width={760}
             />
           </div>
           <h5>{slide.text}</h5>
