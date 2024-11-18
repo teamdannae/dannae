@@ -39,6 +39,7 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
+  z-index: 10;
 }
 
 .headerText {
@@ -183,6 +184,7 @@
   grid-template-columns: repeat(4, 1fr); // 가로 3줄 고정
   grid-template-rows: repeat(3, auto); // 세로 4줄 고정
   gap: 1.5rem;
+  z-index: 9;
 }
 
 .cardItem {
