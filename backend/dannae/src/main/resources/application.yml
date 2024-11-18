@@ -17,8 +17,8 @@ spring:
       ddl-auto: '${SPRING_JPA_HIBERNATE_DDL_AUTO}'
     show-sql: '${SPRING_JPA_SHOW_SQL}'
   websocket:
-    time-limit: 300000
-    send-timeout: 300000
+    time-limit: 3600000
+    send-timeout: 3600000
   data:
     redis:
       host: '${SPRING_DATA_REDIS_HOST}'

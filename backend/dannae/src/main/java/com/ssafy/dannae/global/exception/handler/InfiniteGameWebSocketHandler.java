@@ -32,6 +32,8 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+import com.ssafy.dannae.domain.rank.service.RankCommandService;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
@@ -70,6 +72,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
+    private final RankCommandService rankCommandService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -469,6 +472,17 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             // room status 변경 (한 번만 실행되도록 보장)
             roomCommandService.updateStatus(roomId);
             gameStartedMap.get(roomId).set(false);
+
+            List<Long> playerIdList = sessionPlayerIdMap.values().stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+            PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                .playerIdList(playerIdList)
+                .build();
+
+            rankCommandService.updateRank("무한 초성 게임", playerIdListDto);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -38,14 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 class SentenceGameCommandServiceImpl implements SentenceGameCommandService {
 
-	private static final int[] scores = {
-			0, 10, 20, 30, 40, 60,
-			80, 100, 130, 160, 200,
-			250, 300, 350, 400, 450,
-			500, 550, 600, 650, 700,
-			750, 800, 850, 900, 950,
-			1000, 1050, 1100, 1150, 1200
-	};
 	private final SentenceGameRepository sentenceGameRepository;
 	private final WordRepository wordRepository;
 	private final WordRepositoryCustom wordRepositoryCustom;

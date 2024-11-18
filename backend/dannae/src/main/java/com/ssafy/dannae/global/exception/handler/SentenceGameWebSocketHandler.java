@@ -1,5 +1,28 @@
 package com.ssafy.dannae.global.exception.handler;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
@@ -11,24 +34,15 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+import com.ssafy.dannae.domain.rank.service.RankCommandService;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
-import jakarta.annotation.PreDestroy;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import jakarta.annotation.PreDestroy;
 
 @Component
 public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
@@ -41,6 +55,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final SentenceGameCommandService sentenceGameCommandService;
     private final RoomQueryService roomQueryService;
+    private final RankCommandService rankCommandService;
     private final int roundTimeLimit = 20;
     private final int roundWaitTime = 5;
     private final Map<Long, Map<String, Boolean>> roundPlayerStatus = new ConcurrentHashMap<>();
@@ -52,15 +67,17 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
     private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
 
-    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService) {
+
+    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService,
+		RankCommandService rankCommandService) {
         this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService = playerCommandService;
         this.playerQueryService = playerQueryService;
         this.sentenceGameCommandService = sentenceGameCommandService;
         this.roomCommandService = roomCommandService;
-
-    }
+		this.rankCommandService = rankCommandService;
+	}
 
     private final ScheduledExecutorService globalScheduler = Executors.newScheduledThreadPool(
             1,
@@ -435,7 +452,19 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 }
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
-                roomCommandService.updateStatus(roomId);
+                if (gameStartedMap.get(roomId).compareAndSet(true, false)) { // 게임 종료 시 한 번만 호출
+                    List<Long> playerIdList = sessionTokenMap.values().stream()
+                        .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
+                        .distinct() // 중복 제거
+                        .collect(Collectors.toList());
+
+                    PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                        .playerIdList(playerIdList)
+                        .build();
+
+                    rankCommandService.updateRank("단어의 방", playerIdListDto); // 방별로 한 번 호출
+                }
+
                 gameStartedMap.get(roomId).set(false);
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
