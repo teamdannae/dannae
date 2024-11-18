@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 40px;
+  gap: 2.5rem;
   transition: transform 0.5s ease;
 
   &.isDone {
@@ -18,10 +18,10 @@
   width: 100%;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .headerContainer {
     flex-direction: column;
-    gap: 24px;
+    gap: 1.5rem;
   }
 }
 
@@ -29,7 +29,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
+  gap: 1.25rem;
   white-space: nowrap;
 
   p {
@@ -38,18 +38,50 @@
 }
 
 .buttonContainer {
-  width: 210px;
-  height: 68px;
+  width: 13.125rem;
+  height: 4.25rem;
+}
+
+@media (max-width: 1400px) {
+  .buttonContainer {
+    width: 12rem;
+
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
 }
 
 .imageGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  row-gap: 40px;
-  column-gap: 100px;
+  row-gap: 2.5rem;
+  column-gap: 6.25rem;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 140px; // 명시적인 너비 설정
+  height: 140px; // 명시적인 높이 설정
+
+  @media (max-width: 1600px) {
+    width: 120px;
+    height: 120px;
+  }
+
+  @media (max-width: 1400px) {
+    width: 100px;
+    height: 100px;
+  }
+
+  @media (max-width: 1024) {
+    width: 80px;
+    height: 80px;
+  }
 }
 
 .profileImage {
+  object-fit: cover;
   border-radius: 20px;
   transition: transform 0.3s ease;
   cursor: pointer;
@@ -59,7 +91,7 @@
   }
 
   &.selected {
-    outline: 4px solid vars.$dark-color;
+    outline: 0.25rem solid vars.$dark-color;
   }
 }
 

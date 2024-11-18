@@ -11,11 +11,19 @@
 .profileContainer {
   display: flex;
   align-items: center;
-
-  width: 1240px;
-  height: 740px;
+  max-width: 1240px;
+  min-height: 600px;
+  width: 70%;
+  height: 60%;
   background-color: vars.$grey-color;
   border-radius: 45px;
-  padding: 60px 100px 80px 100px;
+  padding: 3.75rem 6.25rem 5rem 6.25rem;
   overflow: hidden;
+}
+
+@media (max-width: 1400px) {
+  .profileContainer {
+    width: 85%;
+    height: 80%;
+  }
 }

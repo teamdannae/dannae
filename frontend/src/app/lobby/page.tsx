@@ -151,7 +151,7 @@ const Lobby = () => {
   return (
     <div className={styles.lobbyContainer}>
       <header className={`${styles.header} ${styles.mainHeader}`}>
-        <h1>게임 목록</h1>
+        <h1 className={styles.headerText}>게임 목록</h1>
         <nav className={styles.navContainer}>
           <div onClick={handleGameGuideModal} className={styles.smallNavButton}>
             <p>게임 설명</p>
