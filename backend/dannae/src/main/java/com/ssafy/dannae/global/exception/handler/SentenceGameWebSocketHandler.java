@@ -452,12 +452,9 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
                 roomCommandService.updateStatus(roomId);
-                synchronized (gameStartedMap) {
-                    if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
-                        endGameAndUpdateRank(roomId);
-                    }
-                }
 
+                // 게임 종료 및 랭크 업데이트를 별도의 동기화 블록에서 실행
+                endGameAndUpdateRank(roomId);
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
                 scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
@@ -512,24 +509,46 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         }
 
         try {
-            if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
-                List<Long> playerIdList = sessionTokenMap.values().stream()
-                        .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
-                        .distinct()
-                        .collect(Collectors.toList());
-
-                PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
-                        .playerIdList(playerIdList)
-                        .build();
-
-                rankCommandService.updateRank("단어의 방", playerIdListDto);
-                resetRoomState(roomId);
+            // 현재 방에 있는 실제 게임 세션들만 가져옴
+            List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
+            if (activeSessions == null || activeSessions.isEmpty()) {
+                System.out.println("활성 세션이 없습니다. 방 ID: " + roomId);
+                return;
             }
+
+            // 현재 활성화된 세션의 플레이어 ID만 수집
+            List<Long> playerIdList = activeSessions.stream()
+                    .map(this::getPlayerIdFromSession)
+                    .filter(playerId -> playerId != null)
+                    .map(Long::parseLong)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            if (playerIdList.isEmpty()) {
+                System.out.println("유효한 플레이어가 없습니다. 방 ID: " + roomId);
+                return;
+            }
+
+            System.out.println("랭크 업데이트 시작. 방 ID: " + roomId + ", 플레이어 수: " + playerIdList.size());
+
+            PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                    .playerIdList(playerIdList)
+                    .build();
+
+            // 랭크 업데이트 실행
+            rankCommandService.updateRank("단어의 방", playerIdListDto);
+            System.out.println("랭크 업데이트 완료. 방 ID: " + roomId);
+
+            // 게임 상태 초기화
+            resetRoomState(roomId);
+
+        } catch (Exception e) {
+            System.err.println("랭크 업데이트 중 오류 발생. 방 ID: " + roomId);
+            e.printStackTrace();
         } finally {
-            isGameEndInProgressMap.get(roomId).set(false); // 작업이 끝난 후 플래그 해제
+            isGameEndInProgressMap.get(roomId).set(false);
         }
     }
-
     private void resetRoomState(Long roomId) {
         if (!gameRoomSessions.containsKey(roomId)) {
             return; // 이미 초기화된 상태라면 무시
