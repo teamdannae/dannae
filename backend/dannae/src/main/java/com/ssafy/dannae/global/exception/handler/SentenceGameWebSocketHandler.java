@@ -453,20 +453,8 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
                 roomCommandService.updateStatus(roomId);
-                if (gameStartedMap.get(roomId).compareAndSet(true, false)) { // 게임 종료 시 한 번만 호출
-                    List<Long> playerIdList = sessionTokenMap.values().stream()
-                        .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
-                        .distinct() // 중복 제거
-                        .collect(Collectors.toList());
+                endGameAndUpdateRank(roomId);
 
-                    PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
-                        .playerIdList(playerIdList)
-                        .build();
-
-                    rankCommandService.updateRank("단어의 방", playerIdListDto); // 방별로 한 번 호출
-                }
-
-                gameStartedMap.get(roomId).set(false);
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
                 scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
@@ -511,5 +499,21 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private String getPlayerIdFromSession(WebSocketSession session) {
         String token = sessionTokenMap.get(session);
         return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
+    }
+
+    private synchronized void endGameAndUpdateRank(Long roomId) {
+        if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
+            List<Long> playerIdList = sessionTokenMap.values().stream()
+                    .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                    .playerIdList(playerIdList)
+                    .build();
+
+            rankCommandService.updateRank("단어의 방", playerIdListDto);
+            gameStartedMap.remove(roomId);
+        }
     }
 }
