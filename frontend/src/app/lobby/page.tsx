@@ -246,7 +246,7 @@ const Lobby = () => {
             <div
               onClick={handleNextPage}
               className={`${styles.iconButton} ${
-                currentPage === 0 || totalPages - 1 ? styles.disabled : ""
+                currentPage >= totalPages - 1 ? styles.disabled : ""
               }`}
             >
               <Image
@@ -265,11 +265,8 @@ const Lobby = () => {
               isReady={false}
               isEmpty={game.isEmpty || false}
               key={index}
-              isPlaying={game.status === "PLAYING"}
               onClickEvent={
-                game.isEmpty || game.status === "PLAYING"
-                  ? undefined
-                  : () => enterGameroom(game.roomId)
+                game.isEmpty ? undefined : () => enterGameroom(game.roomId)
               }
             >
               {!game.isEmpty && (
