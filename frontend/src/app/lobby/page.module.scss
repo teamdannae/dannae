@@ -44,7 +44,8 @@
 .headerText {
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  // text-overflow: ellipsis;
+  font-size: 4vw;
 }
 
 .mainHeader {
@@ -270,8 +271,9 @@
     justify-content: flex-end;
   }
 
-  .headerText {
-    display: none;
+  .header {
+    gap: 0;
+    justify-content: space-between;
   }
 
   .smallNavButton {
@@ -342,6 +344,16 @@
   }
 }
 
+@media (max-width: 1060px) {
+  // .headerText {
+  //   display: none;
+  // }
+  .header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
 @media (max-width: 820px) {
   .navContainer {
     flex-direction: column;
@@ -349,6 +361,14 @@
 
   .pageController {
     justify-content: center;
+  }
+
+  .header {
+    align-items: center;
+  }
+
+  .headerText {
+    margin-bottom: 0.5rem;
   }
 
   .mainHeader {
