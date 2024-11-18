@@ -265,8 +265,11 @@ const Lobby = () => {
               isReady={false}
               isEmpty={game.isEmpty || false}
               key={index}
+              isPlaying={game.status === "PLAYING"}
               onClickEvent={
-                game.isEmpty ? undefined : () => enterGameroom(game.roomId)
+                game.isEmpty || game.status === "PLAYING"
+                  ? undefined
+                  : () => enterGameroom(game.roomId)
               }
             >
               {!game.isEmpty && (
