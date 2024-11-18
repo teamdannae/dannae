@@ -5,9 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.dannae.domain.player.entity.Player;
 import com.ssafy.dannae.domain.player.entity.PlayerStatus;
+import com.ssafy.dannae.domain.player.exception.NoPlayerException;
 import com.ssafy.dannae.domain.player.repository.PlayerRepository;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
-import com.ssafy.dannae.domain.room.exception.NoRoomException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +42,7 @@ public class PlayerCommandServiceImpl implements PlayerCommandService {
 
     private Player verifyPlayer(Long playerId) {
         return playerRepository.findById(playerId)
-            .orElseThrow(() -> new NoRoomException("player not found"));
+            .orElseThrow(() -> new NoPlayerException("player not found"));
     }
 
 }
