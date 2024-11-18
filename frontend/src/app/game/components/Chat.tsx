@@ -60,7 +60,7 @@ export default function Chat({
   // }, [showPopup, setShowPopup]);
 
   return (
-    <>
+    <div className={styles.chatWrapper}>
       <div className={styles.chatContainer}>
         <div className={styles.messagesContainer}>
           {messages.map((message, index) => (
@@ -91,6 +91,6 @@ export default function Chat({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 }
