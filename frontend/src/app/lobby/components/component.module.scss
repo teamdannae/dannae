@@ -3,7 +3,7 @@
 .modalContainer {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 1.25rem;
   padding: 1.25rem;
 }
 
@@ -58,15 +58,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.125rem;
-  padding: 0 0 0 3rem;
+  gap: 1rem;
+  padding: 0 0 0 4.5rem;
 }
 
 .rankingPlayer {
   display: flex;
   gap: 2.25rem;
   align-items: center;
-  min-width: 46rem;
+  min-width: 42rem;
 }
 
 .rankingTier {
@@ -81,11 +81,18 @@
 
 .rankingNickname {
   text-align: left;
-  width: 16.25rem;
+  width: 11.75rem;
+}
+
+.rankingScoreContainer {
+  display: flex;
+  justify-content: end;
+  width: 8rem;
 }
 
 .rankingScore {
   background-color: vars.$primary-color;
+  width: fit-content;
 }
 
 .guideButtonContainer {
@@ -127,7 +134,7 @@
   }
 
   .rankingNickname {
-    width: 16rem;
+    width: 11.75rem;
   }
 
   .guideButtonContainer {

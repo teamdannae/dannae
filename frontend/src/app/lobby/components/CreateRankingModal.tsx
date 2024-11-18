@@ -107,10 +107,13 @@ const CreateRankingModal = () => {
                   height={80}
                   className={styles.rankingImage}
                 />
-                <h4 className={styles.rankingNickname}>{rank.nickname}</h4>
-                <h3 className={styles.rankingScore}>
-                  {rank.score.toLocaleString()}점
-                </h3>
+
+                <h5 className={styles.rankingNickname}>{rank.nickname}</h5>
+                <div className={styles.rankingScoreContainer}>
+                  <h4 className={styles.rankingScore}>
+                    {rank.score.toLocaleString()}점
+                  </h4>
+                </div>
               </div>
             );
           })
