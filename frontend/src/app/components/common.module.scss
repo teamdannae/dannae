@@ -454,8 +454,7 @@
 .guideContainer {
   position: relative;
   width: 100%;
-  height: 37.5rem;
-  overflow: hidden;
+  height: 34.5rem;
 }
 
 .guideSlide {
@@ -497,7 +496,7 @@
     }
 
     span.big {
-      font-size: 2rem;
+      font-size: 1.7rem;
     }
   }
 }
@@ -520,7 +519,7 @@
 
 .circleButtons {
   position: absolute;
-  bottom: 0;
+  bottom: -28px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
