@@ -24,7 +24,6 @@ function useWebSocket(url: string, onMessage: (data: message) => void) {
 
       socketRef.current.onopen = () => {
         setIsConnected(true);
-        console.log("웹소켓 연결이 열렸습니다.");
         if (reconnectTimerRef.current) {
           clearTimeout(reconnectTimerRef.current);
           reconnectTimerRef.current = null;
@@ -36,17 +35,16 @@ function useWebSocket(url: string, onMessage: (data: message) => void) {
           const data = JSON.parse(event.data);
           memoizedOnMessage(data);
         } catch (error) {
-          console.error("메시지 파싱 오류:", error);
+          console.error(error);
         }
       };
 
       socketRef.current.onclose = () => {
         setIsConnected(false);
-        console.log("웹소켓 연결이 닫혔습니다.");
       };
 
       socketRef.current.onerror = (error) => {
-        console.error("웹소켓 오류:", error);
+        console.error(error);
       };
     };
 

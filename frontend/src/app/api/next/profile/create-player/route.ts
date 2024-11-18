@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ nickname, image }),
     });
 
-    console.log(response);
-
     if (!response.ok) {
       return NextResponse.json(
         { message: "플레이어 id를 생성하지 못했습니다." },
@@ -26,8 +24,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log("받은 데이터:", data);
-
     const playerId = data.data.playerId;
     const token = data.data.token;
 

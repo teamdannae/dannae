@@ -25,9 +25,7 @@ const Lobby = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined" && audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.error("BGM playback failed:", error);
-      });
+      audioRef.current.play();
       audioRef.current.volume = 0.7;
     }
   }, []);
@@ -57,8 +55,6 @@ const Lobby = () => {
   };
 
   const loadGames = async () => {
-    console.log("자동 새로고침");
-
     try {
       const response = await fetch("/api/next/rooms/list");
 
@@ -70,7 +66,7 @@ const Lobby = () => {
       const gamesData = await response.json();
       setGames(gamesData.data);
     } catch (error) {
-      console.error("Failed to load games:", error);
+      console.error(error);
     }
   };
 
@@ -85,7 +81,6 @@ const Lobby = () => {
 
   const handleRefresh = useCallback(() => {
     if (!isThrottled) {
-      console.log("새로고침");
       setIsThrottled(true);
       new Audio("/bgm/Button-Click.mp3").play();
       loadGames();
@@ -128,9 +123,6 @@ const Lobby = () => {
         router.replace("/profile/nickname");
         throw new Error("Failed to load room data");
       }
-
-      const roomData = await response.json();
-      console.log(roomData);
 
       router.push(`/game/${roomId}`);
     } catch (error) {

@@ -31,7 +31,7 @@ const CreateRankingModal = () => {
       const rankingData = await response.json();
       setRanking(rankingData.data);
     } catch (error) {
-      console.error("Failed to fetch ranking data:", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }

@@ -25,7 +25,7 @@ const ProfileImage = () => {
         console.error("이미지 설정 실패");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error(error);
     }
   };
 
@@ -48,10 +48,10 @@ const ProfileImage = () => {
 
         window.location.replace("/lobby");
       } else {
-        console.error("클라이언트에서 실패", createPlayerResponse);
+        console.error(createPlayerResponse);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error(error);
     }
   };
 

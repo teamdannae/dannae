@@ -71,14 +71,12 @@ export default function GameInfo({
         });
 
         if (!response.ok) {
-          console.error("Error:", response.status, response.statusText);
+          console.error(response.status, response.statusText);
         } else {
-          const result = await response.json();
           setIsReady((prev) => !prev);
-          console.log(result);
         }
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error(error);
       }
     }
   };
@@ -95,7 +93,7 @@ export default function GameInfo({
       const data = await response.json();
       return data.playerId;
     } catch (error) {
-      console.error("Error:", error);
+      console.error(error);
     }
   };
 

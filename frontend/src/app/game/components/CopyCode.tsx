@@ -22,7 +22,7 @@ export default function CopyCode({ code }: CopyCodeProps) {
           setTimeout(() => setIsToastVisible(false), 2000);
         })
         .catch(() => {
-          console.error("클립보드 복사 실패");
+          console.error("복사 실패");
         });
     }
   };
