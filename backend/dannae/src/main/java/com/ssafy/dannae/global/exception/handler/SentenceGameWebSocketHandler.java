@@ -260,6 +260,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String nickname = dto.nickname();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
         playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.none);
+        sessionTokenMap.remove(session);
 
         if (sessions != null) {
             sessions.remove(session);
