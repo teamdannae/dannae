@@ -64,10 +64,10 @@ const ProfileNickname = () => {
       if (response.ok) {
         router.push("/profile/image");
       } else {
-        console.error("Failed to set nickname");
+        console.error("닉네임 설정 실패");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error(error);
     }
   };
 

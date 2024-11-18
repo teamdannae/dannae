@@ -161,7 +161,6 @@ export default function WaitingRoom() {
       }),
     });
     const resultData = await resultResponse.json();
-    console.log(resultData.data);
     setGameResult(resultData.data.playerList);
     setIsModalOpen(true);
   };
@@ -211,9 +210,7 @@ export default function WaitingRoom() {
     if (audioElement) {
       if (audioElement.src !== musicUrl) {
         audioElement.src = musicUrl;
-        audioElement.play().catch((error) => {
-          console.error("Autoplay was prevented:", error);
-        });
+        audioElement.play();
       }
       audioElement.volume = volume;
     }
@@ -244,7 +241,6 @@ export default function WaitingRoom() {
 
         // 상태 업데이트
         setRoomInfo(roomData.data);
-        console.log(roomData);
         setYourPlayerId(playerIdData.playerId);
 
         // 토큰을 받은 후에 웹소켓 URL 설정
@@ -292,7 +288,6 @@ export default function WaitingRoom() {
             }
             return updatedUsers;
           });
-          console.log(users);
         }
 
         if (data.event === "creator_change") {
@@ -378,7 +373,6 @@ export default function WaitingRoom() {
           setAreAllPlayersReady(false);
         }
       } else if (data.type === "game_start_ready") {
-        console.log("시작할 준비 완료");
         setAreAllPlayersReady(true);
       } else if (data.type === "game_start" && data.room) {
         startGame();
@@ -466,7 +460,6 @@ export default function WaitingRoom() {
         }
         setRoundReset(false);
         setIsSend(false);
-        console.log(users);
         if (data.words) {
           const formattedWords = data.words.map(
             (wordObj: { word: string; difficulty: number | null }) => ({
@@ -615,7 +608,6 @@ export default function WaitingRoom() {
           setMessages((prev) => [...prev, newMessage]);
         }
       }
-      console.log(data);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [url]

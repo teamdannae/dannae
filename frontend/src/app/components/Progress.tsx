@@ -30,9 +30,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ duration, reset }) => {
         }
 
         if (nextProgress >= threshold && audioRef.current) {
-          audioRef.current.play().catch((error) => {
-            console.error("Audio playback failed:", error);
-          });
+          audioRef.current.play();
         }
 
         return nextProgress;
