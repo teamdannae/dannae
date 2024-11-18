@@ -30,9 +30,13 @@ const CreateRoomModal = () => {
   };
 
   const handleNewRoomTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    if (inputValue.length > 12) {
+      return;
+    }
     setCreateRoomModalState({
       ...createRoomModalState,
-      newRoomTitle: e.target.value,
+      newRoomTitle: inputValue,
     });
   };
 
