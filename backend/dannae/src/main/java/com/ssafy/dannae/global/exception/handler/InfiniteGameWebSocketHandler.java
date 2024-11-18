@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.json.JSONObject;
@@ -31,6 +32,8 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+import com.ssafy.dannae.domain.rank.service.RankCommandService;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
@@ -60,6 +63,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, String> playerNicknames = new HashMap<>(); // 사용자 ID와 닉네임 매핑
     private final Map<Long, Boolean> turnInProgress = new ConcurrentHashMap<>(); // 플래그 맵 추가
     private final Map<Long, Boolean> isSinglePlayerGame = new ConcurrentHashMap<>();
+    private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
+    private final Map<Long, Set<String>> activePlayersMap = new ConcurrentHashMap<>();
 
     private final InfiniteGameCommandService infiniteGameCommandService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -67,6 +72,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final RoomQueryService roomQueryService;
     private final RoomCommandService roomCommandService;
+    private final RankCommandService rankCommandService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -93,7 +99,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
 
         initializePlayerInGame(session, roomId, playerId);
 
-        if (areAllPlayersConnected(roomId)) {
+        gameStartedMap.putIfAbsent(roomId, new AtomicBoolean(false)); // 초기화
+
+        if (areAllPlayersConnected(roomId) && gameStartedMap.get(roomId).compareAndSet(false, true)) {
             usedWords.putIfAbsent(roomId, new HashSet<>());
             startGame(roomId);
         }
@@ -136,6 +144,9 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         List<WebSocketSession> sessions = gameRoomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
         sessions.add(session);
 
+        Set<String> activePlayers = activePlayersMap.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet());
+        activePlayers.add(playerId);
+
         playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.playing);
 
         sendEnterGameMessage(session, playerId, nickname, image);
@@ -150,6 +161,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void startGame(Long roomId) throws IOException {
+
         Long playerCount = roomQueryService.findById(roomId)
             .orElseThrow(() -> new NoRoomException("no room exception"))
             .getPlayerCount();
@@ -343,6 +355,16 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         try {
             playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.end);
 
+            Set<String> activePlayers = activePlayersMap.get(roomId);
+            if (activePlayers != null) {
+                activePlayers.remove(playerId);
+
+                // 남은 활성 플레이어들의 점수 업데이트
+                for (String survivorId : activePlayers) {
+                    playerCommandService.updateScore(Long.parseLong(survivorId), 100);
+                }
+            }
+
             String eliminationMessage = String.format(
                 "{\"type\": \"elimination\", \"playerId\": \"%s\", \"reason\": \"%s\"}", playerId, reason
             );
@@ -428,6 +450,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private synchronized void endGame(Long roomId) throws IOException {
+
         // 이미 게임이 종료되었는지 확인 (맵에서 제거되었는지 체크)
         if (!gameRoomSessions.containsKey(roomId)) {
             return;  // 이미 종료된 게임이면 리턴
@@ -448,6 +471,18 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         try {
             // room status 변경 (한 번만 실행되도록 보장)
             roomCommandService.updateStatus(roomId);
+            gameStartedMap.get(roomId).set(false);
+
+            List<Long> playerIdList = sessionPlayerIdMap.values().stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+            PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                .playerIdList(playerIdList)
+                .build();
+
+            rankCommandService.updateRank("무한 초성 지옥", playerIdListDto);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -483,6 +518,8 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
         isSinglePlayerGame.remove(roomId);
         gameIdsMap.remove(roomId);
         turnInProgress.remove(roomId);
+        activePlayersMap.remove(roomId);
+
     }
 
     @Override
@@ -580,6 +617,12 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             // 플레이어의 닉네임 가져오기
             String nickname = playerNicknames.get(playerId);
 
+            // 나간 플레이어를 활성 플레이어 목록에서 제거
+            Set<String> activePlayers = activePlayersMap.get(roomId);
+            if (activePlayers != null) {
+                activePlayers.remove(playerId);
+            }
+
             // 세션 관리 먼저 수행
             List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
             if (sessions != null) {
@@ -649,5 +692,4 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
     }
-
 }

@@ -41,7 +41,7 @@ const CreateInviteCodeModal = () => {
       closeModal();
       router.push(`/game/${roomId}`);
     } catch (error) {
-      console.error("코드로 방 입장에 실패했습니다.", error);
+      console.error(error);
     }
   };
 

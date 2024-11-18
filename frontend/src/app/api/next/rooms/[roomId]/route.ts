@@ -20,10 +20,8 @@ export async function GET(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-
       return NextResponse.json(
-        { message: "방 정보를 불러올 수 없습니다.", error: errorText },
+        { message: "방 정보를 불러올 수 없습니다." },
         { status: response.status }
       );
     }

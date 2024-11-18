@@ -21,9 +21,7 @@ const Button: React.FC<ButtonProps> = ({
   const handleClick = () => {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch((error) => {
-        console.error("Audio playback failed:", error);
-      });
+      audioRef.current.play();
     }
     onClickEvent();
   };

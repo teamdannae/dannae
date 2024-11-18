@@ -13,15 +13,11 @@ export function middleware(request: NextRequest) {
   // const playerId = request.cookies.get("playerId")?.value;
   // const token = request.cookies.get("token")?.value;
 
-  console.log("지금 확인");
-  console.log(nickname);
-  console.log(image);
   // console.log(playerId);
   // console.log(token);
 
   // nickname이나 image가 없으면 리다이렉트
   if (!nickname || !image) {
-    console.log("잘못된 쿠키");
     return NextResponse.redirect(new URL("/profile/nickname", request.url));
   }
 

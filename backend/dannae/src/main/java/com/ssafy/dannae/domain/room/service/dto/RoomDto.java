@@ -1,5 +1,7 @@
 package com.ssafy.dannae.domain.room.service.dto;
 
+import com.ssafy.dannae.domain.room.entity.RoomStatus;
+
 import lombok.Builder;
 
 @Builder
@@ -9,6 +11,7 @@ public record RoomDto(
 	String mode,
 	Long playerCount,
 	Long creator,
-	String creatorNickname
+	String creatorNickname,
+	RoomStatus status
 ) {
 }

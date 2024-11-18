@@ -1,5 +1,28 @@
 package com.ssafy.dannae.global.exception.handler;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
 import com.ssafy.dannae.domain.game.sentencegame.controller.request.SentenceGameReq;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameCreateRes;
 import com.ssafy.dannae.domain.game.sentencegame.controller.response.SentenceGameRes;
@@ -11,24 +34,15 @@ import com.ssafy.dannae.domain.player.entity.PlayerStatus;
 import com.ssafy.dannae.domain.player.service.PlayerCommandService;
 import com.ssafy.dannae.domain.player.service.PlayerQueryService;
 import com.ssafy.dannae.domain.player.service.dto.PlayerDto;
+import com.ssafy.dannae.domain.player.service.dto.PlayerIdListDto;
+import com.ssafy.dannae.domain.rank.service.RankCommandService;
 import com.ssafy.dannae.domain.room.entity.Room;
 import com.ssafy.dannae.domain.room.exception.NoRoomException;
 import com.ssafy.dannae.domain.room.service.RoomCommandService;
 import com.ssafy.dannae.domain.room.service.RoomQueryService;
 import com.ssafy.dannae.global.util.JwtTokenProvider;
-import jakarta.annotation.PreDestroy;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import jakarta.annotation.PreDestroy;
 
 @Component
 public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
@@ -41,6 +55,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final PlayerQueryService playerQueryService;
     private final SentenceGameCommandService sentenceGameCommandService;
     private final RoomQueryService roomQueryService;
+    private final RankCommandService rankCommandService;
     private final int roundTimeLimit = 20;
     private final int roundWaitTime = 5;
     private final Map<Long, Map<String, Boolean>> roundPlayerStatus = new ConcurrentHashMap<>();
@@ -51,15 +66,18 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     private final Map<Long, AtomicBoolean> isRoundEndInProgressMap = new ConcurrentHashMap<>(); // 라운드 종료 진행 여부 플래그
     private final Map<Long, ScheduledFuture<?>> roundTimeoutTasks = new ConcurrentHashMap<>();
     private final Map<Long, AtomicBoolean> gameStartedMap = new ConcurrentHashMap<>(); // 방별 게임 시작 플래그
+    private final Map<Long, AtomicBoolean> isGameEndInProgressMap = new ConcurrentHashMap<>();
 
-    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService) {
+
+    public SentenceGameWebSocketHandler(JwtTokenProvider jwtTokenProvider, PlayerCommandService playerCommandService, PlayerQueryService playerQueryService, SentenceGameCommandService sentenceGameCommandService, RoomQueryService roomQueryService,  RoomCommandService roomCommandService,
+                                        RankCommandService rankCommandService) {
         this.roomQueryService = roomQueryService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.playerCommandService = playerCommandService;
         this.playerQueryService = playerQueryService;
         this.sentenceGameCommandService = sentenceGameCommandService;
         this.roomCommandService = roomCommandService;
-
+        this.rankCommandService = rankCommandService;
     }
 
     private final ScheduledExecutorService globalScheduler = Executors.newScheduledThreadPool(
@@ -191,13 +209,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 broadcastToRoom(roomId, roundStartMessage);
             }
 
-            // 이전 타이머가 있다면 취소
             ScheduledFuture<?> previousTask = roundTimeoutTasks.get(roomId);
             if (previousTask != null && !previousTask.isDone()) {
                 previousTask.cancel(true);
             }
 
-            // 새로운 타이머 설정
             ScheduledFuture<?> timeoutTask = roomSchedulers.get(roomId).schedule(() -> {
                 if (!checkIfAllPlayersSentMessages(roomId)) {
                     endRound(roomId);
@@ -260,6 +276,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String nickname = dto.nickname();
         List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
         playerCommandService.updateStatus(Long.valueOf(playerId),PlayerStatus.none);
+        sessionTokenMap.remove(session);
 
         if (sessions != null) {
             sessions.remove(session);
@@ -435,7 +452,12 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
                 roomCommandService.updateStatus(roomId);
-                gameStartedMap.get(roomId).set(false);
+                synchronized (gameStartedMap) {
+                    if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
+                        endGameAndUpdateRank(roomId);
+                    }
+                }
+
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
                 scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
@@ -481,4 +503,49 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
         String token = sessionTokenMap.get(session);
         return token != null ? jwtTokenProvider.getPlayerIdFromToken(token) : null;
     }
+
+    private synchronized void endGameAndUpdateRank(Long roomId) {
+        isGameEndInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
+        if (!isGameEndInProgressMap.get(roomId).compareAndSet(false, true)) {
+            System.out.println("랭크 업데이트가 이미 진행 중입니다. 방 ID: " + roomId);
+            return;
+        }
+
+        try {
+            if (gameStartedMap.get(roomId).compareAndSet(true, false)) {
+                List<Long> playerIdList = sessionTokenMap.values().stream()
+                        .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                        .playerIdList(playerIdList)
+                        .build();
+
+                rankCommandService.updateRank("단어의 방", playerIdListDto);
+                resetRoomState(roomId);
+            }
+        } finally {
+            isGameEndInProgressMap.get(roomId).set(false); // 작업이 끝난 후 플래그 해제
+        }
+    }
+
+    private void resetRoomState(Long roomId) {
+        if (!gameRoomSessions.containsKey(roomId)) {
+            return; // 이미 초기화된 상태라면 무시
+        }
+        gameStartedMap.remove(roomId);
+        currentRoundMap.remove(roomId);
+        roundPlayerStatus.remove(roomId);
+        playerMessages.remove(roomId);
+        isRoundInProgressMap.remove(roomId);
+        isRoundEndInProgressMap.remove(roomId);
+        roundTimeoutTasks.remove(roomId);
+
+        ScheduledExecutorService scheduler = roomSchedulers.remove(roomId);
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+    }
+
 }

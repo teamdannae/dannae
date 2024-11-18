@@ -64,6 +64,7 @@ interface message {
   round?: string;
   userWords: string[];
   playerDtos: SentencePlayer[];
+  errorCode?: string;
 }
 
 interface chat {
@@ -93,6 +94,7 @@ interface gameroom {
   creator: number;
   isEmpty?: boolean;
   creatorNickname?: string;
+  status?: string;
 }
 
 interface word {
@@ -118,4 +120,9 @@ interface result {
   nickname: string;
   score: number;
   status: string;
+}
+
+interface roundSentence {
+  playerId: number;
+  sentence: string;
 }

@@ -11,15 +11,12 @@ import {
   Sentence,
   ResultModal,
 } from "../components";
-import {
-  useParams,
-  // useRouter
-} from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.scss";
 import { Progress, Toast } from "@/app/components";
 
 export default function WaitingRoom() {
-  // const router = useRouter();
+  const router = useRouter();
 
   // BGM 관련
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -107,6 +104,7 @@ export default function WaitingRoom() {
   const [isConsonantVisible, setIsConsonantVisible] = useState(true);
   const [gameResult, setGameResult] = useState<result[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [roundSentence, setRoundSentence] = useState<roundSentence[]>([]);
 
   const handleStart = async () => {
     setUsers((prevUsers) =>
@@ -149,6 +147,7 @@ export default function WaitingRoom() {
   const getGameResult = async () => {
     setVolume(0.2);
     setMusicUrl("/bgm/Game-End.mp3");
+    setRoundSentence([]);
     const roomResponse = await fetch(`/api/next/rooms/${roomId}`);
     const roomData = await roomResponse.json();
     const resultResponse = await fetch("/api/next/game/result", {
@@ -162,7 +161,6 @@ export default function WaitingRoom() {
       }),
     });
     const resultData = await resultResponse.json();
-    console.log(resultData.data);
     setGameResult(resultData.data.playerList);
     setIsModalOpen(true);
   };
@@ -212,9 +210,7 @@ export default function WaitingRoom() {
     if (audioElement) {
       if (audioElement.src !== musicUrl) {
         audioElement.src = musicUrl;
-        audioElement.play().catch((error) => {
-          console.error("Autoplay was prevented:", error);
-        });
+        audioElement.play();
       }
       audioElement.volume = volume;
     }
@@ -225,6 +221,7 @@ export default function WaitingRoom() {
         audioElement.src = "";
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [musicUrl, isPlaying]);
 
   useEffect(() => {
@@ -244,7 +241,6 @@ export default function WaitingRoom() {
 
         // 상태 업데이트
         setRoomInfo(roomData.data);
-        console.log(roomData);
         setYourPlayerId(playerIdData.playerId);
 
         // 토큰을 받은 후에 웹소켓 URL 설정
@@ -292,7 +288,6 @@ export default function WaitingRoom() {
             }
             return updatedUsers;
           });
-          console.log(users);
         }
 
         if (data.event === "creator_change") {
@@ -378,7 +373,6 @@ export default function WaitingRoom() {
           setAreAllPlayersReady(false);
         }
       } else if (data.type === "game_start_ready") {
-        console.log("시작할 준비 완료");
         setAreAllPlayersReady(true);
       } else if (data.type === "game_start" && data.room) {
         startGame();
@@ -396,12 +390,12 @@ export default function WaitingRoom() {
         if (wordData.difficulty) {
           const scoreToAdd =
             data.difficulty === 1
-              ? 10
+              ? 100
               : data.difficulty === 2
-              ? 20
+              ? 120
               : data.difficulty === 3
-              ? 40
-              : 60;
+              ? 140
+              : 160;
           setUsers((prevUsers) =>
             prevUsers.map((user) =>
               user.isTurn
@@ -426,8 +420,26 @@ export default function WaitingRoom() {
           setShowToast(false);
         }, 4500);
         // 소켓으로 에러 발생하면 닉네임 설정으로 보냄
-      } else if (data.type === "error") {
-        // router.replace("/profile/nickname");
+      } else if (data.type === "error" && data.errorCode) {
+        if (data.errorCode === "ROOM_FULL") {
+          setToastMessage("방에 자리가 없습니다!");
+          setToastDuration(1500);
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+            router.replace("/lobby");
+          }, 1500);
+        } else if (data.errorCode === "GAME_IN_PROGRESS") {
+          setToastMessage("이미 게임이 진행 중입니다!");
+          setToastDuration(1500);
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+            router.replace("/lobby");
+          }, 1500);
+        } else {
+          router.replace("/profile/nickname");
+        }
         // 플레이어 턴 제시
       } else if (data.type === "turn_info" && data.playerId) {
         setIsInfiniteTurnStart(true);
@@ -441,13 +453,13 @@ export default function WaitingRoom() {
         );
       } else if (data.type === "round_start") {
         new Audio("/bgm/Round-Start.mp3").play();
+        setRoundSentence([]);
         setMessages([]);
         if (audioRef.current) {
           audioRef.current.volume = 0.3;
         }
         setRoundReset(false);
         setIsSend(false);
-        console.log(users);
         if (data.words) {
           const formattedWords = data.words.map(
             (wordObj: { word: string; difficulty: number | null }) => ({
@@ -472,6 +484,25 @@ export default function WaitingRoom() {
             data.userWords.includes(word.word) ? { ...word, used: true } : word
           )
         );
+
+        data.playerDtos.map((player) => {
+          setRoundSentence((prev) => {
+            if (player.playerSentence.length > 0) {
+              return [
+                ...prev,
+                { playerId: player.playerId, sentence: player.playerSentence },
+              ];
+            } else {
+              return [
+                ...prev,
+                {
+                  playerId: player.playerId,
+                  sentence: "문장을 완성하지 못했습니다.",
+                },
+              ];
+            }
+          });
+        });
 
         const playerMessages = data.playerDtos.map((player) => {
           let playerMessage;
@@ -504,14 +535,28 @@ export default function WaitingRoom() {
       } else if (data.type === "elimination" && data.playerId) {
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user.playerId === data.playerId ? { ...user, isFail: true } : user
+            user.playerId === data.playerId
+              ? { ...user, isFail: true }
+              : !user.isEmpty
+              ? {
+                  ...user,
+                  nowScore: 100,
+                  totalScore: user.totalScore + 100,
+                }
+              : user
           )
         );
         setRoundReset(true);
       } else if (data.type === "success" || data.type === "failure") {
+        if (audioRef.current) {
+          audioRef.current.volume = 0.7;
+        }
         setRoundReset(true);
       } else if (data.type === "turn_start") {
         new Audio("/bgm/Round-Start.mp3").play();
+        if (audioRef.current) {
+          audioRef.current.volume = 0.3;
+        }
         setIsSend(false);
       } else if (data.type === "exit") {
         setUsers((prevUsers) =>
@@ -563,8 +608,8 @@ export default function WaitingRoom() {
           setMessages((prev) => [...prev, newMessage]);
         }
       }
-      console.log(data);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [url]
   );
 
@@ -659,7 +704,7 @@ export default function WaitingRoom() {
         </div>
       )}
       <section aria-labelledby="player-list" className={styles.section}>
-        <PlayerList users={users} />
+        <PlayerList users={users} roundSentence={roundSentence} />
       </section>
       <section aria-labelledby="chat" className={styles.section}>
         <Chat

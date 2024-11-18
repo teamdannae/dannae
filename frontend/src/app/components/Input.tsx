@@ -38,9 +38,7 @@ const Input: React.FC<InputProps> = ({
     if (e.key === "Enter") {
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
-        audioRef.current.play().catch((error) => {
-          console.error("Audio playback failed:", error);
-        });
+        audioRef.current.play();
       }
 
       if (onEnterKey) {

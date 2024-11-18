@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useModal } from "@/hooks";
 import { Button } from "@/app/components";
+import { HellGuide, SentenceGuide } from "../../components";
 import styles from "./components.module.scss";
 import Image from "next/image";
 
@@ -32,7 +33,7 @@ export default function GameInfo({
         "주어진 단어들을 사용해 완성된 문장을 만들어 보세요.",
         "단어들을 자유롭게 조합하여 재미있고 창의적인 문장을 완성해보세요!",
       ],
-      imageSrc: "/illustration/illustration-sentence.svg",
+      imageSrc: "/illustration/sentence.svg",
     },
     {
       title: "무한 초성 지옥",
@@ -40,7 +41,7 @@ export default function GameInfo({
         "초성만 보고 떠오르는 단어를 맞추는 당신의 상상력과 순발력을 시험해 보세요!",
         "함께 도전하고, 최고 기록에 도전해 보세요.",
       ],
-      imageSrc: "/illustration/illustration-infinite.svg",
+      imageSrc: "/illustration/infinite.svg",
     },
   ];
 
@@ -70,14 +71,12 @@ export default function GameInfo({
         });
 
         if (!response.ok) {
-          console.error("Error:", response.status, response.statusText);
+          console.error(response.status, response.statusText);
         } else {
-          const result = await response.json();
           setIsReady((prev) => !prev);
-          console.log(result);
         }
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error(error);
       }
     }
   };
@@ -94,7 +93,7 @@ export default function GameInfo({
       const data = await response.json();
       return data.playerId;
     } catch (error) {
-      console.error("Error:", error);
+      console.error(error);
     }
   };
 
@@ -107,11 +106,12 @@ export default function GameInfo({
   }, [areAllPlayersReady, hostPlayerId]);
 
   const handleOpenModal = () => {
-    openModal(
-      <div>
-        <p>모달 내용입니다.</p>
-      </div>
-    );
+    new Audio("/bgm/Button-Click.mp3").play();
+    if (mode === "단어의 방") {
+      openModal(<SentenceGuide />);
+    } else {
+      openModal(<HellGuide />);
+    }
   };
 
   // const handleFlip = (newIndex: number) => {
@@ -174,8 +174,8 @@ export default function GameInfo({
             className={styles.illustration}
             src={currentContent.imageSrc}
             alt="room illustration"
-            width={300}
-            height={320}
+            width={310}
+            height={310}
             priority
           />
         </div>

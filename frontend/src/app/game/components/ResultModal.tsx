@@ -58,7 +58,15 @@ const ResultModal = ({
                         height={100}
                       />
                       <div className={styles.restInfo}>
-                        <p>{result[1].nickname}</p>
+                        <h5
+                          className={
+                            result[1].nickname.length > 6
+                              ? styles.smallNickname
+                              : ""
+                          }
+                        >
+                          {result[1].nickname}
+                        </h5>
                         <p className={styles.resultScore}>
                           {result[1].score.toLocaleString()}점
                         </p>
@@ -81,7 +89,15 @@ const ResultModal = ({
                         height={100}
                       />
                       <div className={styles.restInfo}>
-                        <p>{result[2].nickname}</p>
+                        <h5
+                          className={
+                            result[2].nickname.length > 6
+                              ? styles.smallNickname
+                              : ""
+                          }
+                        >
+                          {result[2].nickname}
+                        </h5>
                         <p className={styles.resultScore}>
                           {result[2].score.toLocaleString()}점
                         </p>
@@ -104,7 +120,15 @@ const ResultModal = ({
                         height={100}
                       />
                       <div className={styles.restInfo}>
-                        <p>{result[3].nickname}</p>
+                        <h5
+                          className={
+                            result[3].nickname.length > 6
+                              ? styles.smallNickname
+                              : ""
+                          }
+                        >
+                          {result[3].nickname}
+                        </h5>
                         <p className={styles.resultScore}>
                           {result[3].score.toLocaleString()}점
                         </p>

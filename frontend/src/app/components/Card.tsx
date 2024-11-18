@@ -13,6 +13,8 @@ interface CardProps {
   isFail?: boolean;
   onClickEvent?: () => void;
   children?: ReactNode;
+  roundSentence?: roundSentence;
+  isPlaying?: boolean;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -24,8 +26,11 @@ const Card: React.FC<CardProps> = ({
   isFail,
   onClickEvent,
   children,
+  roundSentence,
+  isPlaying,
 }) => {
   const [showBanner, setShowBanner] = useState(isNewScore);
+  const [isTouchHandled, setIsTouchHandled] = useState(false);
 
   useEffect(() => {
     if (isNewScore) {
@@ -36,6 +41,18 @@ const Card: React.FC<CardProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isNewScore]);
+
+  const handleTouchStart = () => {
+    if (isTouchHandled) return;
+    setIsTouchHandled(true);
+    if (onClickEvent) onClickEvent();
+    setTimeout(() => setIsTouchHandled(false), 300); // 딜레이 후 플래그 초기화
+  };
+
+  const handleClick = () => {
+    if (isTouchHandled) return;
+    if (onClickEvent) onClickEvent();
+  };
 
   const renderBanner = () => {
     if (isFail)
@@ -48,6 +65,12 @@ const Card: React.FC<CardProps> = ({
       return (
         <CardBanner type="ready">
           <h4>준비 완료</h4>
+        </CardBanner>
+      );
+    if (isPlaying)
+      return (
+        <CardBanner type="playing">
+          <h4>게임중</h4>
         </CardBanner>
       );
     if (isNewScore && showBanner) {
@@ -65,10 +88,14 @@ const Card: React.FC<CardProps> = ({
       className={`${styles.cardContainer} ${isEmpty ? styles.empty : ""} ${
         isSelected ? styles.selected : ""
       }`}
-      onClick={onClickEvent}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
     >
       {renderBanner()}
       {children}
+      {roundSentence && (
+        <p className={styles.roundSentence}>{roundSentence.sentence}</p>
+      )}
     </div>
   );
 };

@@ -30,9 +30,13 @@ const CreateRoomModal = () => {
   };
 
   const handleNewRoomTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    if (inputValue.length > 12) {
+      return;
+    }
     setCreateRoomModalState({
       ...createRoomModalState,
-      newRoomTitle: e.target.value,
+      newRoomTitle: inputValue,
     });
   };
 
@@ -57,15 +61,13 @@ const CreateRoomModal = () => {
 
       const data = await response.json();
       const roomId = data.data.roomId;
-      console.log("방 생성 성공:", data);
-      console.log(roomId);
 
       closeModal(); // 성공 시 모달 닫기
       setTimeout(() => {
         router.push(`/game/${roomId}`);
       }, 500);
     } catch (error) {
-      console.error("방 생성에 실패했습니다.", error);
+      console.error(error);
     }
   };
 

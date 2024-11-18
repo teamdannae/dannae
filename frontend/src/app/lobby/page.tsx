@@ -11,6 +11,7 @@ import {
   CreateRankingModal,
 } from "./components";
 import { useRouter } from "next/navigation";
+import CreateGuideModal from "./components/CreateGuideModal";
 
 const gamesPerPage = 12;
 
@@ -24,15 +25,19 @@ const Lobby = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined" && audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.error("BGM playback failed:", error);
-      });
+      audioRef.current.play();
+      audioRef.current.volume = 0.7;
     }
   }, []);
 
   const router = useRouter();
 
   const { openModal } = useModal();
+
+  const handleGameGuideModal = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    openModal(<CreateGuideModal />);
+  };
 
   const handleCreateRoomModal = () => {
     new Audio("/bgm/Button-Click.mp3").play();
@@ -50,8 +55,6 @@ const Lobby = () => {
   };
 
   const loadGames = async () => {
-    console.log("자동 새로고침");
-
     try {
       const response = await fetch("/api/next/rooms/list");
 
@@ -63,7 +66,7 @@ const Lobby = () => {
       const gamesData = await response.json();
       setGames(gamesData.data);
     } catch (error) {
-      console.error("Failed to load games:", error);
+      console.error(error);
     }
   };
 
@@ -73,16 +76,17 @@ const Lobby = () => {
 
     // 컴포넌트 언마운트 시 인터벌 정리
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = useCallback(() => {
     if (!isThrottled) {
-      console.log("새로고침");
       setIsThrottled(true);
       new Audio("/bgm/Button-Click.mp3").play();
       loadGames();
       setTimeout(() => setIsThrottled(false), 1000); // 1초 동안 쓰로틀링 상태 유지
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isThrottled]);
 
   // 선택된 모드에 따른 게임 필터링
@@ -112,6 +116,7 @@ const Lobby = () => {
   };
 
   const enterGameroom = async (roomId: number) => {
+    new Audio("/bgm/Room-Enter.mp3").play();
     try {
       const response = await fetch(`/api/next/rooms/${roomId.toString()}`);
 
@@ -119,9 +124,6 @@ const Lobby = () => {
         router.replace("/profile/nickname");
         throw new Error("Failed to load room data");
       }
-
-      const roomData = await response.json();
-      console.log(roomData);
 
       router.push(`/game/${roomId}`);
     } catch (error) {
@@ -139,21 +141,38 @@ const Lobby = () => {
     setSelectedGameIndex(index);
   };
 
+  const editProfile = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    router.push("/profile/nickname");
+  };
+
   return (
     <div className={styles.lobbyContainer}>
       <header className={`${styles.header} ${styles.mainHeader}`}>
-        <h1>게임 목록</h1>
+        <h1 className={styles.headerText}>게임 목록</h1>
         <nav className={styles.navContainer}>
-          <div onClick={handleCreateRankingModal} className={styles.navButton}>
+          <div onClick={editProfile} className={styles.smallNavButton}>
+            <p>프로필 재설정</p>
+          </div>
+          <div onClick={handleGameGuideModal} className={styles.smallNavButton}>
+            <p>게임 설명</p>
+          </div>
+          <div
+            onClick={handleCreateRankingModal}
+            className={styles.smallNavButton}
+          >
             <p>순위표</p>
           </div>
           <div
             onClick={handleCreateInviteCodeModal}
-            className={styles.navButton}
+            className={styles.smallNavButton}
           >
             <p>초대 코드 입력</p>
           </div>
-          <div onClick={handleCreateRoomModal} className={styles.navButton}>
+          <div
+            onClick={handleCreateRoomModal}
+            className={styles.smallNavButton}
+          >
             <p>방 만들기</p>
           </div>
         </nav>
@@ -175,7 +194,7 @@ const Lobby = () => {
               onClick={() => handleNavButtonClick(1)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 1
-                  ? styles.selectedGame
+                  ? styles.selectedSentenceGame
                   : styles.deselectedGame
               }`}
             >
@@ -185,7 +204,7 @@ const Lobby = () => {
               onClick={() => handleNavButtonClick(2)}
               className={`${styles.navButton} ${
                 selectedGameIndex === 2
-                  ? styles.selectedGame
+                  ? styles.selectedInfiniteGame
                   : styles.deselectedGame
               }`}
             >
@@ -227,7 +246,7 @@ const Lobby = () => {
             <div
               onClick={handleNextPage}
               className={`${styles.iconButton} ${
-                currentPage === 0 || totalPages - 1 ? styles.disabled : ""
+                currentPage >= totalPages - 1 ? styles.disabled : ""
               }`}
             >
               <Image
@@ -246,22 +265,49 @@ const Lobby = () => {
               isReady={false}
               isEmpty={game.isEmpty || false}
               key={index}
+              isPlaying={game.status === "PLAYING"}
               onClickEvent={
-                game.isEmpty ? undefined : () => enterGameroom(game.roomId)
+                game.isEmpty || game.status === "PLAYING"
+                  ? undefined
+                  : () => enterGameroom(game.roomId)
               }
             >
               {!game.isEmpty && (
                 <div className={styles.cardItem}>
-                  <h5>{game.title}</h5>
+                  <h5
+                    className={
+                      game.mode === "단어의 방"
+                        ? styles.blueTitle
+                        : styles.redTitle
+                    }
+                  >
+                    {game.title}
+                  </h5>
                   <div>
                     <div className={styles.info}>
-                      <Image
-                        src="/icons/gameboy.svg"
-                        alt="mode icon"
-                        width={24}
-                        height={24}
-                      />
-                      <p>{game.mode}</p>
+                      {game.mode === "단어의 방" ? (
+                        <Image
+                          src="/icons/gameboy.svg"
+                          alt="mode icon"
+                          width={24}
+                          height={24}
+                        />
+                      ) : (
+                        <Image
+                          src="/icons/gameboyB.svg"
+                          alt="mode icon"
+                          width={24}
+                          height={24}
+                        />
+                      )}
+
+                      <p
+                        className={
+                          game.mode === "단어의 방" ? styles.blue : styles.red
+                        }
+                      >
+                        {game.mode}
+                      </p>
                     </div>
                     <div className={styles.info}>
                       <Image
@@ -273,6 +319,28 @@ const Lobby = () => {
                       <p>{game.creatorNickname}</p>
                     </div>
                   </div>
+                  {game.mode === "단어의 방" ? (
+                    <Image
+                      className={styles.birdIllustration}
+                      src="/illustration/bird.svg"
+                      alt="mode icon"
+                      width={160}
+                      height={160}
+                      onClick={(e) => e.stopPropagation()}
+                      priority
+                    />
+                  ) : (
+                    <Image
+                      className={styles.catIllustration}
+                      src="/illustration/cat.svg"
+                      alt="mode icon"
+                      width={170}
+                      height={200}
+                      onClick={(e) => e.stopPropagation()}
+                      priority
+                    />
+                  )}
+
                   <p className={styles.playerCount}>{game.playerCount} / 4</p>
                 </div>
               )}

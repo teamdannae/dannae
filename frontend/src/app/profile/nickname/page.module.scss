@@ -1,3 +1,5 @@
+@use "@/styles/variables.scss" as vars;
+
 .pageWrapper {
   display: flex;
   position: relative;
@@ -7,14 +9,15 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 40px;
+  gap: 1.25rem;
 }
 
 .headerText {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
+  gap: 1.25rem;
+  margin-bottom: 3.125rem;
 
   p {
     text-wrap: pretty;
@@ -27,18 +30,57 @@
   right: -120%;
 }
 
+@media (max-width: 1000px) {
+  .illustration {
+    display: none;
+  }
+}
+
 .inputContainer {
   width: 100%;
 }
 
+.input {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.iconButton {
+  display: flex;
+  padding: 0.625rem;
+  justify-content: center;
+  align-items: center;
+  border: 0.1rem solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+  background-color: vars.$white-color;
+  height: 3.75rem;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+}
+
+.refreshButton {
+  &:hover .refreshIcon {
+    transform: rotate(360deg);
+    transition: transform 1s ease;
+  }
+}
+
+.refreshIcon {
+  transition: transform 0.5s ease;
+}
+
 .errorContainer {
-  min-height: 20px;
-  margin: 12px 0px 0px 12px;
+  min-height: 1.25rem;
+  margin: 0.75rem 0 0 0.75rem;
 }
 
 .errorMessage {
   color: red;
-  font-size: 14px;
+  font-size: 0.875rem;
   animation: shake 0.2s ease-in-out;
 }
 

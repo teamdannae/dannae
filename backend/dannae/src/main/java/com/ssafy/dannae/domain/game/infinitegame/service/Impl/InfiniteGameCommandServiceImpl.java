@@ -50,7 +50,7 @@ class InfiniteGameCommandServiceImpl implements InfiniteGameCommandService {
 		'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
 	};
 	private static final int[] score = {
-		0, 10, 20, 40, 60, 100
+		0, 100, 120, 140, 160
 	};
 	private static final boolean[][] invalidCombinations = new boolean[19][19];
 

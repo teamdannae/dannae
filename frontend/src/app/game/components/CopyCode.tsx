@@ -13,6 +13,7 @@ export default function CopyCode({ code }: CopyCodeProps) {
   const [isToastVisible, setIsToastVisible] = useState(false);
 
   const copyToClipboard = () => {
+    new Audio("/bgm/Copy-Button.mp3").play();
     if (typeof window !== "undefined" && navigator.clipboard) {
       navigator.clipboard
         .writeText(code)
@@ -21,7 +22,7 @@ export default function CopyCode({ code }: CopyCodeProps) {
           setTimeout(() => setIsToastVisible(false), 2000);
         })
         .catch(() => {
-          console.error("클립보드 복사 실패");
+          console.error("복사 실패");
         });
     }
   };
