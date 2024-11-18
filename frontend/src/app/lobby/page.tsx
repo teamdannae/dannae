@@ -116,6 +116,7 @@ const Lobby = () => {
   };
 
   const enterGameroom = async (roomId: number) => {
+    new Audio("/bgm/Room-Enter.mp3").play();
     try {
       const response = await fetch(`/api/next/rooms/${roomId.toString()}`);
 
@@ -140,15 +141,17 @@ const Lobby = () => {
     setSelectedGameIndex(index);
   };
 
+  const editProfile = () => {
+    new Audio("/bgm/Button-Click.mp3").play();
+    router.push("/profile/nickname");
+  };
+
   return (
     <div className={styles.lobbyContainer}>
       <header className={`${styles.header} ${styles.mainHeader}`}>
         <h1 className={styles.headerText}>게임 목록</h1>
         <nav className={styles.navContainer}>
-          <div
-            onClick={() => router.push("/profile/nickname")}
-            className={styles.smallNavButton}
-          >
+          <div onClick={editProfile} className={styles.smallNavButton}>
             <p>프로필 재설정</p>
           </div>
           <div onClick={handleGameGuideModal} className={styles.smallNavButton}>
