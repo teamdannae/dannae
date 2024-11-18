@@ -19,9 +19,9 @@
   background-color: vars.$white-color;
   border: vars.$border;
   border-radius: 8px;
-  padding: 40px 20px;
+  padding: 2.5rem 1.25rem;
   width: auto;
-  min-width: 500px;
+  min-width: 31.25rem;
   box-shadow: vars.$box-shadow;
   position: relative;
   display: flex;
@@ -34,10 +34,10 @@
 
 .closeButton {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   background: url("/icons/cross-block.svg") no-repeat center;
   background-size: contain;
   border: none;
@@ -54,7 +54,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 5px;
+  gap: 0.35rem;
 }
 
 .inputLabel {
@@ -74,10 +74,10 @@
   background-color: vars.$white-color;
   color: vars.$dark-color;
   font-size: vars.$font-size-p1;
-  border: 1px solid vars.$dark-color;
+  border: 0.1rem solid vars.$dark-color;
   border-radius: 15px;
-  height: 60px;
-  padding: 18px 30px;
+  height: 3.75rem;
+  padding: 1.125rem 1.875rem;
 
   &::placeholder {
     color: vars.$disabled-color;
@@ -95,18 +95,18 @@
 }
 
 .invalidInputValue {
-  border: 2px solid vars.$red-color;
+  border: 0.15rem solid vars.$red-color;
 }
 
 .warningIcon {
   position: absolute;
-  right: 30px;
+  right: 2rem;
 }
 
 // Progress
 .progressContainer {
   width: 100%;
-  height: 12px;
+  height: 0.75rem;
   background-color: vars.$grey-color;
   border-radius: 10px;
   overflow: hidden;
@@ -134,13 +134,13 @@
 .radioContainer {
   border: none;
   display: flex;
-  gap: 35px;
+  gap: 2.5rem;
 }
 
 .radio {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .radioButton[type="radio"] {
@@ -148,9 +148,9 @@
   -moz-appearance: none;
   appearance: none;
 
-  width: 28px;
-  height: 28px;
-  border: 1px solid vars.$dark-color;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0.1rem solid vars.$dark-color;
   border-radius: 50%;
   cursor: pointer;
   background-color: vars.$white-color;
@@ -162,8 +162,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
+    width: 0.875rem;
+    height: 0.875rem;
     background-color: vars.$primary-color;
     border-radius: 50%;
   }
@@ -176,7 +176,7 @@
 // Word
 .wordCard {
   position: relative;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   border-radius: 14px;
   font-size: vars.$font-size-p1;
   font-family: var(--font-head);
@@ -185,7 +185,7 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  margin: 4px;
+  margin: 0.25rem;
   transition: background-color 0.3s, color 0.3s;
 
   &.common {
@@ -251,14 +251,14 @@
 .tooltip {
   background-color: vars.$primary-color;
   color: vars.$black-color;
-  padding: 12px;
+  padding: 0.75rem;
   border-radius: 8px;
-  width: 320px;
+  width: 20rem;
   text-align: left;
   font-size: vars.$font-size-p2;
   z-index: 1000;
   word-break: keep-all;
-  max-height: 400px;
+  max-height: 25rem;
   overflow-y: scroll;
 
   &::-webkit-scrollbar {
@@ -268,10 +268,10 @@
   .tooltipHeader {
     font-size: vars.$font-size-p1;
     font-weight: bolder;
-    margin-bottom: 12px;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 0.25rem;
   }
 
   .tooltipBody {
@@ -293,7 +293,7 @@
 // Button
 .buttonContainer {
   width: 100%;
-  padding: 20px 35px;
+  padding: 1.25rem 2.5rem;
 
   display: flex;
   align-items: center;
@@ -338,10 +338,10 @@
   align-items: center;
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 10rem;
   z-index: 100;
-  padding: 20px;
-  border: 1px solid vars.$dark-color;
+  padding: 1.25rem;
+  border: 0.1rem solid vars.$dark-color;
   border-radius: 45px;
   background-color: vars.$white-color;
   box-shadow: vars.$box-shadow;
@@ -355,6 +355,12 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .cardContainer {
+    height: 8rem;
+  }
+}
+
 // CardTag
 .cardBannerContainer {
   display: flex;
@@ -363,11 +369,11 @@
   align-items: center;
   position: absolute;
 
-  width: 170px;
-  height: 62px;
+  width: 10.625rem;
+  height: 3.875rem;
   z-index: 101;
   transform: rotate(-10deg);
-  border: 2px solid vars.$dark-color;
+  border: 0.15rem solid vars.$dark-color;
   border-radius: 7px;
   background-color: vars.$primary-color;
 
@@ -416,7 +422,7 @@
   background-color: vars.$dark-color;
   color: vars.$white-color;
   border: vars.$border;
-  padding: 33px 66px;
+  padding: 2rem 4.125rem;
   border-radius: 45px;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -427,10 +433,28 @@
   }
 }
 
+@media (max-width: 1300px) {
+  .toast {
+    // padding: 1.6rem 3.6rem;
+
+    h3 {
+      font-size: vars.$font-size-h4;
+    }
+  }
+}
+
+@media (max-width: 1300px) {
+  .toast {
+    h3 {
+      font-size: vars.$font-size-h5;
+    }
+  }
+}
+
 .guideContainer {
   position: relative;
   width: 100%;
-  height: 600px;
+  height: 37.5rem;
   overflow: hidden;
 }
 
@@ -446,7 +470,7 @@
   align-items: center;
 
   h5 {
-    margin-top: 24px;
+    margin-top: 1.5rem;
 
     span {
       padding: 1px 6px;
@@ -473,7 +497,7 @@
     }
 
     span.big {
-      font-size: 32px;
+      font-size: 2rem;
     }
   }
 }
@@ -500,12 +524,12 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .circleButton {
-  width: 12px;
-  height: 12px;
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 50%;
   background-color: #ccc;
   border: none;
