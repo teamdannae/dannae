@@ -6,6 +6,33 @@
   justify-content: space-around;
   height: 100vh;
   padding: 24px 76px 24px 76px;
+  --color: #e1e1e1;
+  background-color: #ffffff;
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 55px 55px;
 }
 
 .header {
@@ -62,6 +89,7 @@
   border: 1px solid vars.$dark-color;
   border-radius: 15px;
   cursor: pointer;
+  background-color: vars.$white-color;
 
   p {
     font-size: vars.$font-size-p2;
@@ -136,6 +164,7 @@
   border: 1px solid vars.$dark-color;
   border-radius: 15px;
   cursor: pointer;
+  background-color: vars.$white-color;
 
   &:hover {
     background-color: vars.$grey-color;

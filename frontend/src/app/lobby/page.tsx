@@ -28,6 +28,7 @@ const Lobby = () => {
       audioRef.current.play().catch((error) => {
         console.error("BGM playback failed:", error);
       });
+      audioRef.current.volume = 0.7;
     }
   }, []);
 
