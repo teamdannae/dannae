@@ -1,0 +1,824 @@
+@use "@/styles/variables.scss" as vars;
+
+.headerContainer {
+  display: flex;
+  width: 62.5rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-top: 0.5rem;
+}
+
+.backButton {
+  display: flex;
+  gap: 0.125rem;
+  align-items: center;
+  font-size: vars.$font-size-p1;
+
+  &:hover {
+    font-weight: bold;
+  }
+
+  &:hover .backIcon {
+    background-image: url("/icons/chevron-double-left.svg");
+    transform: scale(1.5);
+  }
+}
+
+.backIcon {
+  width: 24px;
+  height: 24px;
+  background: url("/icons/chevron-left.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 기본 버튼 스타일 제거
+.buttonReset {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.infoContainer {
+  height: 18rem;
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.infoMain {
+  position: relative;
+  background-color: vars.$grey-color;
+  height: 100%;
+  width: 100%;
+  min-width: 62.5rem;
+  max-width: 80rem;
+  border-radius: 24px;
+  padding: 1.5rem;
+
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+
+  &.flip {
+    transform: rotateY(90deg);
+  }
+}
+
+.infoMainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  backface-visibility: hidden;
+}
+
+.infoMainBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+}
+
+.description {
+  color: vars.$darkgray-color;
+}
+
+.infoIcon {
+  width: 2rem;
+  height: 2rem;
+  background: url("/icons/info-octagon.svg") no-repeat center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+.illustration {
+  position: absolute;
+  bottom: -5%;
+  right: 5%;
+}
+
+.detailButton {
+  width: fit-content;
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+
+  p {
+    font-size: vars.$font-size-p2;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@keyframes rainbowBorder {
+  0% {
+    border-color: #ff0000; // 빨간색
+  }
+  16.66% {
+    border-color: #ff7f00; // 주황색
+  }
+  33.33% {
+    border-color: #ffff00; // 노란색
+  }
+  50% {
+    border-color: #00ff00; // 초록색
+  }
+  66.66% {
+    border-color: #0000ff; // 파란색
+  }
+  83.33% {
+    border-color: #4b0082; // 남색
+  }
+  100% {
+    border-color: #8b00ff; // 보라색
+  }
+}
+
+.startButton {
+  border: 4px solid;
+  animation: rainbowBorder 3s linear infinite;
+}
+
+// .leftButton {
+//   width: 32px;
+//   height: 32px;
+//   background: url("/icons/chevron-left.svg") no-repeat center;
+//   background-size: contain;
+//   border: none;
+//   cursor: pointer;
+//   transition: transform 0.2s ease, background-image 0.2s ease;
+
+//   &:hover {
+//     background-image: url("/icons/chevron-double-left.svg");
+//     transform: scale(1.5);
+//   }
+// }
+
+// .rightButton {
+//   width: 32px;
+//   height: 32px;
+//   background: url("/icons/chevron-right.svg") no-repeat center;
+//   background-size: contain;
+//   border: none;
+//   cursor: pointer;
+//   transition: transform 0.2s ease, background-image 0.2s ease;
+
+//   &:hover {
+//     background-image: url("/icons/chevron-double-right.svg");
+//     transform: scale(1.5);
+//   }
+// }
+
+.readyButton {
+  width: 25%;
+  border-radius: 15px;
+  transition: transform 0.3s ease;
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.playerContainer {
+  display: flex;
+  // grid-template-columns: repeat(4, minmax(6.25rem, 16.25rem));
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  min-width: 62.5rem;
+}
+
+.cardWrapper {
+  min-width: 15.25rem;
+}
+
+.chatWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  width: 100%;
+  min-width: 62.5rem;
+  max-width: 80rem;
+  margin: auto;
+}
+
+.popup {
+  position: fixed;
+  bottom: 20%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 10;
+  width: fit-content;
+  height: fit-content;
+  background-color: vars.$primary-color;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.messagesContainer {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  height: 10rem;
+  border: vars.$border;
+  border-radius: 12px;
+  background-color: vars.$white-color;
+  position: relative;
+  z-index: 1;
+  &::-webkit-scrollbar {
+    width: 0.75rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: white;
+    border-radius: 8px;
+    margin-top: 0.625rem;
+    margin-bottom: 0.625rem;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 8px;
+    border: 3px solid white;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  font-size: vars.$font-size-p2;
+}
+
+.inputContainer {
+  display: flex;
+  padding-top: 0.5rem;
+  gap: 0.75rem;
+}
+
+.inputContainer > :first-child {
+  flex: 10;
+}
+
+.inputContainer > :last-child {
+  flex: 1;
+}
+
+.cardInner {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  height: 80%;
+}
+
+.cardInnerImage {
+  border-radius: 24px;
+}
+
+.cardInnerInfo {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: end;
+  margin-left: 8px;
+
+  h5 {
+    font-size: vars.$font-size-p1;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.cardInnerDetail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-align: end;
+
+  h5 {
+    font-size: 1.125rem;
+    color: vars.$dark-color;
+  }
+
+  &.longNickname {
+    .nickname {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// 무한 초성 지옥 관련 CSS
+.infiniteGameContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  align-items: center;
+  min-width: 62.5rem;
+  max-width: 80rem;
+  width: 100%;
+  height: 29.375rem;
+  background-color: vars.$grey-color;
+  border-radius: 45px;
+  margin-bottom: 0.5rem;
+  padding: 1.25rem;
+}
+
+.consonantContainer {
+  display: flex;
+  gap: 1.875rem;
+  padding: 1.25rem 0;
+  justify-content: center;
+  align-items: center;
+
+  &.isHidden {
+    animation: roll-out-right 0.6s ease-in 4.5s both;
+  }
+
+  &.isStart {
+    display: none;
+  }
+}
+
+@keyframes roll-out-right {
+  0% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(1000px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+.consonant {
+  display: flex;
+  width: 6.25rem;
+  height: 6.25rem;
+  align-items: center;
+  justify-content: center;
+  background-color: vars.$white-color;
+  border: 0.1rem solid vars.$dark-color;
+  border-radius: 25px;
+  box-shadow: vars.$box-shadow;
+}
+
+.wordContainer {
+  display: flex;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  width: 98%;
+  gap: 0.625rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.sentenceContainer {
+  min-height: 320px;
+  min-width: 62.5rem;
+  max-width: 80rem;
+  background-color: vars.$grey-color;
+  margin: 8px 0;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.score {
+  background-color: vars.$primary-color;
+  width: fit-content;
+  border-radius: 4px;
+  align-self: flex-end;
+}
+
+.loaderContainer {
+  min-width: 62.5rem;
+  max-width: 80rem;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.loader {
+  position: relative;
+  height: 200px;
+  width: 200px;
+  border-bottom: 3px solid #ff3d00;
+  box-sizing: border-box;
+  animation: drawLine 4s linear infinite;
+}
+
+.loader:before {
+  content: "";
+  position: absolute;
+  left: calc(100% + 14px);
+  bottom: -6px;
+  width: 16px;
+  height: 100px;
+  border-radius: 20px 20px 50px 50px;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(#ff3d00 6px, transparent 0),
+    linear-gradient(45deg, rgba(0, 0, 0, 0.02) 49%, white 51%),
+    linear-gradient(315deg, rgba(0, 0, 0, 0.02) 49%, white 51%),
+    linear-gradient(
+      to bottom,
+      #ffffff 10%,
+      #ff3d00 10%,
+      #ff3d00 90%,
+      #ffffff 90%
+    );
+  background-size: 3px 3px, 8px 8px, 8px 8px, 16px 88px;
+  background-position: center bottom, left 88px, right 88px, left top;
+  transform: rotate(25deg);
+  animation: pencilRot 4s linear infinite;
+}
+
+.loadingText {
+  position: absolute;
+  bottom: 10%;
+  font-size: vars.$font-size-h3;
+}
+
+@keyframes drawLine {
+  0%,
+  100% {
+    width: 0px;
+  }
+
+  45%,
+  55% {
+    width: 200px;
+  }
+}
+
+@keyframes pencilRot {
+  0%,
+  45% {
+    bottom: -6px;
+    left: calc(100% + 14px);
+    transform: rotate(25deg);
+  }
+
+  55%,
+  100% {
+    bottom: -12px;
+    left: calc(100% + 16px);
+    transform: rotate(220deg);
+  }
+}
+
+// 결과 모달
+
+// ResultModal.module.scss
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContainer {
+  background-color: vars.$grey-color;
+  border-radius: 8px;
+  max-width: 43.75rem;
+  width: 100%;
+  padding: 1.25rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modalHeader {
+  margin-bottom: 0.625rem;
+  text-align: center;
+}
+
+.modalContent {
+  margin: 1rem 0;
+  display: flex;
+  width: 100%;
+  height: 37.5rem;
+  gap: 3%;
+}
+
+.modalContent > div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3%;
+}
+
+.firstCard {
+  background-color: vars.$primary-color;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.125rem;
+  border: vars.$border;
+  img {
+    border-radius: 24px;
+  }
+  position: relative;
+}
+
+.winnerCrown {
+  position: absolute;
+  top: -60px;
+  left: 0;
+  rotate: -10deg;
+}
+
+.restCard {
+  background-color: vars.$dark-color;
+  border-radius: 14px;
+  width: 100%;
+  height: 31%;
+  color: vars.$white-color;
+  display: flex;
+  border: vars.$border;
+
+  img {
+    border-radius: 12px;
+  }
+}
+
+.restCard > div {
+  display: flex;
+  width: 100%;
+  justify-content: left;
+  align-items: center;
+  gap: 3%;
+}
+
+.smallNickname {
+  font-size: vars.$font-size-p1;
+}
+
+.emptyCard {
+  background-color: vars.$grey-color;
+}
+
+.restInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resultScore {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-p1;
+  background-color: vars.$white-color;
+  border-radius: 8px;
+  width: fit-content;
+  padding: 8px;
+  color: vars.$dark-color;
+}
+
+.modalFooter {
+  display: flex;
+}
+
+.closeButton,
+.confirmButton {
+  padding: 8px 15px;
+  font-size: 1em;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.closeButton {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.confirmButton {
+  background-color: #4caf50;
+  color: white;
+}
+
+.closeButton:hover {
+  background-color: #c7c7c7;
+}
+
+.confirmButton:hover {
+  background-color: #45a049;
+}
+
+// Fade-in animation for modal appearance
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 1200px) {
+  .headerContainer {
+    width: 50rem;
+  }
+
+  .infoMain {
+    min-width: 50rem;
+
+    height: 80%;
+
+    .infoMainContent {
+      gap: 1rem;
+    }
+    .description {
+      p {
+        font-size: vars.$font-size-p2;
+      }
+    }
+  }
+
+  .infiniteGameContainer {
+    min-width: 50rem;
+  }
+
+  .sentenceContainer {
+    min-width: 50rem;
+  }
+
+  .loaderContainer {
+    min-width: 50rem;
+  }
+
+  .infoContainer {
+    height: auto;
+  }
+
+  .readyButton {
+    width: 10rem;
+
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .readyButton:hover {
+    transform: none;
+  }
+
+  .startButton {
+    width: 10rem;
+    border-width: 3px;
+
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .startButton:hover {
+    transform: none;
+  }
+
+  .illustration {
+    display: none;
+  }
+
+  .playerContainer {
+    min-width: 50rem;
+  }
+
+  .cardInnerImage {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 15px;
+  }
+  .cardInnerDetail {
+    align-items: flex-end;
+    h5 {
+      font-size: 0.9rem;
+    }
+
+    .cardInnerDetail {
+      align-items: flex-end;
+    }
+
+    &.longNickname {
+      .nickname {
+        font-size: 0.7rem;
+      }
+    }
+  }
+
+  .cardWrapper {
+    min-width: 12rem;
+    max-width: 12rem;
+  }
+
+  .chatContainer {
+    min-width: 50rem;
+  }
+
+  .messagesContainer {
+    height: 8rem;
+  }
+
+  .inputContainer {
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .inputContainer > :first-child {
+    flex: 6;
+  }
+
+  .inputContainer > :last-child {
+    flex: 1;
+  }
+
+  .modalContainer {
+    max-width: 40rem;
+    max-height: 40rem;
+  }
+
+  .modalHeader {
+    font-size: vars.$font-size-h3;
+  }
+
+  .modalContent {
+    height: 26rem;
+  }
+
+  .firstCard {
+    gap: 0.5rem;
+    img {
+      scale: 0.4;
+    }
+  }
+
+  .restCard {
+    h5 {
+      font-size: vars.$font-size-p1;
+    }
+    img {
+      scale: 0.5;
+    }
+  }
+
+  .modalFooter {
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+}

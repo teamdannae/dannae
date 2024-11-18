@@ -1,0 +1,149 @@
+@use "../../../styles/variables.scss" as vars;
+
+.modalContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.navButton {
+  display: flex;
+  width: 14rem;
+  height: 4.25rem;
+  padding: 1.25rem 2.2rem;
+  justify-content: center;
+  align-items: center;
+  color: vars.$dark-color;
+  border: 0.1rem solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+
+  &.selectedGame {
+    background-color: vars.$primary-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.deselectedGame {
+    background-color: vars.$dark-color;
+    color: vars.$white-color;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.rankingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 0 0 4.5rem;
+}
+
+.rankingPlayer {
+  display: flex;
+  gap: 2.25rem;
+  align-items: center;
+  min-width: 42rem;
+}
+
+.rankingTier {
+  display: flex;
+  gap: 0.625em;
+  align-items: center;
+}
+
+.rankingImage {
+  border-radius: 1.25rem;
+}
+
+.rankingNickname {
+  text-align: left;
+  width: 11.75rem;
+}
+
+.rankingScoreContainer {
+  display: flex;
+  justify-content: flex-end;
+  width: 8rem;
+}
+
+.rankingScore {
+  background-color: vars.$primary-color;
+  width: fit-content;
+}
+
+.guideButtonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.guideContent {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.guideContentActive {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 1200px) {
+  .modalContainer {
+    gap: 1rem;
+
+    p,
+    span {
+      font-size: vars.$font-size-p2;
+    }
+  }
+  .rankingHeader {
+    display: none;
+  }
+
+  .rankingContainer {
+    gap: 0.6rem;
+  }
+
+  .rankingPlayer {
+    min-width: 45rem;
+  }
+
+  .rankingNickname {
+    width: 11.75rem;
+  }
+
+  .guideButtonContainer {
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .guideContent {
+    scale: 0.9;
+  }
+}

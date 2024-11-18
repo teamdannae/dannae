@@ -1,0 +1,121 @@
+@use "@/styles/variables.scss" as vars;
+
+.pageWrapper {
+  display: flex;
+  position: relative;
+}
+
+.nicknameContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 3.125rem;
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+.illustration {
+  position: absolute;
+  top: -15%;
+  right: -120%;
+}
+
+@media (max-width: 1000px) {
+  .illustration {
+    display: none;
+  }
+}
+
+.inputContainer {
+  width: 100%;
+}
+
+.input {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.iconButton {
+  display: flex;
+  padding: 0.625rem;
+  justify-content: center;
+  align-items: center;
+  border: 0.1rem solid vars.$dark-color;
+  border-radius: 15px;
+  cursor: pointer;
+  background-color: vars.$white-color;
+  height: 3.75rem;
+
+  &:hover {
+    background-color: vars.$grey-color;
+  }
+}
+
+.refreshButton {
+  &:hover .refreshIcon {
+    transform: rotate(360deg);
+    transition: transform 1s ease;
+  }
+}
+
+.refreshIcon {
+  transition: transform 0.5s ease;
+}
+
+.errorContainer {
+  min-height: 1.25rem;
+  margin: 0.75rem 0 0 0.75rem;
+}
+
+.errorMessage {
+  color: red;
+  font-size: 0.875rem;
+  animation: shake 0.2s ease-in-out;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-5px);
+  }
+  20% {
+    transform: translateX(5px);
+  }
+  30% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+  60% {
+    transform: translateX(3px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+  90% {
+    transform: translateX(-1px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

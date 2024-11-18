@@ -1,0 +1,89 @@
+@use "./variables.scss" as vars;
+
+:root {
+  --background: #ffffff;
+  --foreground: #191a23;
+  --font-head: "HeadFont", sans-serif;
+  --font-main: "MainFont", sans-serif;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+} */
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: vars.$dark-color;
+  background: vars.$white-color;
+  font-family: var(--font-main);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input {
+  font-family: var(--font-main);
+  font-weight: 400;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1 {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-h1;
+}
+
+h2 {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-h2;
+}
+
+h3 {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-h3;
+}
+
+h4 {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-h4;
+}
+
+h5 {
+  font-family: var(--font-head);
+  font-size: vars.$font-size-h5;
+}
+
+p {
+  font-family: var(--font-main);
+  font-size: vars.$font-size-p1;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+} */
+
+.zapsplat-credit {
+  position: fixed;
+  bottom: 0.25rem;
+  left: 5rem;
+  font-size: 0.75rem;
+}
