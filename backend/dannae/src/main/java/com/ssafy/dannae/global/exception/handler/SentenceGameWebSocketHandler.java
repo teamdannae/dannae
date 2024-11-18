@@ -443,7 +443,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 synchronized (this) {
                     List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
                     if (sessions != null) {
-                        // 모든 플레이어의 상태를 업데이트
+
                         for (WebSocketSession session : sessions) {
                             String playerId = getPlayerIdFromSession(session);
                             if (playerId != null) {
@@ -451,30 +451,27 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                             }
                         }
 
-                        // 마지막 점수가 업데이트된 후에 랭크 업데이트 실행
+                        // 게임 종료 처리를 별도 스레드에서 실행
                         CompletableFuture.runAsync(() -> {
                             try {
-                                // 점수 업데이트가 완료되기를 기다림
+                                // 최종 점수 업데이트를 위한 대기
                                 Thread.sleep(1000);
 
-                                // 게임 종료 메시지 전송
+                                System.out.println("게임 종료 처리 시작 - 방 ID: " + roomId);
                                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
                                 roomCommandService.updateStatus(roomId);
 
-                                // 최종 점수로 랭크 업데이트
+                                // 랭크 업데이트 전 추가 대기
+                                Thread.sleep(500);
+
                                 endGameAndUpdateRank(roomId);
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
                             } catch (Exception e) {
-                                System.err.println("게임 종료 처리 중 오류 발생: " + e.getMessage());
+                                System.err.println("게임 종료 처리 중 오류: " + e.getMessage());
                                 e.printStackTrace();
                             }
                         }, globalScheduler);
                     }
                 }
-            } else {
-                ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
-                scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
             }
 
         } catch (Exception e) {
@@ -519,26 +516,28 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private synchronized void endGameAndUpdateRank(Long roomId) {
-        if (roomId == null || !isGameEndInProgressMap.containsKey(roomId)) {
-            System.out.println("유효하지 않은 방 ID 또는 초기화되지 않은 상태입니다. 방 ID: " + roomId);
-            return;
-        }
-
-        isGameEndInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
-        if (!isGameEndInProgressMap.get(roomId).compareAndSet(false, true)) {
-            System.out.println("랭크 업데이트가 이미 진행 중입니다. 방 ID: " + roomId);
-            return;
-        }
-
         try {
-            // 현재 방에 있는 실제 게임 세션들만 가져옴
-            List<WebSocketSession> activeSessions = gameRoomSessions.get(roomId);
-            if (activeSessions == null || activeSessions.isEmpty()) {
+            // 방 상태 확인
+            if (roomId == null || !isGameEndInProgressMap.containsKey(roomId)) {
+                System.out.println("유효하지 않은 방 ID 또는 초기화되지 않은 상태입니다. 방 ID: " + roomId);
+                return;
+            }
+
+            // 중복 실행 방지
+            isGameEndInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
+            if (!isGameEndInProgressMap.get(roomId).compareAndSet(false, true)) {
+                System.out.println("랭크 업데이트가 이미 진행 중입니다. 방 ID: " + roomId);
+                return;
+            }
+
+            // 세션 및 플레이어 ID 수집 - 복사본 생성
+            List<WebSocketSession> activeSessions = new ArrayList<>(gameRoomSessions.getOrDefault(roomId, new CopyOnWriteArrayList<>()));
+            if (activeSessions.isEmpty()) {
                 System.out.println("활성 세션이 없습니다. 방 ID: " + roomId);
                 return;
             }
 
-            // 현재 활성화된 세션의 플레이어 ID만 수집
+            // 플레이어 ID 리스트 생성
             List<Long> playerIdList = activeSessions.stream()
                     .map(this::getPlayerIdFromSession)
                     .filter(playerId -> playerId != null)
@@ -546,31 +545,40 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                     .distinct()
                     .collect(Collectors.toList());
 
+            System.out.println("수집된 플레이어 ID 목록: " + playerIdList);
+
             if (playerIdList.isEmpty()) {
                 System.out.println("유효한 플레이어가 없습니다. 방 ID: " + roomId);
                 return;
             }
 
-            System.out.println("랭크 업데이트 시작. 방 ID: " + roomId + ", 플레이어 수: " + playerIdList.size());
-
-            PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
-                    .playerIdList(playerIdList)
-                    .build();
-
             // 랭크 업데이트 실행
-            rankCommandService.updateRank("단어의 방", playerIdListDto);
-            System.out.println("랭크 업데이트 완료. 방 ID: " + roomId);
+            try {
+                PlayerIdListDto playerIdListDto = PlayerIdListDto.builder()
+                        .playerIdList(playerIdList)
+                        .build();
 
-            // 게임 상태 초기화
-            resetRoomState(roomId);
+                rankCommandService.updateRank("단어의 방", playerIdListDto);
+
+                // 업데이트 성공 후에 상태 초기화
+                Thread.sleep(500); // 약간의 지연을 주어 업데이트가 완료되도록 함
+                resetRoomState(roomId);
+
+            } catch (Exception e) {
+                System.err.println("랭크 업데이트 실행 중 오류: " + e.getMessage());
+                e.printStackTrace();
+            }
 
         } catch (Exception e) {
-            System.err.println("랭크 업데이트 중 오류 발생. 방 ID: " + roomId);
+            System.err.println("전체 랭크 업데이트 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            isGameEndInProgressMap.get(roomId).set(false);
+            if (isGameEndInProgressMap.containsKey(roomId)) {
+                isGameEndInProgressMap.get(roomId).set(false);
+            }
         }
     }
+
     private void resetRoomState(Long roomId) {
         if (!gameRoomSessions.containsKey(roomId)) {
             return; // 이미 초기화된 상태라면 무시
