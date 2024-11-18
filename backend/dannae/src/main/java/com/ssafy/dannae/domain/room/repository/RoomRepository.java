@@ -8,7 +8,7 @@ import com.ssafy.dannae.domain.room.entity.Room;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-	List<Room> findByReleaseAndPlayerCountGreaterThanOrderByIdDesc(boolean release, int playerCount);
+	List<Room> findByReleaseAndPlayerCountGreaterThanOrderByStatusDescIdDesc(boolean release, int playerCount);
 
 	boolean existsById(Long id);
 
