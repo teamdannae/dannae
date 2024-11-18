@@ -452,6 +452,7 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
                 }
 
                 broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
+                roomCommandService.updateStatus(roomId);
                 if (gameStartedMap.get(roomId).compareAndSet(true, false)) { // 게임 종료 시 한 번만 호출
                     List<Long> playerIdList = sessionTokenMap.values().stream()
                         .map(token -> Long.parseLong(jwtTokenProvider.getPlayerIdFromToken(token)))
