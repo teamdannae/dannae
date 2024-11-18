@@ -94,6 +94,7 @@ interface gameroom {
   creator: number;
   isEmpty?: boolean;
   creatorNickname?: string;
+  status?: string;
 }
 
 interface word {

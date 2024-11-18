@@ -14,6 +14,7 @@ interface CardProps {
   onClickEvent?: () => void;
   children?: ReactNode;
   roundSentence?: roundSentence;
+  isPlaying?: boolean;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -26,6 +27,7 @@ const Card: React.FC<CardProps> = ({
   onClickEvent,
   children,
   roundSentence,
+  isPlaying,
 }) => {
   const [showBanner, setShowBanner] = useState(isNewScore);
   const [isTouchHandled, setIsTouchHandled] = useState(false);
@@ -63,6 +65,12 @@ const Card: React.FC<CardProps> = ({
       return (
         <CardBanner type="ready">
           <h4>준비 완료</h4>
+        </CardBanner>
+      );
+    if (isPlaying)
+      return (
+        <CardBanner type="playing">
+          <h4>게임중</h4>
         </CardBanner>
       );
     if (isNewScore && showBanner) {
