@@ -481,7 +481,7 @@ public class InfiniteGameWebSocketHandler extends TextWebSocketHandler {
                 .playerIdList(playerIdList)
                 .build();
 
-            rankCommandService.updateRank("무한 초성 게임", playerIdListDto);
+            rankCommandService.updateRank("무한 초성 지옥", playerIdListDto);
 
         } catch (Exception e) {
             e.printStackTrace();
