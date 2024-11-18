@@ -3,25 +3,25 @@
 .modalContainer {
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  padding: 20px;
+  gap: 2.5rem;
+  padding: 1.25rem;
 }
 
 .navContainer {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .navButton {
   display: flex;
-  width: 14.2857rem;
-  height: 68px;
-  padding: 20px 35px;
+  width: 14rem;
+  height: 4.25rem;
+  padding: 1.25rem 2.2rem;
   justify-content: center;
   align-items: center;
   color: vars.$dark-color;
-  border: 1px solid vars.$dark-color;
+  border: 0.1rem solid vars.$dark-color;
   border-radius: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -51,36 +51,36 @@
 .inputContainer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .rankingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 1.125rem;
 }
 
 .rankingPlayer {
   display: flex;
-  gap: 36px;
+  gap: 2.25rem;
   align-items: center;
-  min-width: 800px;
+  min-width: 50rem;
 }
 
 .rankingTier {
   display: flex;
-  gap: 10px;
+  gap: 0.625em;
   align-items: center;
 }
 
 .rankingImage {
-  border-radius: 20px;
+  border-radius: 1.25rem;
 }
 
 .rankingNickname {
   text-align: left;
-  width: 260px;
+  width: 16.25rem;
 }
 
 .rankingScore {
@@ -90,7 +90,7 @@
 .guideButtonContainer {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 .guideContent {
@@ -102,4 +102,40 @@
 .guideContentActive {
   opacity: 1;
   transform: translateY(0);
+}
+
+@media (max-width: 1200px) {
+  .modalContainer {
+    gap: 1rem;
+
+    p,
+    span {
+      font-size: vars.$font-size-p2;
+    }
+  }
+  .rankingHeader {
+    display: none;
+  }
+
+  .rankingContainer {
+    gap: 0.6rem;
+  }
+
+  .rankingPlayer {
+    min-width: 45rem;
+  }
+
+  .rankingNickname {
+    width: 16rem;
+  }
+
+  .guideButtonContainer {
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .guideContent {
+    scale: 0.9;
+  }
 }

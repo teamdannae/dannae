@@ -49,9 +49,9 @@ const CreateRankingModal = () => {
   return (
     <div
       className={styles.modalContainer}
-      style={{ width: 1000, padding: "10px 0px 0px 60px" }}
+      style={{ width: "62.5", padding: "0.625rem 0 0 3.75rem" }}
     >
-      <h3>순위표</h3>
+      <h3 className={styles.rankingHeader}>순위표</h3>
       <nav className={styles.navContainer} style={{ justifyContent: "center" }}>
         <div
           onClick={() => toggleMode("1")}
@@ -72,7 +72,7 @@ const CreateRankingModal = () => {
       </nav>
       <div className={styles.rankingContainer}>
         {isLoading ? (
-          <div style={{ width: 940, height: 472 }} />
+          <div style={{ height: "29.5rem" }} />
         ) : (
           ranking.map((rank, index) => {
             const medalImage =
@@ -98,7 +98,7 @@ const CreateRankingModal = () => {
                       className={styles.medalImage}
                     />
                   )}
-                  <h3>{index + 1}등</h3>
+                  {/* <h3>{index + 1}등</h3> */}
                 </div>
                 <Image
                   alt="player image"

@@ -2,15 +2,15 @@
 
 .headerContainer {
   display: flex;
-  width: 80%;
-  justify-content: space-around;
+  width: 62.5rem;
+  justify-content: space-between;
   align-items: flex-end;
-  padding-top: 8px;
+  padding-top: 0.5rem;
 }
 
 .backButton {
   display: flex;
-  gap: 2px;
+  gap: 0.125rem;
   align-items: center;
   font-size: vars.$font-size-p1;
 
@@ -37,7 +37,7 @@
 .copyButton {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 
   &:hover {
     text-decoration: underline;
@@ -55,22 +55,24 @@
 }
 
 .infoContainer {
-  height: 280px;
+  height: 28rem;
   width: 100%;
   display: flex;
-  gap: 16px;
+  gap: 1rem;
   justify-content: center;
   align-items: center;
-  margin-top: 16px;
+  margin-top: 1rem;
 }
 
 .infoMain {
   position: relative;
   background-color: vars.$grey-color;
-  width: 75%;
+  height: 100%;
+  width: 100%;
+  min-width: 62.5rem;
+  max-width: 80rem;
   border-radius: 24px;
-  height: 280px;
-  padding: 24px;
+  padding: 1.5rem;
 
   transition: transform 0.6s;
   transform-style: preserve-3d;
@@ -84,7 +86,7 @@
 .infoMainContent {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2rem;
   backface-visibility: hidden;
 }
 
@@ -98,12 +100,11 @@
 
 .description {
   color: vars.$darkgray-color;
-  font-size: vars.$font-size-p2;
 }
 
 .infoIcon {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   background: url("/icons/info-octagon.svg") no-repeat center;
   background-size: contain;
   border: none;
@@ -120,8 +121,12 @@
 .detailButton {
   width: fit-content;
   display: flex;
-  gap: 4px;
+  gap: 0.25rem;
   align-items: center;
+
+  p {
+    font-size: vars.$font-size-p2;
+  }
 
   &:hover {
     text-decoration: underline;
@@ -157,39 +162,39 @@
   animation: rainbowBorder 3s linear infinite;
 }
 
-.leftButton {
-  width: 32px;
-  height: 32px;
-  background: url("/icons/chevron-left.svg") no-repeat center;
-  background-size: contain;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, background-image 0.2s ease;
+// .leftButton {
+//   width: 32px;
+//   height: 32px;
+//   background: url("/icons/chevron-left.svg") no-repeat center;
+//   background-size: contain;
+//   border: none;
+//   cursor: pointer;
+//   transition: transform 0.2s ease, background-image 0.2s ease;
 
-  &:hover {
-    background-image: url("/icons/chevron-double-left.svg");
-    transform: scale(1.5);
-  }
-}
+//   &:hover {
+//     background-image: url("/icons/chevron-double-left.svg");
+//     transform: scale(1.5);
+//   }
+// }
 
-.rightButton {
-  width: 32px;
-  height: 32px;
-  background: url("/icons/chevron-right.svg") no-repeat center;
-  background-size: contain;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, background-image 0.2s ease;
+// .rightButton {
+//   width: 32px;
+//   height: 32px;
+//   background: url("/icons/chevron-right.svg") no-repeat center;
+//   background-size: contain;
+//   border: none;
+//   cursor: pointer;
+//   transition: transform 0.2s ease, background-image 0.2s ease;
 
-  &:hover {
-    background-image: url("/icons/chevron-double-right.svg");
-    transform: scale(1.5);
-  }
-}
+//   &:hover {
+//     background-image: url("/icons/chevron-double-right.svg");
+//     transform: scale(1.5);
+//   }
+// }
 
 .readyButton {
   width: 25%;
-  border-radius: 16px;
+  border-radius: 15px;
   transition: transform 0.3s ease;
   &:hover {
     transform: scale(1.1);
@@ -197,19 +202,31 @@
 }
 
 .playerContainer {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(100px, 260px));
+  display: flex;
+  // grid-template-columns: repeat(4, minmax(6.25rem, 16.25rem));
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  min-width: 62.5rem;
+}
+
+.cardWrapper {
+  min-width: 15.25rem;
+}
+
+.chatWrapper {
+  display: flex;
+  justify-content: center;
 }
 
 .chatContainer {
   display: flex;
   flex-direction: column;
-  padding: 8px;
-  width: 75%;
+  padding: 0.5rem;
+  width: 100%;
+  min-width: 62.5rem;
+  max-width: 80rem;
   margin: auto;
 }
 
@@ -226,28 +243,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 0.75rem;
 }
 
 .messagesContainer {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 12px;
-  height: 160px;
+  padding: 0.75rem;
+  height: 10rem;
   border: vars.$border;
   border-radius: 12px;
   background-color: vars.$white-color;
   position: relative;
   z-index: 1;
   &::-webkit-scrollbar {
-    width: 12px;
+    width: 0.75rem;
   }
 
   &::-webkit-scrollbar-track {
     background: white;
     border-radius: 8px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 0.625rem;
+    margin-bottom: 0.625rem;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -264,14 +281,14 @@
 .message {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
   font-size: vars.$font-size-p2;
 }
 
 .inputContainer {
   display: flex;
-  padding-top: 8px;
-  gap: 12px;
+  padding-top: 0.5rem;
+  gap: 0.75rem;
 }
 
 .inputContainer > :first-child {
@@ -285,22 +302,13 @@
 .cardInner {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   width: 100%;
   height: 80%;
 }
 
 .cardInnerImage {
   border-radius: 24px;
-}
-
-@media (max-width: 1024px) {
-  .cardInnerImage {
-    display: none;
-  }
-  .cardInnerDetail {
-    align-items: center;
-  }
 }
 
 .cardInnerInfo {
@@ -328,13 +336,13 @@
   text-align: end;
 
   h5 {
-    font-size: 18px;
+    font-size: 1.125rem;
     color: vars.$dark-color;
   }
 
   &.longNickname {
     .nickname {
-      font-size: 14px;
+      font-size: 0.875rem;
     }
   }
 }
@@ -343,20 +351,22 @@
 .infiniteGameContainer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
   align-items: center;
-  width: 75%;
-  height: 470px;
+  min-width: 62.5rem;
+  max-width: 80rem;
+  width: 100%;
+  height: 29.375rem;
   background-color: vars.$grey-color;
   border-radius: 45px;
-  margin-bottom: 8px;
-  padding: 20px;
+  margin-bottom: 0.5rem;
+  padding: 1.25rem;
 }
 
 .consonantContainer {
   display: flex;
-  gap: 30px;
-  padding: 20px 0;
+  gap: 1.875rem;
+  padding: 1.25rem 0;
   justify-content: center;
   align-items: center;
 
@@ -382,12 +392,12 @@
 
 .consonant {
   display: flex;
-  width: 100px;
-  height: 100px;
+  width: 6.25rem;
+  height: 6.25rem;
   align-items: center;
   justify-content: center;
   background-color: vars.$white-color;
-  border: 1px solid vars.$dark-color;
+  border: 0.1rem solid vars.$dark-color;
   border-radius: 25px;
   box-shadow: vars.$box-shadow;
 }
@@ -397,7 +407,7 @@
   flex-wrap: wrap;
   overflow-y: auto;
   width: 98%;
-  gap: 10px;
+  gap: 0.625rem;
   &::-webkit-scrollbar {
     display: none;
   }
@@ -405,7 +415,8 @@
 
 .sentenceContainer {
   min-height: 320px;
-  width: 80%;
+  min-width: 62.5rem;
+  max-width: 80rem;
   background-color: vars.$grey-color;
   margin: 8px 0;
   border-radius: 14px;
@@ -420,7 +431,8 @@
 }
 
 .loaderContainer {
-  width: 100%;
+  min-width: 62.5rem;
+  max-width: 80rem;
   height: 100%;
   display: flex;
   justify-content: center;
@@ -515,23 +527,23 @@
 .modalContainer {
   background-color: vars.$grey-color;
   border-radius: 8px;
-  max-width: 700px;
+  max-width: 43.75rem;
   width: 100%;
-  padding: 20px;
+  padding: 1.25rem;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   animation: fadeIn 0.3s ease-in-out;
 }
 
 .modalHeader {
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
   text-align: center;
 }
 
 .modalContent {
-  margin: 15px 0;
+  margin: 1rem 0;
   display: flex;
   width: 100%;
-  height: 600px;
+  height: 37.5rem;
   gap: 3%;
 }
 
@@ -552,7 +564,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 1.125rem;
   border: vars.$border;
   img {
     border-radius: 24px;
@@ -655,5 +667,159 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@media (max-width: 1200px) {
+  .headerContainer {
+    width: 50rem;
+  }
+
+  .infoMain {
+    min-width: 50rem;
+
+    height: 80%;
+
+    .infoMainContent {
+      gap: 1rem;
+    }
+    .description {
+      p {
+        font-size: vars.$font-size-p2;
+      }
+    }
+  }
+
+  .infiniteGameContainer {
+    min-width: 50rem;
+  }
+
+  .sentenceContainer {
+    min-width: 50rem;
+  }
+
+  .loaderContainer {
+    min-width: 50rem;
+  }
+
+  .infoContainer {
+    height: auto;
+  }
+
+  .readyButton {
+    width: 10rem;
+
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .readyButton:hover {
+    transform: none;
+  }
+
+  .startButton {
+    width: 10rem;
+    border-width: 3px;
+
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .startButton:hover {
+    transform: none;
+  }
+
+  .illustration {
+    display: none;
+  }
+
+  .playerContainer {
+    min-width: 50rem;
+  }
+
+  .cardInnerImage {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 15px;
+  }
+  .cardInnerDetail {
+    align-items: flex-end;
+    h5 {
+      font-size: 0.9rem;
+    }
+
+    .cardInnerDetail {
+      align-items: flex-end;
+    }
+
+    &.longNickname {
+      .nickname {
+        font-size: 0.7rem;
+      }
+    }
+  }
+
+  .cardWrapper {
+    min-width: 12rem;
+    max-width: 12rem;
+  }
+
+  .chatContainer {
+    min-width: 50rem;
+  }
+
+  .messagesContainer {
+    height: 8rem;
+  }
+
+  .inputContainer {
+    p {
+      font-size: vars.$font-size-p2;
+    }
+  }
+
+  .inputContainer > :first-child {
+    flex: 6;
+  }
+
+  .inputContainer > :last-child {
+    flex: 1;
+  }
+
+  .modalContainer {
+    max-width: 40rem;
+    max-height: 40rem;
+  }
+
+  .modalHeader {
+    font-size: vars.$font-size-h3;
+  }
+
+  .modalContent {
+    height: 26rem;
+  }
+
+  .firstCard {
+    gap: 0.5rem;
+    img {
+      scale: 0.4;
+    }
+  }
+
+  .restCard {
+    h5 {
+      font-size: vars.$font-size-p1;
+    }
+    img {
+      scale: 0.5;
+    }
+  }
+
+  .modalFooter {
+    p {
+      font-size: vars.$font-size-p2;
+    }
   }
 }
