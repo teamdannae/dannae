@@ -502,6 +502,11 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private synchronized void endGameAndUpdateRank(Long roomId) {
+        if (roomId == null || !isGameEndInProgressMap.containsKey(roomId)) {
+            System.out.println("유효하지 않은 방 ID 또는 초기화되지 않은 상태입니다. 방 ID: " + roomId);
+            return;
+        }
+
         isGameEndInProgressMap.putIfAbsent(roomId, new AtomicBoolean(false));
         if (!isGameEndInProgressMap.get(roomId).compareAndSet(false, true)) {
             System.out.println("랭크 업데이트가 이미 진행 중입니다. 방 ID: " + roomId);
