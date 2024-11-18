@@ -440,21 +440,38 @@ public class SentenceGameWebSocketHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, scoreMessage);
 
             if (res.isEnd()) {
-                List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
-                if (sessions != null) {
-                    for (WebSocketSession session : sessions) {
-                        String playerId = getPlayerIdFromSession(session);
-                        if (playerId != null) {
-                            playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.none);
+                synchronized (this) {
+                    List<WebSocketSession> sessions = gameRoomSessions.get(roomId);
+                    if (sessions != null) {
+                        // 모든 플레이어의 상태를 업데이트
+                        for (WebSocketSession session : sessions) {
+                            String playerId = getPlayerIdFromSession(session);
+                            if (playerId != null) {
+                                playerCommandService.updateStatus(Long.parseLong(playerId), PlayerStatus.none);
+                            }
                         }
+
+                        // 마지막 점수가 업데이트된 후에 랭크 업데이트 실행
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                // 점수 업데이트가 완료되기를 기다림
+                                Thread.sleep(1000);
+
+                                // 게임 종료 메시지 전송
+                                broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
+                                roomCommandService.updateStatus(roomId);
+
+                                // 최종 점수로 랭크 업데이트
+                                endGameAndUpdateRank(roomId);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            } catch (Exception e) {
+                                System.err.println("게임 종료 처리 중 오류 발생: " + e.getMessage());
+                                e.printStackTrace();
+                            }
+                        }, globalScheduler);
                     }
                 }
-
-                broadcastToRoom(roomId, "{\"type\": \"game_end\", \"message\": \"게임이 종료되었습니다.\"}");
-                roomCommandService.updateStatus(roomId);
-
-                // 게임 종료 및 랭크 업데이트를 별도의 동기화 블록에서 실행
-                endGameAndUpdateRank(roomId);
             } else {
                 ScheduledExecutorService scheduler = roomSchedulers.get(roomId);
                 scheduler.schedule(() -> startNewRound(roomId), roundWaitTime, TimeUnit.SECONDS);
