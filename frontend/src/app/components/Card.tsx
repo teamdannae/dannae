@@ -28,6 +28,7 @@ const Card: React.FC<CardProps> = ({
   roundSentence,
 }) => {
   const [showBanner, setShowBanner] = useState(isNewScore);
+  const [isTouchHandled, setIsTouchHandled] = useState(false);
 
   useEffect(() => {
     if (isNewScore) {
@@ -38,6 +39,18 @@ const Card: React.FC<CardProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isNewScore]);
+
+  const handleTouchStart = () => {
+    if (isTouchHandled) return;
+    setIsTouchHandled(true);
+    if (onClickEvent) onClickEvent();
+    setTimeout(() => setIsTouchHandled(false), 300); // 딜레이 후 플래그 초기화
+  };
+
+  const handleClick = () => {
+    if (isTouchHandled) return;
+    if (onClickEvent) onClickEvent();
+  };
 
   const renderBanner = () => {
     if (isFail)
@@ -67,7 +80,8 @@ const Card: React.FC<CardProps> = ({
       className={`${styles.cardContainer} ${isEmpty ? styles.empty : ""} ${
         isSelected ? styles.selected : ""
       }`}
-      onClick={onClickEvent}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
     >
       {renderBanner()}
       {children}
