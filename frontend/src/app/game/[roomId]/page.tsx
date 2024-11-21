@@ -177,6 +177,7 @@ export default function WaitingRoom() {
     setMessages([]);
     setNewMessage("");
     setWordList([]);
+    setConsonant("");
     setIsStart(false);
     setRoundReset(true);
     setUsers((prevUsers) =>
@@ -656,7 +657,7 @@ export default function WaitingRoom() {
     <main
       role="main"
       aria-labelledby="game-waiting-room"
-      className={styles.container}
+      className={`${styles.container} ${isStart && styles.inGame}`}
     >
       {showToast && <Toast message={toastMessage} duration={toastDuration} />}
       <ResultModal

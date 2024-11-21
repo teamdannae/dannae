@@ -34,6 +34,11 @@
       transparent
     );
   background-size: 55px 55px;
+
+  &.inGame {
+    background-color: #aca197;
+    --color: #ffffff;
+  }
 }
 
 .progressContainer {

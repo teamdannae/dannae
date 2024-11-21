@@ -85,7 +85,7 @@ export default function Chat({
           />
           <Button
             onClickEvent={handleSend}
-            buttonText={isSend ? "제출 완료" : "제출하기"}
+            buttonText={isSend ? "전송완료" : "전송"}
             buttonColor="black"
             disabled={isSend}
           />

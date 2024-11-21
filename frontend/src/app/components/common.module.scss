@@ -300,7 +300,7 @@
   justify-content: center;
 
   color: vars.$white-color;
-  border: 1px solid vars.$dark-color;
+  border: 0.1rem solid vars.$dark-color;
   border-radius: 15px;
   cursor: pointer;
 
@@ -321,7 +321,7 @@
 
   &:disabled {
     background-color: vars.$disabled-color;
-    border: none;
+    border: 0.1rem solid transparent;
     cursor: not-allowed;
 
     &:hover {
@@ -388,21 +388,21 @@
   left: 50%;
   transform: translateX(-50%);
   background-color: vars.$primary-color;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   border-radius: 8px;
   color: vars.$dark-color;
   font-size: vars.$font-size-p2;
-  min-width: 260px;
+  min-width: 12rem;
   z-index: 102;
   word-break: keep-all;
   text-align: left;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 
   /* 말풍선 꼬리 */
   &::after {
     content: "";
     position: absolute;
-    bottom: -8px;
+    bottom: -0.5rem;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
